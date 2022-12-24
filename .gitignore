@@ -126,4 +126,4 @@ nb-configuration.xml
 /.phpunit.*.cache
 
 # Acme-Challenge
-.well-known/
+/.well-known/
