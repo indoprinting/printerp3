@@ -1,0 +1,18 @@
+{
+    "name": "ridintek/printerp3",
+    "description": "PrintERP 3",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Riyan Widiyanto",
+            "email": "rw056h@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "codeigniter4/framework": "^4.2",
+        "phpoffice/phpspreadsheet": "^1.25",
+        "google/apiclient": "^2.12"
+    }
+}

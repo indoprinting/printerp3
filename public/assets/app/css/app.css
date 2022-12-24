@@ -1,0 +1,97 @@
+@font-face {
+  font-family: 'DejaVu Sans';
+  src: url(../fonts/DejaVuSans/DejaVuSans.ttf);
+}
+
+@font-face {
+  font-family: 'DejaVu Sans Bold';
+  src: url(../fonts/DejaVuSans/DejaVuSans-Bold.ttf);
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url(../fonts/SourceSansPro/SourceSansPro-Regular.ttf);
+}
+
+table.dataTable tbody tr {
+  background-color: inherit;
+}
+
+.dark-mode option {
+  background: #343a40;
+}
+
+.dark-mode .bg-gradient-primary2 {
+  background: #007bff linear-gradient(180deg, #268fff, #007bff) repeat-x !important;
+  color: #fff;
+}
+
+.dark-mode .bg-gradient-primary2.btn:hover {
+  background: #007bff linear-gradient(180deg, #267fde, #0069d9) repeat-x !important;
+  border-color: #0062cc;
+  color: #ececec;
+}
+
+.dark-mode .bg-gradient-primary2.btn.active,
+.dark-mode .bg-gradient-primary2.btn:active,
+.dark-mode .bg-gradient-primary2.btn:not(:disabled):not(.disabled).active,
+.dark-mode .bg-gradient-primary2.btn:not(:disabled):not(.disabled):active {
+  background: #007bff linear-gradient(180deg, #267ad4, #0062cc) repeat-x !important;
+  border-color: #005cbf;
+  color: #fff;
+}
+
+.dark-mode .dataTables_wrapper .dataTables_filter input {
+  color: #fff;
+}
+
+.dark-mode .ql-editor.ql-blank::before {
+  color: rgba(240, 240, 240, 0.6);
+}
+
+.dark-mode .ql-snow .ql-picker .ql-picker-label {
+  color: #fff;
+}
+
+.dark-mode .ql-snow .ql-stroke {
+  stroke: #fff;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_processing,
+.dataTables_wrapper .dataTables_paginate {
+  color: inherit;
+}
+
+.custom-file-label {
+  z-index: 0;
+}
+
+.modal-footer {
+  padding: .1rem;
+}
+
+.modal-header {
+  padding: .5rem;
+}
+
+.nav-sidebar .menu-is-opening>.nav-link i.right,
+.nav-sidebar .menu-open>.nav-link i.right {
+  transform: rotate(90deg);
+}
+
+.os-padding {
+  z-index: inherit;
+}
+
+.text-sm .brand-link {
+  font-size: 1.25rem;
+}
+
+@media only screen and (min-width: 480px) {
+  .bottom-navigation {
+    display: none;
+  }
+}

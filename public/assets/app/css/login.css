@@ -1,0 +1,7 @@
+.login-box {
+  z-index: 1;
+}
+
+.no-box-shadow {
+  box-shadow: none;
+}

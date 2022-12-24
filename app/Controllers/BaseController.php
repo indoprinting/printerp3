@@ -1,0 +1,143 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use CodeIgniter\Controller;
+use CodeIgniter\HTTP\CLIRequest;
+use CodeIgniter\HTTP\IncomingRequest;
+use CodeIgniter\HTTP\RequestInterface;
+use CodeIgniter\HTTP\ResponseInterface;
+use Psr\Log\LoggerInterface;
+use Config\Services;
+
+/**
+ * Class BaseController
+ *
+ * BaseController provides a convenient place for loading components
+ * and performing functions that are needed by all your controllers.
+ * Extend this class in any new controllers:
+ *     class Home extends BaseController
+ *
+ * For security be sure to declare any new methods as protected or private.
+ */
+class BaseController extends Controller
+{
+	/**
+	 * Instance of the main Request object.
+	 *
+	 * @var CLIRequest|IncomingRequest
+	 */
+	protected $request;
+
+	/**
+	 * An array of helpers to be loaded automatically upon
+	 * class instantiation. These helpers will be available
+	 * to all other controllers that extend BaseController.
+	 *
+	 * @var array
+	 */
+	protected $helpers = [];
+
+	/**
+	 * Data to send to view.
+	 * @var array;
+	 */
+	protected $data = [];
+
+	/**
+	 * Constructor.
+	 */
+	public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
+	{
+		// Do Not Edit This Line
+		parent::initController($request, $response, $logger);
+
+		// Preload any models, libraries, etc, here.
+
+		// E.g.: $this->session = \Config\Services::session();
+
+		/**
+		 * Resource Versioning
+		 */
+		$this->data['resver'] = '1.0.0'; // For Production.
+		// $this->data['resver'] = bin2hex(random_bytes(4)); // For Development.
+
+		//--------------------------------------------------------------------
+		// Preload any models, libraries, etc, here.
+		//--------------------------------------------------------------------
+		// E.g.: $this->session = \Config\Services::session();
+
+		$this->data['page'] = []; // data['page'] is reserved.
+
+		if (isLoggedIn()) {
+			// Set language locale for global lang().
+			Services::language(session('login')->lang);
+
+			$lang = [
+				'App' => include(APPPATH . 'Language/' . session('login')->lang . '/App.php'),
+				'Msg' => include(APPPATH . 'Language/' . session('login')->lang . '/Msg.php')
+			];
+
+			// lang64 used by javascript only.
+			$this->data['lang64'] = base64_encode(json_encode($lang));
+			unset($lang);
+
+			// Add new permissions here.
+			$this->data['permissions'] = [
+				'All' 								=> lang('App.allAccess'),
+				'BankAccount.Add'    	=> lang('App.addBankAccount'),
+				'BankAccount.Delete' 	=> lang('App.deleteBankAccount'),
+				'BankAccount.Edit'   	=> lang('App.editBankAccount'),
+				'BankAccount.View'   	=> lang('App.viewBankAccount'),
+				'BankMutation.Add'   	=> lang('App.addBankMutation'),
+				'BankMutation.Delete' => lang('App.deleteBankMutation'),
+				'BankMutation.Edit'   => lang('App.editBankMutation'),
+				'BankMutation.View'   => lang('App.viewBankMutation'),
+				'User.Add'    				=> lang('App.addUser'),
+				'User.Delete' 				=> lang('App.deleteUser'),
+				'User.Edit'   				=> lang('App.editUser'),
+				'User.View'   				=> lang('App.viewUser'),
+				'UserGroup.Add'    		=> lang('App.addUserGroup'),
+				'UserGroup.Delete' 		=> lang('App.deleteUserGroup'),
+				'UserGroup.Edit'   		=> lang('App.editUserGroup'),
+				'UserGroup.View'   		=> lang('App.viewUserGroup'),
+			];
+		}
+	}
+
+	/**
+	 * Build new page.
+	 * @param array $data [ page, ... ]
+	 */
+	protected function buildPage($data = [])
+	{
+		if (isAJAX()) {
+			// Load contents.
+			$currentUrl = current_url() . ($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '');
+			$data['page']['content'] = view($data['page']['content'], $data);
+			$data['page']['url'] = $currentUrl;
+
+			$this->response(200, $data['page']);
+		} else if (requestMethod() == 'GET') {
+			if (isLoggedIn()) {
+				echo view('content', $data);
+			}
+		}
+	}
+
+	/**
+	 * Send API response to client.
+	 * @param int $code Code to response.
+	 * @param array $data Respons data.
+	 */
+	protected function response(int $code, $data = [])
+	{
+		if (!is_array($data)) throw new \Exception('Response 2nd parameter is not an array.');
+
+		$data = array_merge(['code' => intval($code)], $data);
+		http_response_code($code);
+		sendJSON($data);
+	}
+}

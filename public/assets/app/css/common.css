@@ -1,0 +1,18 @@
+.icon-text {
+  margin-right: 0.2rem;
+}
+
+.input-control {
+  border: none;
+  border-bottom: 1px solid purple;
+  border-radius: 0;
+  transition: all 0.1s linear;
+}
+
+.input-control:focus {
+  border-bottom: 2px solid purple;
+}
+
+select.is-invalid ~ .select2-container .select2-selection {
+  border-color: red;
+}
