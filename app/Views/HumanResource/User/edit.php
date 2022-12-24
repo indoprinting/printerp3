@@ -6,6 +6,7 @@
 </div>
 <div class="modal-body">
   <form method="post" enctype="multipart/form-data" id="form">
+    <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-6">
         <div class="card">
@@ -101,7 +102,6 @@
         </div>
       </div>
     </div>
-    <?= csrf_field() ?>
   </form>
 </div>
 <div class="modal-footer">

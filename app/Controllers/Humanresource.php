@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\{DataTables, FileUpload};
-use App\Models\{DB, User};
+use App\Models\{DB, User, UserGroup};
 
 class Humanresource extends BaseController
 {
@@ -31,26 +31,25 @@ class Humanresource extends BaseController
 
     $dt = new DataTables('groups');
     $dt
-      ->select("groups.id, groups.name, groups.type, groups.permissions,
-      groups.created_at, creator.fullname creator_name, groups.updated_at,
-        updater.fullname updater_name")
-      ->join('user creator', 'creator.id = groups.created_by', 'left')
-      ->join('user updater', 'updater.id = groups.updated_by', 'left')
+      ->select("groups.id, groups.name, groups.permissions")
       ->editColumn('id', function ($data) {
         return '
-        <div class="btn-group">
-          <a class="btn bg-gradient-yellow" href="' . base_url("usergroup/edit/{$data['id']}") . '"
-            data-toggle="modal" data-target="#ModalStatic"
-            data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-            <i class="fad fa-fw fa-edit"></i>
-          </a>
-          <a class="btn bg-gradient-danger" href="' . base_url("usergroup/delete/{$data['id']}") . '"
-            data-action="confirm" data-confirm-text="Delete"
-            data-text="This action cannot be undone."
-            data-title="Delete Usergroup ' . $data['name'] . '?">
-            <i class="fad fa-fw fa-trash"></i>
-          </a>
-        </div>';
+          <div class="btn-group btn-action">
+            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-page"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('humanresource/usergroup/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> Edit
+              </a>
+              <a class="dropdown-item" href="' . base_url('humanresource/usergroup/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> Delete
+              </a>
+            </div>
+          </div>';
       })
       ->editColumn('permissions', function ($data) {
         $permissions = getJSON($data['permissions']);
@@ -99,10 +98,13 @@ class Humanresource extends BaseController
               <i class="fad fa-page"></i>
             </a>
             <div class="dropdown-menu">
-              <a class="dropdown-item" href="' . base_url('humanresource/user/edit/' . $data['id']) . '" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+              <a class="dropdown-item" href="' . base_url('humanresource/user/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> Edit
               </a>
-              <a class="dropdown-item" href="' . base_url('humanresource/user/delete/' . $data['id']) . '" data-action="confirm">
+              <a class="dropdown-item" href="' . base_url('humanresource/user/delete/' . $data['id']) . '"
+                data-action="confirm">
                 <i class="fad fa-fw fa-trash"></i> Delete
               </a>
             </div>
@@ -185,12 +187,11 @@ class Humanresource extends BaseController
 
     if (requestMethod() == 'POST') {
       $userGroupData = [
-        'name'        => $this->request->getPost('groupname'),
-        'permissions' => json_encode($this->request->getPost('permission') ?? []),
-        'type'        => $this->request->getPost('type')
+        'name'        => getPost('groupname'),
+        'permissions' => json_encode(getPost('permission') ?? [])
       ];
 
-      if ($this->setting->addUserGroup($userGroupData)) {
+      if (UserGroup::add($userGroupData)) {
         $this->response(201, ['message' => 'User group has been added.']);
       }
 
@@ -198,21 +199,16 @@ class Humanresource extends BaseController
     }
 
     $this->data['title'] = lang('App.addUserGroup');
-    $this->data['types'] = [
-      'general'  => 'general',
-      'employee' => 'employee',
-      'student'  => 'student'
-    ];
 
-    $this->response(200, ['data' => view('Settings/UserGroup/add', $this->data)]);
+    $this->response(200, ['content' => view('HumanResource/UserGroup/add', $this->data)]);
   }
 
   protected function usergroup_delete($userGroupId = NULL)
   {
     checkPermission('UserGroup.Delete');
 
-    if (requestMethod() == 'POST' && $this->isAJAX) {
-      if ($this->setting->deleteUserGroups(['id' => $userGroupId])) {
+    if (requestMethod() == 'POST' && isAJAX()) {
+      if (UserGroup::delete(['id' => $userGroupId])) {
         $this->response(200, ['message' => 'User group has been deleted.']);
       }
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -224,30 +220,24 @@ class Humanresource extends BaseController
   {
     checkPermission('UserGroup.Edit');
 
-    $userGroup = $this->setting->getUserGroups(['id' => $userGroupId])[0];
+    $userGroup = UserGroup::getRow(['id' => $userGroupId]);
 
     if (requestMethod() == 'POST') {
       $userGroupData = [
-        'name'        => $this->request->getPost('groupname'),
-        'permissions' => json_encode($this->request->getPost('permission') ?? []),
-        'type'        => $this->request->getPost('type')
+        'name'        => getPost('groupname'),
+        'permissions' => json_encode(getPost('permission') ?? [])
       ];
 
-      if ($this->setting->updateUserGroup($userGroup->id, $userGroupData)) {
+      if (UserGroup::update((int)$userGroup->id, $userGroupData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.userGroupEditOK'), $userGroup->name)]);
       }
       $this->response(400, ['message' => sprintf(lang('Msg.userGroupEditNO'), $userGroup->name)]);
     }
 
     $this->data['title'] = lang('App.editUserGroup');
-    $this->data['types'] = [
-      'general'  => 'general',
-      'employee' => 'employee',
-      'student'  => 'student'
-    ];
     $this->data['userGroup'] = $userGroup;
 
-    $this->response(200, ['data' => view('Settings/UserGroup/edit', $this->data)]);
+    $this->response(200, ['content' => view('HumanResource/UserGroup/edit', $this->data)]);
   }
 
   public function user()
@@ -365,12 +355,8 @@ class Humanresource extends BaseController
         }
 
         $userData['avatar_id'] = $upload->storeRandom();
-      } else {
+      } else if ($user->avatar_id == 1 || $user->avatar_id == 2) {
         $userData['avatar_id'] = ($userData['gender'] == 'male' ? 1 : 2);
-      }
-
-      if (empty($userData['groups'])) {
-        $this->response(400, ['message' => sprintf(lang('Msg.userEditNO'), $user->fullname)]);
       }
 
       if (User::update((int)$userId, $userData)) {

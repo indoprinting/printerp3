@@ -117,15 +117,13 @@ class User
       if (is_string($data['password']) && strlen($data['password']) < 8) {
         setLastError('Password at least 8 characters');
         return FALSE;
-      } else {
-        setLastError('Password must be a string.');
+      } else if (!is_string($data['password'])) {
+        setLastError('Password must be a string.' . gettype($data['password']));
         return FALSE;
       }
 
       $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
     }
-
-    // setLastError($data['password']); return FALSE;
 
     DB::table('users')->update($data, ['id' => $id]);
     return DB::affectedRows();

@@ -53,8 +53,8 @@
 
     window.Table = $('#Table').DataTable({
       ajax: {
-        data: function(data) {
-          data['<?= csrf_token() ?>'] = '<?= csrf_hash() ?>';
+        data: {
+          <?= csrf_token() ?>: '<?= csrf_hash() ?>'
         },
         method: 'POST',
         url: base_url + '/humanresource/getUsers'

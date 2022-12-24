@@ -64,6 +64,20 @@ class UserGroup
    */
   public static function update(int $id, array $data)
   {
+    if ($id == 1) {
+      if (!in_array('All', json_decode($data['permissions'], TRUE))) {
+        setLastError('Owner group must has all permissions.');
+        return FALSE;
+      }
+    }
+
+    if (isset($data['name'])) {
+      if (empty($data['name'])) {
+        setLastError('Group name must has name.');
+        return FALSE;
+      }
+    }
+
     DB::table('groups')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }

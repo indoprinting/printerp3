@@ -2,10 +2,9 @@
   <div class="row">
     <div class="col-12">
       <div class="card shadow">
-        <div class="card-header bg-gradient-indigo">
+        <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('settings/usergroup/add') ?>" data-toggle="modal"
-              data-target="#ModalStatic" data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('humanresource/usergroup/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-dialog-centered modal-dialog-scrollable">
               <i class="fad fa-plus-circle"></i>
             </a>
           </div>
@@ -14,26 +13,16 @@
           <table id="Table" class="table table-bordered table-hover" style="width:100%;">
             <thead>
               <tr>
-                <th></th>
+                <th class="col-sm-1"></th>
                 <th><?= lang('App.groupName'); ?></th>
-                <th><?= lang('App.groupType'); ?></th>
                 <th><?= lang('App.permission'); ?></th>
-                <th><?= lang('App.createdAt'); ?></th>
-                <th><?= lang('App.createdBy'); ?></th>
-                <th><?= lang('App.updatedAt'); ?></th>
-                <th><?= lang('App.updatedBy'); ?></th>
               </tr>
             </thead>
             <tfoot>
               <tr>
                 <th></th>
                 <th><?= lang('App.groupName'); ?></th>
-                <th><?= lang('App.groupType'); ?></th>
                 <th><?= lang('App.permission'); ?></th>
-                <th><?= lang('App.createdAt'); ?></th>
-                <th><?= lang('App.createdBy'); ?></th>
-                <th><?= lang('App.updatedAt'); ?></th>
-                <th><?= lang('App.updatedBy'); ?></th>
               </tr>
             </tfoot>
           </table>
@@ -48,16 +37,17 @@
 
     window.Table = $('#Table').DataTable({
       ajax: {
-        data: function(data) {
-          data['<?= csrf_token() ?>'] = '<?= csrf_hash() ?>';
+        data: {
+          <?= csrf_token() ?>: '<?= csrf_hash() ?>'
         },
         method: 'POST',
-        url: base_url + '/settings/getUserGroups'
+        url: base_url + '/humanresource/getUserGroups'
       },
       columnDefs: [{
         targets: 0,
         orderable: false
       }],
+      fixedHeader: false,
       lengthMenu: [
         [10, 25, 50, 100, -1],
         [10, 25, 50, 100, lang.App.all]
@@ -66,10 +56,11 @@
         [1, 'asc']
       ],
       processing: true,
-      scrollX: true,
-      searchDelay: 750,
+      responsive: true,
+      scrollX: false,
+      searchDelay: 1000,
       serverSide: true,
-      stateSave: true
+      stateSave: false
     });
   });
 </script>
