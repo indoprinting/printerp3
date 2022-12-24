@@ -96,7 +96,7 @@ class User
         return FALSE;
       }
 
-      if (is_array($data['groups'])) {
+      if (isset($data['groups']) && is_array($data['groups'])) {
         if (!in_array('OWNER', array_map('strtoupper', $data['groups']))) {
           setLastError('User owner must has OWNER group.');
           return FALSE;
