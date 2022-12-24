@@ -26,7 +26,7 @@ class Auth
     foreach ($columnIds as $columnId) {
       $db = DB::table('users')->select(
         "id AS user_id, avatar_id, biller_id, warehouse_id, groups,
-        fullname, username, password, gender, lang, dark_mode"
+        fullname, username, password, gender, lang, dark_mode, active"
       );
 
       if ($rememberMode) {
@@ -38,6 +38,11 @@ class Auth
       if ($row) {
         if (password_verify($pass, $row->password) || $rememberMode) {
           unset($row->password);
+
+          if ($row->active != 1) {
+            setLastError("User {$row->fullname} has been deactivated.");
+            return FALSE;
+          }
 
           if (!$row->avatar_id) {
             $row->avatar_id = ($row->gender == 'male' ? 1 : 2);
