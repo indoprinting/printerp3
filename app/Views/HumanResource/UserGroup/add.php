@@ -10,8 +10,8 @@
     <div class="row">
       <div class="col-md-12">
         <div class="form-group">
-          <label for="groupname"><?= lang('App.groupName') ?></label>
-          <input id="groupname" name="groupname" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.groupName') ?>" required>
+          <label for="name"><?= lang('App.groupname') ?></label>
+          <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.groupname') ?>">
         </div>
       </div>
     </div>
@@ -22,7 +22,7 @@
             <div class="card-title"><?= lang('App.permission') ?></div>
           </div>
           <div class="card-body table-responsive">
-            <table class="table table-condensed">
+            <table class="table table-condensed table-hover table-striped" id="TableModal">
               <thead>
                 <tr>
                   <th><?= lang('App.permission') ?></th>
@@ -30,45 +30,55 @@
                   <th><?= lang('App.delete') ?></th>
                   <th><?= lang('App.edit') ?></th>
                   <th><?= lang('App.view') ?></th>
+                  <th><?= lang('App.misc') ?></th>
                 </tr>
               </thead>
               <tbody>
-                <?php if (hasAccess('All')) : ?>
+                <?php foreach (\App\Models\Permission::get() as $permission) : ?>
                   <tr>
-                    <td class="font-weight-bold"><?= lang('App.allAccess') ?></td>
-                    <td colspan="4" class="text-center">
-                      <input type="checkbox" name="permission[]" value="All">
-                    </td>
+                    <?php $actions = getJSON($permission->actions); ?>
+                    <?php if (strcasecmp($permission->name, 'All') === 0) : ?>
+                      <td class="font-weight-bold"><?= lang('App.allaccess') ?></td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td><label>
+                          <input type="checkbox" name="permission[]" value="All"> <?= lang('App.all') ?>
+                        </label>
+                      </td>
+                    <?php else : ?>
+                      <td class="font-weight-bold"><?= lang('App.' . strtolower($permission->name)) ?></td>
+                      <?php if (in_array('Add', $actions)) : ?>
+                        <td><input type="checkbox" name="permission[]" value="<?= $permission->name ?>.Add"></td>
+                      <?php else : ?>
+                        <td></td>
+                      <?php endif; ?>
+                      <?php if (in_array('Delete', $actions)) : ?>
+                        <td><input type="checkbox" name="permission[]" value="<?= $permission->name ?>.Delete"></td>
+                      <?php else : ?>
+                        <td></td>
+                      <?php endif; ?>
+                      <?php if (in_array('Edit', $actions)) : ?>
+                        <td><input type="checkbox" name="permission[]" value="<?= $permission->name ?>.Edit"></td>
+                      <?php else : ?>
+                        <td></td>
+                      <?php endif; ?>
+                      <?php if (in_array('View', $actions)) : ?>
+                        <td><input type="checkbox" name="permission[]" value="<?= $permission->name ?>.View"></td>
+                      <?php else : ?>
+                        <td></td>
+                      <?php endif; ?>
+                      <td>
+                        <?php foreach ($actions as $act) : ?>
+                          <?php if (!in_array($act, ['Add', 'Delete', 'Edit', 'View'])) : ?>
+                            <label><input type="checkbox" name="permission[]" value="<?= $permission->name ?>.<?= $act ?>"> <?= lang('App.' . strtolower($act)) ?></label>
+                          <?php endif; ?>
+                        <?php endforeach; ?>
+                      </td>
+                    <?php endif; ?>
                   </tr>
-                <?php endif; ?>
-                <tr>
-                  <td class="font-weight-bold"><?= lang('App.bankAccount') ?></td>
-                  <td><input type="checkbox" name="permission[]" value="BankAccount.Add"></td>
-                  <td><input type="checkbox" name="permission[]" value="BankAccount.Delete"></td>
-                  <td><input type="checkbox" name="permission[]" value="BankAccount.Edit"></td>
-                  <td><input type="checkbox" name="permission[]" value="BankAccount.View"></td>
-                </tr>
-                <tr>
-                  <td class="font-weight-bold"><?= lang('App.bankMutation') ?></td>
-                  <td><input type="checkbox" name="permission[]" value="BankMutation.Add"></td>
-                  <td><input type="checkbox" name="permission[]" value="BankMutation.Delete"></td>
-                  <td><input type="checkbox" name="permission[]" value="BankMutation.Edit"></td>
-                  <td><input type="checkbox" name="permission[]" value="BankMutation.View"></td>
-                </tr>
-                <tr>
-                  <td class="font-weight-bold"><?= lang('App.user') ?></td>
-                  <td><input type="checkbox" name="permission[]" value="User.Add"></td>
-                  <td><input type="checkbox" name="permission[]" value="User.Delete"></td>
-                  <td><input type="checkbox" name="permission[]" value="User.Edit"></td>
-                  <td><input type="checkbox" name="permission[]" value="User.View"></td>
-                </tr>
-                <tr>
-                  <td class="font-weight-bold"><?= lang('App.userGroup') ?></td>
-                  <td><input type="checkbox" name="permission[]" value="UserGroup.Add"></td>
-                  <td><input type="checkbox" name="permission[]" value="UserGroup.Delete"></td>
-                  <td><input type="checkbox" name="permission[]" value="UserGroup.Edit"></td>
-                  <td><input type="checkbox" name="permission[]" value="UserGroup.View"></td>
-                </tr>
+                <?php endforeach; ?>
               </tbody>
               <tfoot>
                 <tr>
@@ -77,6 +87,7 @@
                   <th><?= lang('App.delete') ?></th>
                   <th><?= lang('App.edit') ?></th>
                   <th><?= lang('App.view') ?></th>
+                  <th><?= lang('App.misc') ?></th>
                 </tr>
               </tfoot>
             </table>
@@ -96,6 +107,18 @@
   })();
 
   $(document).ready(function() {
+    $('#TableModal').DataTable({
+      columnDefs: [{
+        targets: [1, 2, 3, 4, 5],
+        orderable: false
+      }],
+      order: [
+        [0, 'asc']
+      ],
+      paging: false,
+      processing: true
+    });
+
     initModalForm({
       form: '#form',
       submit: '#submit',

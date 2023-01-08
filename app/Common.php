@@ -58,6 +58,46 @@ function checkPermission(string $permission = NULL)
 }
 
 /**
+ * Print debug output.
+ */
+function dbgprint()
+{
+  $args = func_get_args();
+
+  foreach ($args as $arg) {
+    $str = print_r($arg, TRUE);
+    echo ('<pre>');
+    echo ($str);
+    echo ('</pre>');
+  }
+}
+
+/**
+ * Filter number string into float.
+ * @param mixed $num Number string.
+ */
+function filterDecimal($num)
+{
+  return (float)preg_replace('/([^\-\.0-9Ee])/', '', $num);
+}
+
+/**
+ * Convert number into formatted currency.
+ */
+function formatCurrency($num)
+{
+  return 'Rp ' . number_format(filterDecimal($num), 0, ',', '.');
+}
+
+/**
+ * Convert number into formatted number.
+ */
+function formatNumber($num)
+{
+  return number_format(filterDecimal($num), 0, ',', '.');
+}
+
+/**
  * Fetch an item from GET data.
  */
 function getCookie($name)
@@ -172,6 +212,73 @@ function isLoggedIn()
 }
 
 /**
+ * Nulling empty data.
+ */
+function nulling(array $data, array $keys)
+{
+  if (empty($keys)) return $data;
+
+  foreach ($keys as $key) {
+    if (isset($data[$key]) && empty($data[$key])) {
+      $data[$key] = NULL;
+    }
+  }
+
+  return $data;
+}
+
+function renderAttachment(string $attachment = NULL)
+{
+  $res = '';
+
+  if ($attachment) {
+    $res = '
+      <a href="' . base_url('filemanager/view/' . $attachment) . '"
+        data-toggle="modal" data-target="#ModalDefault2" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <i class="fad fa-file-download"></i>
+      </a>';
+  }
+
+  return $res;
+}
+
+function renderStatus(string $status)
+{
+  if (empty($status)) return '';
+
+  $type = 'default';
+  $st = strtolower($status);
+
+  $danger = [
+    'bad', 'decrease', 'due', 'due_partial', 'expired', 'need_approval', 'need_payment', 'off', 'over_due',
+    'over_received', 'returned'
+  ];
+  $info = [
+    'completed_partial', 'confirmed', 'delivered', 'excellent', 'finished', 'installed_partial', 'ordered',
+    'partial', 'preparing', 'received', 'received_partial'
+  ];
+  $success = ['approved', 'completed', 'increase', 'good', 'installed', 'paid', 'sent', 'verified'];
+  $warning = [
+    'cancelled', 'checked', 'draft', 'packing', 'pending', 'slow', 'trouble',
+    'waiting_production', 'waiting_transfer'
+  ];
+
+  if (array_search($st, $danger) !== FALSE) {
+    $type = 'danger';
+  } elseif (array_search($st, $info) !== FALSE) {
+    $type = 'info';
+  } elseif (array_search($st, $success) !== FALSE) {
+    $type = 'success';
+  } elseif (array_search($st, $warning) !== FALSE) {
+    $type = 'warning';
+  }
+
+  $name = lang('Status.' . $status);
+
+  return "<div class=\"badge bg-gradient-{$type} p-2\">{$name}</div>";
+}
+
+/**
  * Get request method.
  */
 function requestMethod()
@@ -199,13 +306,30 @@ function sendJSON($data, $options = [])
  * Set created_by based on user id and created_at. Used for Model data.
  * @param array $data
  */
-function setCreatedBy($data = [])
+function setCreatedBy(array $data)
 {
   $data['created_at'] = ($data['created_at'] ?? date('Y-m-d H:i:s'));
+  $data['date'] = $data['created_at']; // Obsolete
 
   if (empty($data['created_by']) && isLoggedIn()) {
     $data['created_by'] = session('login')->user_id;
+  } else if (empty($data['created_by'])) {
+    $data['created_by'] = 119; // System.
   }
+
+  return $data;
+}
+
+/**
+ * Set expired_at as expired date. Default +1 day.
+ */
+function setExpired(array $data)
+{
+  if (empty($data['expired_at'])) {
+    $data['expired_at']   = date('Y-m-d H:i:s', strtotime('+1 day', time()));
+    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Obsolete
+  }
+
   return $data;
 }
 
@@ -256,6 +380,14 @@ function setUpdatedBy($data = [])
     $data['updated_by'] = session('login')->user_id;
   }
   return $data;
+}
+
+/**
+ * Strip HTML tags for note.
+ */
+function stripTags(string $text)
+{
+  return strip_tags($text, '<a><br><em><h1><h2><h3><li><ol><p><strong><u><ul>');
 }
 
 /**

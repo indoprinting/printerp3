@@ -3,6 +3,7 @@
 return [
   'accessDenied'              => 'Akses Ditolak',
   'areYouSure'                => 'Apa anda yakin?',
+  'attachmentExceed'          => 'Ukuran lampiran terlalu besar.',
   'attachmentRequired'        => 'Lampiran dibutuhkan.',
   'deleteConfirm'             => 'Data yang dihapus tidak bisa dikembalikan lagi.',
   'deleteFailed'              => 'Data gagal dihapus.',
@@ -11,6 +12,10 @@ return [
   'fileNotFound'              => 'Berkas tidak ditemukan.',
   'notAuthorized'             => 'Anda tidak diizinkan.',
   'notLoggedIn'               => 'Anda belum login.',
+  'permissionAddOK'           => 'Izin %s telah berhasil ditambah.',
+  'permissionAddNO'           => 'Gagal menambahkan izin %s.',
+  'permissionEditOK'          => 'Izin %s telah berhasil diubah.',
+  'permissionEditNO'          => 'Gagal mengubah izin %s.',
   'profileImgExceed'          => 'Ukuran gambar profile melebihi batas.',
   'titleRequired'             => 'Judul dibutuhkan.',
   'userAddOK'                 => 'Pengguna %s telah berhasil ditambah.',

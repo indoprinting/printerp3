@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\PaymentValidation;
+
 class Debug extends BaseController
 {
   public function debug()
   {
-    echo "OK";
+    echo PaymentValidation::delete(['reference' => 'MUT-2023/01/0017']);
   }
 
   public function modal()
@@ -46,5 +48,12 @@ class Debug extends BaseController
   public function password(string $pass = 'Durian100')
   {
     echo password_hash($pass, PASSWORD_DEFAULT);
+  }
+
+  public function session()
+  {
+    echo('<pre>');
+    print_r(session('login'));
+    echo('</pre>');
   }
 }

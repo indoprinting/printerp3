@@ -4,7 +4,7 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('humanresource/usergroup/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('humanresource/usergroup/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
               <i class="fad fa-plus-circle"></i>
             </a>
           </div>
@@ -14,14 +14,14 @@
             <thead>
               <tr>
                 <th class="col-sm-1"></th>
-                <th><?= lang('App.groupName'); ?></th>
+                <th><?= lang('App.groupname'); ?></th>
                 <th><?= lang('App.permission'); ?></th>
               </tr>
             </thead>
             <tfoot>
               <tr>
                 <th></th>
-                <th><?= lang('App.groupName'); ?></th>
+                <th><?= lang('App.groupname'); ?></th>
                 <th><?= lang('App.permission'); ?></th>
               </tr>
             </tfoot>
@@ -44,7 +44,7 @@
         url: base_url + '/humanresource/getUserGroups'
       },
       columnDefs: [{
-        targets: 0,
+        targets: [0, 2],
         orderable: false
       }],
       fixedHeader: false,

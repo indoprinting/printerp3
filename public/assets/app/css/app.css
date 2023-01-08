@@ -13,8 +13,16 @@
   src: url(../fonts/SourceSansPro/SourceSansPro-Regular.ttf);
 }
 
+table.dataTable tbody td {
+  vertical-align: middle;
+}
+
 table.dataTable tbody tr {
   background-color: inherit;
+}
+
+#sidebar-overlay {
+  z-index: 1;
 }
 
 .dark-mode option {
@@ -67,6 +75,19 @@ table.dataTable tbody tr {
 
 .custom-file-label {
   z-index: 0;
+}
+
+.icheckbox_square-blue,
+.iradio_square-blue {
+  margin: 0 4px 0 0;
+}
+
+.layout-navbar-fixed .wrapper .main-header {
+  z-index: 1;
+}
+
+.main-sidebar {
+  z-index: 2;
 }
 
 .modal-footer {

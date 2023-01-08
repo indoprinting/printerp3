@@ -64,13 +64,19 @@ class Attachment
   }
 
   /**
+   * Select _Template.
+   */
+  public static function select(string $columns, $escape = TRUE)
+  {
+    return DB::table('attachment')->select($columns, $escape);
+  }
+
+  /**
    * Update attachment.
    * @param array $data [ id, filename, hashname, mime ]
    */
   public static function update(int $id, array $data)
   {
-    $db = get_instance()->db;
-    $db->update('attachment', $data, ['id' => $id]);
     DB::table('attachment')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }

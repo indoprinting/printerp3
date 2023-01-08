@@ -61,8 +61,7 @@ class BaseController extends Controller
 		/**
 		 * Resource Versioning
 		 */
-		$this->data['resver'] = '1.0.0'; // For Production.
-		// $this->data['resver'] = bin2hex(random_bytes(4)); // For Development.
+		$this->data['resver'] = (isEnv('development') ? bin2hex(random_bytes(4)) : '1.0.0');
 
 		//--------------------------------------------------------------------
 		// Preload any models, libraries, etc, here.
@@ -83,27 +82,6 @@ class BaseController extends Controller
 			// lang64 used by javascript only.
 			$this->data['lang64'] = base64_encode(json_encode($lang));
 			unset($lang);
-
-			// Add new permissions here.
-			$this->data['permissions'] = [
-				'All' 								=> lang('App.allAccess'),
-				'BankAccount.Add'    	=> lang('App.addBankAccount'),
-				'BankAccount.Delete' 	=> lang('App.deleteBankAccount'),
-				'BankAccount.Edit'   	=> lang('App.editBankAccount'),
-				'BankAccount.View'   	=> lang('App.viewBankAccount'),
-				'BankMutation.Add'   	=> lang('App.addBankMutation'),
-				'BankMutation.Delete' => lang('App.deleteBankMutation'),
-				'BankMutation.Edit'   => lang('App.editBankMutation'),
-				'BankMutation.View'   => lang('App.viewBankMutation'),
-				'User.Add'    				=> lang('App.addUser'),
-				'User.Delete' 				=> lang('App.deleteUser'),
-				'User.Edit'   				=> lang('App.editUser'),
-				'User.View'   				=> lang('App.viewUser'),
-				'UserGroup.Add'    		=> lang('App.addUserGroup'),
-				'UserGroup.Delete' 		=> lang('App.deleteUserGroup'),
-				'UserGroup.Edit'   		=> lang('App.editUserGroup'),
-				'UserGroup.View'   		=> lang('App.viewUserGroup'),
-			];
 		}
 	}
 

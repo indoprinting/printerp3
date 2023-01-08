@@ -21,7 +21,7 @@ class DataTables
   /**
    * @var \CodeIgniter\Database\BaseBuilder
    */
-  private $builder;
+  private static $qb;
 
   /**
    * @var array
@@ -31,7 +31,7 @@ class DataTables
   /**
    * @var \CodeIgniter\Database\BaseConnection
    */
-  private $db;
+  private static $db;
 
   /**
    * @var array
@@ -81,7 +81,7 @@ class DataTables
   public function __construct($tableName = NULL)
   {
     $this->returnObject  = FALSE;
-    $this->db            = db_connect();
+    self::$db            = db_connect();
     $this->columns       = [];
     $this->filterData    = [];
     $this->addColumns    = [];
@@ -95,7 +95,7 @@ class DataTables
     $this->start   = (int)$this->request->getPostGet('start'); // LIMIT offset.
 
     if ($tableName) {
-      $this->builder = $this->db->table($tableName);
+      self::$qb = self::$db->table($tableName);
     }
   }
 
@@ -147,11 +147,11 @@ class DataTables
 
   public function from($table, bool $overwrite = FALSE)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->from($table, $overwrite);
+    self::$qb->from($table, $overwrite);
     return $this;
   }
 
@@ -163,62 +163,62 @@ class DataTables
   {
     $results = [];
 
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
     // Get total records. 'where', 'orWhere', 'like' and 'orLike' is not filtering.
-    $recordsTotal = $this->builder->countAllResults(FALSE);
+    $recordsTotal = self::$qb->countAllResults(FALSE);
 
     // Internal filter data.
     if ($this->filterData) {
-      $this->builder->groupStart();
+      self::$qb->groupStart();
 
       foreach ($this->filterData as $col => $value) {
-        $this->builder->orLike($col, strval($value));
+        self::$qb->orLike($col, strval($value));
       }
 
-      $this->builder->groupEnd();
+      self::$qb->groupEnd();
     }
 
     // Global search by front-end.
     if ($this->search) {
-      $this->builder->groupStart();
+      self::$qb->groupStart();
 
       foreach ($this->columns as $col) {
         if (!empty($col)) {
           if (stripos($col, 'GROUP_CONCAT') !== FALSE) continue;
 
-          $this->builder->orLike($col, strval($this->search), 'both');
+          self::$qb->orLike($col, strval($this->search), 'both');
         }
       }
 
-      $this->builder->groupEnd();
+      self::$qb->groupEnd();
 
       // die(print_r($this->columns, TRUE));
-      // die($this->builder->getCompiledSelect()); // DEBUG_ONLY
-      $this->builder->groupBy('id'); // Temporary test. Required.
+      // die(self::$qb->getCompiledSelect()); // DEBUG_ONLY
+      self::$qb->groupBy('id'); // Temporary test. Required.
     }
 
     // Return number of filtered rows.
-    $recordsFiltered = $this->builder->countAllResults(FALSE);
+    $recordsFiltered = self::$qb->countAllResults(FALSE);
 
     if ($this->order && gettype($this->order) == 'array') {
       foreach ($this->order as $order) {
         // Since first column is 0 from client, MySQL need column min. 1 for orderding.
         // So we add this by one.
-        $this->builder->orderBy(strval($order['column'] + 1), $order['dir']);
+        self::$qb->orderBy(strval($order['column'] + 1), $order['dir']);
       }
     }
 
     if ($this->length > 1) {
       // Length return -1 for no limit.
-      $this->builder->limit($this->length, $this->start);
+      self::$qb->limit($this->length, $this->start);
     }
 
-    // print_r($this->builder->getCompiledSelect()); die(); // DEBUG_ONLY
+    // print_r(self::$qb->getCompiledSelect()); die(); // DEBUG_ONLY
 
-    $rows = $this->builder->get()->getResultArray();
+    $rows = self::$qb->get()->getResultArray();
 
     // Modifying row data.
     for ($x = 0; $x < count($rows); $x++) {
@@ -300,11 +300,11 @@ class DataTables
    */
   public function get(int $limit = NULL, int $offset = 0, bool $reset = TRUE)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    return $this->builder->get($limit, $offset, $reset);
+    return self::$qb->get($limit, $offset, $reset);
   }
 
   /**
@@ -377,71 +377,71 @@ class DataTables
 
   public function groupBy($by, $escape = NULL)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->groupBy($by, $escape);
+    self::$qb->groupBy($by, $escape);
     return $this;
   }
 
   public function join(string $table, string $cond, string $type = '', bool $escape = NULL)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->join($table, $cond, $type, $escape);
+    self::$qb->join($table, $cond, $type, $escape);
     return $this;
   }
 
   public function like($field, string $match = '', string $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->like($field, $match, $side, $escape, $insensitiveSearch);
+    self::$qb->like($field, $match, $side, $escape, $insensitiveSearch);
     return $this;
   }
 
   protected function limit(int $value = NULL, int $offset = 0)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->limit($value, $offset);
+    self::$qb->limit($value, $offset);
     return $this;
   }
 
   protected function orderBy(string $orderBy, string $direction = '', bool $escape = NULL)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->orderBy($orderBy, $direction, $escape);
+    self::$qb->orderBy($orderBy, $direction, $escape);
     return $this;
   }
 
   public function orLike($field, string $match = '', $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->orLike($field, $match, $side, $escape, $insensitiveSearch);
+    self::$qb->orLike($field, $match, $side, $escape, $insensitiveSearch);
     return $this;
   }
 
   public function orWhere($key, $value = NULL, bool $escape = NULL)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->orWhere($key, $value, $escape);
+    self::$qb->orWhere($key, $value, $escape);
     return $this;
   }
 
@@ -455,19 +455,20 @@ class DataTables
 
   public function select($select, bool $escape = NULL)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
     $this->columns = $this->getColumns($select);
-    $this->builder->select($select, $escape);
+    self::$qb->select($select, $escape);
     return $this;
   }
 
-  public function table($table)
+  public static function table($table)
   {
-    $this->builder = $this->db->table($table);
-    return $this;
+    self::$db = db_connect();
+    self::$qb = self::$db->table($table);
+    return new self;
   }
 
   private function trimArray(array $data)
@@ -482,11 +483,11 @@ class DataTables
 
   public function where($key, $value = NULL, bool $escape = NULL)
   {
-    if (!$this->builder) {
+    if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    $this->builder->where($key, $value, $escape);
+    self::$qb->where($key, $value, $escape);
     return $this;
   }
 }

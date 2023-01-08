@@ -45,7 +45,7 @@
   </div>
   <div class="wrapper">
     <!-- Navbar -->
-    <nav class="main-header navbar navbar-expand navbar-dark bg-gradient-dark">
+    <nav class="main-header navbar navbar-expand<?= session('login')->dark_mode ? ' navbar-dark bg-gradient-dark' : ' navbar-light bg-gradient-white' ?>">
       <!-- Left navbar links -->
       <ul class="navbar-nav">
         <li class="nav-item">
@@ -81,52 +81,20 @@
         </li>
 
         <!-- Notifications Dropdown Menu -->
-        <li class="nav-item dropdown">
-          <a class="nav-link" data-toggle="dropdown" href="#">
+        <li class="nav-item">
+          <a class="nav-link" href="<?= base_url('profile/notification') ?>" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-dialog-centered modal-dialog-scrollable">
             <i class="far fa-info-circle"></i>
-            <span class="badge badge-warning navbar-badge">15</span>
           </a>
-          <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right overflow-auto" style="max-height:500px;">
-            <a href="#" class="dropdown-item">
-              <b>SOP Tracking POD</b>
-              <p>
-                SOP Status Produksi (Untuk CS/TL/ATL)
-
-                1. Pastikan untuk mengubah status sale dari Completed ke Finished jika produk sudah siap diambil pelanggan. Perubahan ini akan mengirimkan pesan WhatsApp ke pelanggan secara otomatis.
-
-                2. Pastikan untuk mengubah status sale dari Finished ke Delivered jika produk sudah diterima oleh pelanggan.
-
-                Semua perubahan status bisa dilakukan di Sales List. Klik statusnya.
-
-                Demikian pemberitahuan ini untuk segera dilakukan. Terima kasih.
-              </p>
-            </a>
-            <div class="dropdown-divider"></div>
-            <a href="#" class="dropdown-item">
-              <b>SOP Tracking POD</b>
-              <p>
-                SOP Status Produksi (Untuk CS/TL/ATL)
-
-                1. Pastikan untuk mengubah status sale dari Completed ke Finished jika produk sudah siap diambil pelanggan. Perubahan ini akan mengirimkan pesan WhatsApp ke pelanggan secara otomatis.
-
-                2. Pastikan untuk mengubah status sale dari Finished ke Delivered jika produk sudah diterima oleh pelanggan.
-
-                Semua perubahan status bisa dilakukan di Sales List. Klik statusnya.
-
-                Demikian pemberitahuan ini untuk segera dilakukan. Terima kasih.
-              </p>
-            </a>
-          </div>
         </li>
 
         <!-- Locale -->
         <li class="nav-item dropdown">
           <a class="nav-link" data-toggle="dropdown" href="#">
-            <i class="flag-icon flag-icon-<?= App\Models\DB::table('locale')->getRow(['code' => session('login')->lang])->flag ?>"></i>
+            <i class="flag-icon flag-icon-<?= App\Models\Locale::getRow(['code' => session('login')->lang])->flag ?>"></i>
           </a>
           <div class="dropdown-menu dropdown-menu-right">
             <?php
-            foreach (App\Models\DB::table('locale')->get() as $locale) :
+            foreach (App\Models\Locale::get() as $locale) :
               $active = '';
 
               if (session('login')->lang == $locale->code) $active = ' active'; ?>
@@ -146,7 +114,7 @@
     <!-- /.navbar -->
 
     <!-- Main Sidebar Container -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <aside class="main-sidebar elevation-4<?= session('login')->dark_mode ? ' sidebar-dark-primary' : ' sidebar-light-primary' ?>">
       <!-- Brand Logo -->
       <a href="#" class="brand-link">
         <img src="<?= base_url() ?>/assets/dist/img/AdminLTELogo.png" alt="PrintERP 3" class="brand-image img-circle elevation-3" style="opacity: .8">
@@ -158,7 +126,7 @@
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
           <div class="image">
-            <img src="<?= base_url() ?>/attachment/<?= session('login')->avatar_hashname ?>" class="img-circle elevation-2" alt="User Image">
+            <img src="<?= base_url() ?>/attachment/<?= session('login')->avatar ?>" class="img-circle elevation-2" alt="User Image">
           </div>
           <div class="info">
             <a href="#" class="d-block"><?= session('login')->fullname ?></a>
@@ -210,49 +178,66 @@
                 </ul>
               </li>
             <?php endif; ?>
-            <?php if (hasAccess('Biller.View')) : ?>
-              <!-- Biller -->
+            <?php if (hasAccess('Biller.View') || hasAccess('Warehouse.View')) : ?>
               <li class="nav-item">
-                <a href="#" class="nav-link">
+                <a href="#" class="nav-link" data-slug="division">
                   <i class="nav-icon fad fa-building"></i>
-                  <p><?= lang('App.biller') ?></p>
+                  <p><?= lang('App.division') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
                 </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('Biller.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('division/biller') ?>" class="nav-link" data-action="link" data-slug="biller">
+                        <i class="nav-icon fad fa-warehouse"></i>
+                        <p><?= lang('App.biller') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Warehouse.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('division/warehouse') ?>" class="nav-link" data-action="link" data-slug="warehouse">
+                        <i class="nav-icon fad fa-warehouse-alt"></i>
+                        <p><?= lang('App.warehouse') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
               </li>
             <?php endif; ?>
             <?php if (hasAccess([
-              'Bank.View', 'BankMutation.View', 'BankReconciliation.View',
+              'BankAccount.View', 'BankMutation.View', 'BankReconciliation.View',
               'Expense.View', 'Income.View', 'PaymentValidation.View'
             ])) : ?>
               <!-- Finance -->
               <li class="nav-item">
                 <a href="#" class="nav-link" data-slug="finance">
                   <i class="nav-icon fad fa-usd"></i>
-                  <p><?= lang('App.finance') ?>
-                    <i class="fad fa-angle-right right"></i>
+                  <p><?= lang('App.finance') ?> <i class="fad fa-angle-right right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
-                  <?php if (hasAccess('Bank.View')) : ?>
+                  <?php if (hasAccess('BankAccount.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('finance/bank') ?>" class="nav-link" data-action="link" data-slug="bank">
                         <i class="nav-icon fad fa-landmark"></i>
-                        <p><?= lang('App.bankAccount') ?></p>
+                        <p><?= lang('App.bankaccount') ?></p>
                       </a>
                     </li>
                   <?php endif; ?>
                   <?php if (hasAccess('BankMutation.View')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
+                      <a href="<?= base_url('finance/mutation') ?>" class="nav-link" data-action="link" data-slug="mutation">
                         <i class="nav-icon fad fa-box-usd"></i>
-                        <p><?= lang('App.bankMutation') ?></p>
+                        <p><?= lang('App.bankmutation') ?></p>
                       </a>
                     </li>
                   <?php endif; ?>
                   <?php if (hasAccess('BankReconciliation.View')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
+                      <a href="<?= base_url('finance/reconciliation') ?>" class="nav-link" data-action="link" data-slug="reconciliation">
                         <i class="nav-icon fad fa-sync"></i>
-                        <p><?= lang('App.bankReconciliation') ?></p>
+                        <p><?= lang('App.bankreconciliation') ?></p>
                       </a>
                     </li>
                   <?php endif; ?>
@@ -274,9 +259,9 @@
                   <?php endif; ?>
                   <?php if (hasAccess('PaymentValidation.View')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
+                      <a href="<?= base_url('finance/validation') ?>" class="nav-link" data-action="link" data-slug="validation">
                         <i class="nav-icon fad fa-check"></i>
-                        <p><?= lang('App.paymentValidation') ?></p>
+                        <p><?= lang('App.paymentvalidation') ?></p>
                       </a>
                     </li>
                   <?php endif; ?>
@@ -287,8 +272,7 @@
             <li class="nav-item">
               <a href="#" class="nav-link" data-slug="humanresource">
                 <i class="nav-icon fad fa-users-cog"></i>
-                <p><?= lang('App.humanResource') ?>
-                  <i class="fad fa-angle-right right"></i>
+                <p><?= lang('App.humanresource') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
@@ -301,7 +285,7 @@
                 <li class="nav-item">
                   <a href="<?= base_url('humanresource/customergroup') ?>" class="nav-link" data-action="link" data-slug="customergroup">
                     <i class="nav-icon fad fa-users"></i>
-                    <p><?= lang('App.customerGroup') ?></p>
+                    <p><?= lang('App.customergroup') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
@@ -313,7 +297,7 @@
                 <li class="nav-item">
                   <a href="<?= base_url('humanresource/usergroup') ?>" class="nav-link" data-action="link" data-slug="usergroup">
                     <i class="nav-icon fad fa-users"></i>
-                    <p><?= lang('App.userGroup') ?></p>
+                    <p><?= lang('App.usergroup') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
@@ -328,17 +312,10 @@
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="nav-icon fad fa-box-open-full"></i>
-                <p><?= lang('App.inventory') ?>
-                  <i class="fad fa-angle-right right"></i>
+                <p><?= lang('App.inventory') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-box-up"></i>
-                    <p><?= lang('App.item') ?></p>
-                  </a>
-                </li>
                 <li class="nav-item">
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-sliders"></i>
@@ -347,8 +324,14 @@
                 </li>
                 <li class="nav-item">
                   <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-cloud-arrow-down"></i>
+                    <p><?= lang('App.sync') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-hand-holding-box"></i>
-                    <p><?= lang('App.internalUse') ?></p>
+                    <p><?= lang('App.internaluse') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
@@ -365,8 +348,14 @@
                 </li>
                 <li class="nav-item">
                   <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-box-up"></i>
+                    <p><?= lang('App.product') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-box-check"></i>
-                    <p><?= lang('App.stockOpname') ?></p>
+                    <p><?= lang('App.stockopname') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
@@ -378,7 +367,7 @@
                 <li class="nav-item">
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-box-ballot"></i>
-                    <p><?= lang('App.usage') ?></p>
+                    <p><?= lang('App.usagehistory') ?></p>
                   </a>
                 </li>
               </ul>
@@ -387,27 +376,26 @@
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="nav-icon fad fa-cog"></i>
-                <p><?= lang('App.maintenance') ?>
-                  <i class="fad fa-angle-right right"></i>
+                <p><?= lang('App.maintenance') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-check-to-slot"></i>
-                    <p><?= lang('App.equipmentCheck') ?></p>
+                    <p><?= lang('App.equipmentcheck') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-th"></i>
-                    <p><?= lang('App.maintenanceLog') ?></p>
+                    <p><?= lang('App.maintenancelog') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-calendar"></i>
-                    <p><?= lang('App.maintenanceSchedule') ?></p>
+                    <p><?= lang('App.maintenanceschedule') ?></p>
                   </a>
                 </li>
               </ul>
@@ -416,8 +404,7 @@
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="nav-icon fad fa-shopping-cart"></i>
-                <p><?= lang('App.procurement') ?>
-                  <i class="fad fa-angle-right right"></i>
+                <p><?= lang('App.procurement') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
@@ -433,8 +420,7 @@
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="nav-icon fad fa-scissors"></i>
-                <p><?= lang('App.production') ?>
-                  <i class="fad fa-angle-right right"></i>
+                <p><?= lang('App.production') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
@@ -450,8 +436,7 @@
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="nav-icon fad fa-users-class"></i>
-                <p>QMS
-                  <i class="fad fa-angle-right right"></i>
+                <p>QMS <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
@@ -481,12 +466,63 @@
                 </li>
               </ul>
             </li>
+            <!-- Report -->
+            <li class="nav-item">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fad fa-file-chart-pie"></i>
+                <p><?= lang('App.report') ?> <i class="fad fa-angle-right right"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-chart-mixed"></i>
+                    <p><?= lang('App.dailyperformance') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-receipt"></i>
+                    <p><?= lang('App.debt') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-money-bill-trend-up"></i>
+                    <p><?= lang('App.incomestatement') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-box-dollar"></i>
+                    <p><?= lang('App.inventorybalance') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-screwdriver-wrench"></i>
+                    <p><?= lang('App.maintenance') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-money-bill-wave"></i>
+                    <p><?= lang('App.payment') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link">
+                    <i class="nav-icon fad fa-file-invoice-dollar"></i>
+                    <p><?= lang('App.receivable') ?></p>
+                  </a>
+                </li>
+              </ul>
+            </li>
             <!-- Sales -->
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="nav-icon fad fa-cash-register"></i>
-                <p><?= lang('App.sale') ?>
-                  <i class="fad fa-angle-right right"></i>
+                <p><?= lang('App.sale') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
@@ -498,12 +534,28 @@
                 </li>
               </ul>
             </li>
+            <!-- Setting -->
+            <li class="nav-item">
+              <a href="<?= base_url('setting') ?>" class="nav-link" data-slug="setting">
+                <i class="nav-icon fad fa-cogs"></i>
+                <p><?= lang('App.setting') ?> <i class="fad fa-angle-right right"></i></p>
+              </a>
+              <ul class="nav nav-treeview">
+                <?php if (hasAccess('All')) : ?>
+                  <li class="nav-item">
+                    <a href="<?= base_url('setting/permission') ?>" class="nav-link" data-action="link" data-slug="permission">
+                      <i class="nav-icon fad fa-user-lock"></i>
+                      <p><?= lang('App.permission') ?></p>
+                    </a>
+                  </li>
+                <?php endif; ?>
+              </ul>
+            </li>
             <!-- TrackingPOD -->
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="nav-icon fad fa-chart-network"></i>
-                <p>TrackingPOD
-                  <i class="fad fa-angle-right right"></i>
+                <p>TrackingPOD <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
@@ -514,13 +566,6 @@
                   </a>
                 </li>
               </ul>
-            </li>
-            <!-- Warehouse -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fad fa-warehouse"></i>
-                <p><?= lang('App.warehouse') ?></p>
-              </a>
             </li>
           </ul>
         </nav>
@@ -559,24 +604,14 @@
     </div>
     <!-- /.content-wrapper -->
 
-    <!-- Control Sidebar -->
-    <aside class="control-sidebar control-sidebar-dark">
-      <!-- Control sidebar content goes here -->
-      <div class="p-3">
-        <h5>Title</h5>
-        <p>Sidebar content</p>
-      </div>
-    </aside>
-    <!-- /.control-sidebar -->
-
     <!-- Main Footer -->
     <footer class="main-footer">
       <!-- To the right -->
       <div class="float-right d-none d-sm-inline">
-        PrintERP version 3.0
+        <a href="https://www.ridintek.com" target="_blank">PrintERP version 3.0</a>
       </div>
       <!-- Default to the left -->
-      <strong>Copyright &copy; <?= date('Y') ?> <a href="https://indoprinting.co.id">INDOPRINTING</a>.</strong> All rights reserved.
+      <strong>Copyright &copy; <?= date('Y') ?> <a href="https://www.indoprinting.co.id">INDOPRINTING</a>.</strong>
     </footer>
     <div class="modal fade" id="ModalDefault">
       <div class="modal-dialog">
@@ -678,6 +713,7 @@
   <script src="<?= base_url() ?>/assets/modules/select2/js/select2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/sweetalert2/sweetalert2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/toastr/toastr.min.js"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDP-hGcct-nQS50RHHdXjwXgNxi71jRaU8&libraries=places&v=weekly"></script>
   <!-- AdminLTE App -->
   <script src="<?= base_url() ?>/assets/dist/js/adminlte.min.js"></script>
   <!-- Custom -->
@@ -691,7 +727,7 @@
 
       Swal.fire({
         icon: 'warning',
-        text: lang.Msg.deleteConfirm,
+        text: lang.Msg.areYouSure,
         title: lang.Msg.areYouSure,
         showCancelButton: true,
       }).then((result) => {
