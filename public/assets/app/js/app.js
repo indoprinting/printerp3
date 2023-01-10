@@ -124,6 +124,12 @@
 $(document).ready(function () {
   initControls();
 
+  $(document).on("select2:open", () => {
+    setTimeout(() => {
+      document.querySelector(".select2-container--open .select2-search__field").focus()
+    }, 10);
+  });
+
   $(document).on('click', '[data-action="darkmode"]', function () {
     let darkMode = 0;
 

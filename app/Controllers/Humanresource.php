@@ -209,11 +209,16 @@ class Humanresource extends BaseController
               <a class="dropdown-item" href="' . base_url('humanresource/user/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
               <a class="dropdown-item" href="' . base_url('humanresource/user/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('humanresource/user/view/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalDefault"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
               </a>
             </div>
           </div>';
@@ -683,6 +688,16 @@ class Humanresource extends BaseController
     $this->data['user'] = $user;
 
     $this->response(200, ['content' => view('HumanResource/User/edit', $this->data)]);
+  }
+
+  protected function user_view($userId = NULL)
+  {
+    $user = User::getRow(['id' => $userId]);
+
+    $this->data['title'] = lang('App.viewuser');
+    $this->data['user'] = $user;
+
+    $this->response(200, ['content' => view('HumanResource/User/view', $this->data)]);
   }
 
   public function supplier()

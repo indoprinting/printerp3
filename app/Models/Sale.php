@@ -16,6 +16,30 @@ class Sale
   }
 
   /**
+   * Add sale payment.
+   * @param int $saleId Sale ID.
+   * @param array $data [ *amount, *bank_id ]
+   */
+  public static function addPayment(int $saleId, array $data)
+  {
+    $sale = self::getRow(['id' => $saleId]);
+
+    Payment::add([
+      'reference'       => $sale->reference,
+      'reference_date'  => $sale->created_at,
+      'bank_id'         => $data['bank_id'],
+      'biller_id'       => $sale->biller_id,
+      'sale_id'         => $sale->id,
+      'amount'          => $data['amount'],
+      'type'            => 'received',
+    ]);
+
+    self::sync(['id' => $sale->id]);
+
+    return TRUE;
+  }
+
+  /**
    * Delete Sale.
    */
   public static function delete(array $where)
@@ -225,13 +249,14 @@ class Sale
       }
 
       if ($saleStatus == 'waiting_production' && empty($saleJS->waiting_production_date)) {
-        $saleData['waiting_production_date'] = date('Y-m-d H:i:s');
+        $saleJS->waiting_production_date = date('Y-m-d H:i:s');
       }
 
       $saleData['paid']           = $totalPaid;
       $saleData['balance']        = $balance;
       $saleData['status']         = $saleStatus;
       $saleData['payment_status'] = $paymentStatus;
+      $saleData['json_data']      = json_encode($saleJS);
 
       self::update((int)$sale->id, $saleData);
 

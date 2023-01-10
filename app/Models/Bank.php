@@ -18,12 +18,12 @@ class Bank
   /**
    * Get bank balance.
    */
-  public static function balance(int $bankId)
+  public static function balance($clause = [])
   {
     $res = Bank::select('(COALESCE(recv.total, 0) - COALESCE(sent.total, 0)) AS balance')
-      ->join("(SELECT bank_id, SUM(amount) AS total FROM payments WHERE type LIKE 'received' GROUP BY bank_id) recv", 'recv.bank_id = banks.id', 'left')
-      ->join("(SELECT bank_id, SUM(amount) AS total FROM payments WHERE type LIKE 'sent' GROUP BY bank_id) sent", 'sent.bank_id = banks.id', 'left')
-      ->where('banks.id', $bankId)
+      ->join("(SELECT bank_id, SUM(amount) AS total FROM payment WHERE type LIKE 'received' GROUP BY bank_id) recv", 'recv.bank_id = bank.id', 'left')
+      ->join("(SELECT bank_id, SUM(amount) AS total FROM payment WHERE type LIKE 'sent' GROUP BY bank_id) sent", 'sent.bank_id = bank.id', 'left')
+      ->where($clause)
       ->getRow();
 
     if ($res) {

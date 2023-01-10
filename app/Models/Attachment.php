@@ -7,7 +7,7 @@ namespace App\Models;
 class Attachment
 {
   /**
-   * Add new attachment.
+   * Add new Attachment.
    *
    * @param array $data [ *data, *filename, *hashname, *mime, *size, created_at, created_by ]
    * @return false|int Return new attachment id or FALSE if failed.
@@ -25,7 +25,7 @@ class Attachment
   }
 
   /**
-   * Delete attachments.
+   * Delete Attachment.
    *
    * @param array $clause
    */
@@ -43,7 +43,7 @@ class Attachment
   }
 
   /**
-   * Get attachments collection.
+   * Get Attachment collection.
    * @param array $where [ id, filename, mime, created_by, updated_by ]
    */
   public static function get($where = [])
@@ -52,7 +52,7 @@ class Attachment
   }
 
   /**
-   * Get attachment row.
+   * Get Attachment row.
    * @param array $where [ id, filename, mime, created_by, updated_by ]
    */
   public static function getRow($where = [])
@@ -64,7 +64,7 @@ class Attachment
   }
 
   /**
-   * Select _Template.
+   * Select Attachment.
    */
   public static function select(string $columns, $escape = TRUE)
   {
@@ -72,7 +72,7 @@ class Attachment
   }
 
   /**
-   * Update attachment.
+   * Update Attachment.
    * @param array $data [ id, filename, hashname, mime ]
    */
   public static function update(int $id, array $data)

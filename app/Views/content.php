@@ -164,6 +164,12 @@
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
+                    <a href="<?= base_url('debug/invoice') ?>" class="nav-link" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-xl">
+                      <i class="nav-icon fad fa-window"></i>
+                      <p>Invoice</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
                     <a href="<?= base_url('debug/modal') ?>" class="nav-link" data-toggle="modal" data-target="#ModalDefault">
                       <i class="nav-icon fad fa-window"></i>
                       <p>Modal</p>
@@ -520,16 +526,22 @@
             </li>
             <!-- Sales -->
             <li class="nav-item">
-              <a href="#" class="nav-link">
+              <a href="#" class="nav-link" data-slug="sale">
                 <i class="nav-icon fad fa-cash-register"></i>
                 <p><?= lang('App.sale') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
+                  <a href="<?= base_url('sale/invoice') ?>" class="nav-link" data-action="link" data-slug="invoice">
                     <i class="nav-icon fad fa-file-invoice"></i>
                     <p><?= lang('App.invoice') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="<?= base_url('sale/receivable') ?>" class="nav-link" data-action="link" data-slug="receivable">
+                    <i class="nav-icon fad fa-file-invoice"></i>
+                    <p><?= lang('App.receivable') ?></p>
                   </a>
                 </li>
               </ul>

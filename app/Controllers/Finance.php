@@ -57,17 +57,17 @@ class Finance extends BaseController
   {
     checkPermission('BankMutation.View');
 
-    $dt = new DataTables('bankmutation');
+    $dt = new DataTables('bank_mutations');
     $dt
-      ->select("bankmutation.id AS id, bankmutation.created_at, bankmutation.reference,
+      ->select("bank_mutations.id AS id, bank_mutations.created_at, bank_mutations.reference,
         bankfrom.name AS bankfrom_name, bankto.name AS bankto_name,
-        bankmutation.note, bankmutation.amount, biller.name AS biller_name,
-        creator.fullname, bankmutation.status,
-        bankmutation.attachment")
-      ->join('banks bankfrom', 'bankfrom.code = bankmutation.bankfrom', 'left')
-      ->join('banks bankto', 'bankto.code = bankmutation.bankto', 'left')
-      ->join('biller', 'biller.code = bankmutation.biller', 'left')
-      ->join('users creator', 'creator.id = bankmutation.created_by', 'left')
+        bank_mutations.note, bank_mutations.amount, biller.name AS biller_name,
+        creator.fullname, bank_mutations.status,
+        bank_mutations.attachment")
+      ->join('banks bankfrom', 'bankfrom.id = bank_mutations.from_bank_id', 'left')
+      ->join('banks bankto', 'bankto.id = bank_mutations.to_bank_id', 'left')
+      ->join('biller', 'biller.id = bank_mutations.biller_id', 'left')
+      ->join('users creator', 'creator.id = bank_mutations.created_by', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">

@@ -11,7 +11,9 @@ class Payment
    */
   public static function add(array $data)
   {
-    DB::table('payments')->insert($data);
+    $data = setCreatedBy($data);
+
+    DB::table('payment')->insert($data);
     return DB::insertID();
   }
 
@@ -20,7 +22,7 @@ class Payment
    */
   public static function delete(array $where)
   {
-    DB::table('payments')->delete($where);
+    DB::table('payment')->delete($where);
     return DB::affectedRows();
   }
 
@@ -29,7 +31,7 @@ class Payment
    */
   public static function get($where = [])
   {
-    return DB::table('payments')->get($where);
+    return DB::table('payment')->get($where);
   }
 
   /**
@@ -48,7 +50,7 @@ class Payment
    */
   public static function select(string $columns, $escape = TRUE)
   {
-    return DB::table('payments')->select($columns, $escape);
+    return DB::table('payment')->select($columns, $escape);
   }
 
   /**
@@ -56,7 +58,7 @@ class Payment
    */
   public static function update(int $id, array $data)
   {
-    DB::table('payments')->update($data, ['id' => $id]);
+    DB::table('payment')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }
 }

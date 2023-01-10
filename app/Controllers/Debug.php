@@ -13,6 +13,13 @@ class Debug extends BaseController
     echo PaymentValidation::delete(['reference' => 'MUT-2023/01/0017']);
   }
 
+  public function invoice()
+  {
+    $this->response(200, [
+      'content' => view('Debug/invoice')
+    ]);
+  }
+
   public function modal()
   {
     $this->response(200, [
@@ -52,8 +59,8 @@ class Debug extends BaseController
 
   public function session()
   {
-    echo('<pre>');
+    echo ('<pre>');
     print_r(session('login'));
-    echo('</pre>');
+    echo ('</pre>');
   }
 }

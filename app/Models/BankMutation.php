@@ -11,27 +11,26 @@ class BankMutation
    */
   public static function add(array $data)
   {
+    if (isset($data['biller'])) {
+      $biller = Biller::getRow(['code' => $data['biller']]);
+      $data['biller_id'] = $biller->id;
+    }
+
+    if (empty($data['bankfrom'])) {
+      $bankFrom = Bank::getRow(['code' => $data['bankfrom']]);
+      $data['from_bank_id']   = $bankFrom->id;
+      $data['from_bank_name'] = $bankFrom->name;
+    }
+
+    if (empty($data['bankto'])) {
+      $bankTo = Bank::getRow(['code' => $data['bankfrom']]);
+      $data['to_bank_id']   = $bankTo->id;
+      $data['to_bank_name'] = $bankTo->name;
+    }
 
     $data = setCreatedBy($data);
     $data['reference'] = OrderRef::getReference('mutation');
     OrderRef::updateReference('mutation');
-
-    if (!empty($data['bank_from'])) {
-      $bankFrom = Bank::getRow(['code' => $data['bank_from']]);
-      $data['from_bank_id'] = $bankFrom->id; // Obsolete
-      $data['to_bank_name'] = $bankFrom->name; // Obsolete
-    }
-
-    if (!empty($data['bank_to'])) {
-      $bankTo = Bank::getRow(['code' => $data['bank_to']]);
-      $data['to_bank_id']   = $bankTo->id; // Obsolete
-      $data['to_bank_name'] = $bankTo->name; // Obsolete
-    }
-
-    if (!empty($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id; // Obsolete
-    }
 
     DB::table('bank_mutations')->insert($data);
     $insertID = DB::insertID();
