@@ -24,8 +24,8 @@ class Auth
     $columnIds = ['username', 'phone'];
 
     foreach ($columnIds as $columnId) {
-      $db = DB::table('users')->select(
-        "id AS user_id, avatar_id, biller_id, warehouse_id, groups,
+      $db = User::select(
+        "id AS user_id, avatar, biller, warehouse, groups,
         fullname, username, password, gender, lang, dark_mode, active"
       );
 
@@ -44,12 +44,8 @@ class Auth
             return FALSE;
           }
 
-          if (!$row->avatar_id) {
-            $row->avatar_id = ($row->gender == 'male' ? 1 : 2);
-          }
-
-          if ($avatar = DB::table('attachment')->getRow(['id' => $row->avatar_id])) {
-            $row->avatar_hashname = $avatar->hashname;
+          if (!$row->avatar) {
+            $row->avatar = ($row->gender == 'male' ? 'avatarmale' : 'avatarfemale');
           }
 
           unset($attachment);
@@ -58,8 +54,10 @@ class Auth
             $groupNames = explode(',', $row->groups);
             $row->permissions = [];
 
+            $row->groups = $groupNames; // Make user groups as array.
+
             foreach ($groupNames as $groupName) {
-              $group = DB::table('groups')->getRow(['name' => $groupName]);
+              $group = UserGroup::getRow(['name' => $groupName]);
 
               if ($group) {
                 $row->permissions = array_merge($row->permissions, getJSON($group->permissions, TRUE));
@@ -81,7 +79,7 @@ class Auth
               'samesite' => 'Lax'
             ]);
 
-            DB::table('users')->update(['remember' => $hashed], ['id' => $row->user_id]);
+            User::update((int)$row->user_id, ['remember' => $hashed]);
           }
 
           session()->set('login', $row);

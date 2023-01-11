@@ -12,7 +12,7 @@ class Warehouse
    */
   public static function add(array $data)
   {
-    DB::table('warehouses')->insert($data);
+    DB::table('warehouse')->insert($data);
     return DB::insertID();
   }
 
@@ -22,7 +22,7 @@ class Warehouse
    */
   public static function delete(array $clause)
   {
-    DB::table('warehouses')->delete($clause);
+    DB::table('warehouse')->delete($clause);
     return DB::affectedRows();
   }
 
@@ -32,7 +32,7 @@ class Warehouse
    */
   public static function get($clause = [])
   {
-    return DB::table('warehouses')->get($clause);
+    return DB::table('warehouse')->get($clause);
   }
 
   /**
@@ -54,7 +54,7 @@ class Warehouse
    */
   public static function update(int $id, array $data)
   {
-    DB::table('warehouses')->update($data, ['id' => $id]);
+    DB::table('warehouse')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }
 }

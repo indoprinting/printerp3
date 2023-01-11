@@ -16,9 +16,9 @@
             <thead>
               <tr>
                 <th></th>
-                <th><?= lang('App.profileImage'); ?></th>
-                <th><?= lang('App.fullName'); ?></th>
-                <th><?= lang('App.userName'); ?></th>
+                <th><?= lang('App.profileimage'); ?></th>
+                <th><?= lang('App.fullname'); ?></th>
+                <th><?= lang('App.username'); ?></th>
                 <th><?= lang('App.phone'); ?></th>
                 <th><?= lang('App.gender'); ?></th>
                 <th><?= lang('App.groups'); ?></th>
@@ -30,9 +30,9 @@
             <tfoot>
               <tr>
                 <th></th>
-                <th><?= lang('App.profileImage'); ?></th>
-                <th><?= lang('App.fullName'); ?></th>
-                <th><?= lang('App.userName'); ?></th>
+                <th><?= lang('App.profileimage'); ?></th>
+                <th><?= lang('App.fullname'); ?></th>
+                <th><?= lang('App.username'); ?></th>
                 <th><?= lang('App.phone'); ?></th>
                 <th><?= lang('App.gender'); ?></th>
                 <th><?= lang('App.groups'); ?></th>

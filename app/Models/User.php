@@ -32,6 +32,8 @@ class User
       return FALSE;
     }
 
+    $data = nulling($data, ['biller', 'warehouse']);
+
     DB::table('users')->insert($data);
     return DB::insertID();
   }
@@ -104,7 +106,7 @@ class User
       }
     }
 
-    if (!empty($data['groups'])) {
+    if (isset($data['groups'])) {
       if (is_array($data['groups'])) {
         $data['groups'] = implode(',', $data['groups']);
       } else {
@@ -113,7 +115,7 @@ class User
       }
     }
 
-    if (!empty($data['password'])) {
+    if (isset($data['password'])) {
       if (is_string($data['password']) && strlen($data['password']) < 8) {
         setLastError('Password at least 8 characters');
         return FALSE;
@@ -125,7 +127,10 @@ class User
       $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
     }
 
+    $data = nulling($data, ['biller', 'warehouse']);
+
     DB::table('users')->update($data, ['id' => $id]);
+    setLastError(DB::error()['message']);
     return DB::affectedRows();
   }
 }

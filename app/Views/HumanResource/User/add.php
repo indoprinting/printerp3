@@ -13,7 +13,7 @@
           <div class="card-header bg-gradient-success"><?= lang('App.profile') ?></div>
           <div class="card-body">
             <div class="form-group">
-              <label for="avatarImg"><?= lang('App.profileImage') ?></label>
+              <label for="avatarImg"><?= lang('App.profileimage') ?></label>
               <div class="text-center">
                 <div class="btn btn-default btn-file">
                   <img id="avatar" class="profile-user-img img-fluid" src="<?= base_url('attachment/avatarmale') ?>">
@@ -22,8 +22,8 @@
               </div>
             </div>
             <div class="form-group">
-              <label for="fullName"><?= lang('App.fullName') ?></label>
-              <input id="fullName" name="fullName" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.fullName') ?>" required>
+              <label for="fullname"><?= lang('App.fullname') ?></label>
+              <input id="fullname" name="fullname" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.fullname') ?>" required>
             </div>
             <div class="form-group">
               <label for="phone"><?= lang('App.phone') ?>/WA</label>
@@ -31,7 +31,7 @@
             </div>
             <div class="form-group">
               <label for="gender"><?= lang('App.gender') ?></label>
-              <select id="gender" name="gender" class="form-control form-control-border select2" data-placeholder="<?= lang('App.gender') ?>" style="width:100%">
+              <select id="gender" name="gender" class="form-control form-control-border select" data-placeholder="<?= lang('App.gender') ?>" style="width:100%">
                 <option value="male"><?= lang('App.male') ?></option>
                 <option value="female"><?= lang('App.female') ?></option>
               </select>
@@ -49,16 +49,16 @@
           <div class="card-header bg-gradient-primary"><?= lang('App.account') ?></div>
           <div class="card-body">
             <div class="form-group">
-              <label for="groups"><?= lang('App.userGroup') ?></label>
-              <select id="groups" name="groups[]" class="form-control select2" data-placeholder="<?= lang('App.userGroup') ?>" style="width:100%" multiple required>
+              <label for="groups"><?= lang('App.usergroup') ?></label>
+              <select id="groups" name="groups[]" class="form-control select" data-placeholder="<?= lang('App.usergroup') ?>" style="width:100%" multiple required>
                 <?php foreach (\App\Models\UserGroup::get() as $group) : ?>
                   <option value="<?= $group->name ?>"><?= $group->name ?></option>
                 <?php endforeach; ?>
               </select>
             </div>
             <div class="form-group">
-              <label for="userName"><?= lang('App.userName') ?></label>
-              <input id="userName" name="userName" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.userName') ?>" required>
+              <label for="username"><?= lang('App.username') ?></label>
+              <input id="username" name="username" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.username') ?>" required>
             </div>
             <div class="form-group">
               <label for="password"><?= lang('App.password') ?></label>
@@ -73,28 +73,27 @@
             </div>
             <div class="form-group">
               <label for="active"><?= lang('App.status') ?></label>
-              <select id="active" name="active" class="select2" style="width:100%;">
+              <select id="active" name="active" class="select" style="width:100%;">
                 <option value="1"><?= lang('App.active') ?></option>
                 <option value="0"><?= lang('App.inactive') ?></option>
               </select>
             </div>
             <div class="form-group">
               <label for="biller"><?= lang('App.biller') ?></label>
-              <select id="biller" name="biller" class="form-control select2-allow-clear" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                <option value="">
-                <option>
-                  <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                <option value="<?= $bl->id ?>"><?= $bl->name ?></option>
-              <?php endforeach; ?>
+              <select id="biller" name="biller" class="form-control select-allow-clear" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
+                <option value=""></option>
+                <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
+                  <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
+                <?php endforeach; ?>
               </select>
             </div>
             <div class="form-group">
               <label for="warehouse"><?= lang('App.warehouse') ?></label>
-              <select id="warehouse" name="warehouse" class="form-control select2-allow-clear" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%">
+              <select id="warehouse" name="warehouse" class="form-control select-allow-clear" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%">
                 <option value="">
                 <option>
                   <?php foreach (\App\Models\Warehouse::get(['active' => 1]) as $wh) : ?>
-                <option value="<?= $wh->id ?>"><?= $wh->name ?></option>
+                <option value="<?= $wh->code ?>"><?= $wh->name ?></option>
               <?php endforeach; ?>
               </select>
             </div>

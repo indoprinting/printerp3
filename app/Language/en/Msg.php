@@ -3,6 +3,7 @@
 return [
   'accessDenied'              => 'Access Denied',
   'areYouSure'                => 'Are you sure?',
+  'attachmentExceed'          => 'Attachment size is exceeded.',
   'attachmentRequired'        => 'Attachment is required.',
   'deleteConfirm'             => 'Data cannot be reverted again.',
   'deleteFailed'              => 'Data failed to deleted.',
@@ -11,6 +12,10 @@ return [
   'fileNotFound'              => 'File not found.',
   'notAuthorized'             => 'You are not authorized.',
   'notLoggedIn'               => 'You are not logged in.',
+  'permissionAddOK'           => 'Permission %s has been added successfully.',
+  'permissionAddNO'           => 'Failed to add permission %s.',
+  'permissionEditOK'          => 'Permission %s has been updated successfully.',
+  'permissionEditNO'          => 'Failed to update permission %s.',
   'profileImgExceed'          => 'Profile image size is exceeded.',
   'titleRequired'             => 'Title is required.',
   'userAddOK'                 => 'User %s has been addedd successfully.',

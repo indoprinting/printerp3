@@ -12,7 +12,7 @@ class Biller
    */
   public static function add(array $data)
   {
-    DB::table('billers')->insert($data);
+    DB::table('biller')->insert($data);
     return DB::insertID();
   }
 
@@ -22,7 +22,7 @@ class Biller
    */
   public static function delete(array $clause)
   {
-    DB::table('billers')->delete($clause);
+    DB::table('biller')->delete($clause);
     return DB::affectedRows();
   }
 
@@ -32,7 +32,7 @@ class Biller
    */
   public static function get($clause = [])
   {
-    return DB::table('billers')->get($clause);
+    return DB::table('biller')->get($clause);
   }
 
   /**
@@ -48,13 +48,21 @@ class Biller
   }
 
   /**
+   * Select _Template.
+   */
+  public static function select(string $columns, $escape = TRUE)
+  {
+    return DB::table('tableName')->select($columns, $escape);
+  }
+
+  /**
    * Update billers.
    * @param int $id billers ID.
    * @param array $data [ name, code ]
    */
   public static function update(int $id, array $data)
   {
-    DB::table('billers')->update($data, ['id' => $id]);
+    DB::table('biller')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }
 }
