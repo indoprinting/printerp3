@@ -30,12 +30,15 @@ class BankMutation
 
     $data = setCreatedBy($data);
     $data['reference'] = OrderRef::getReference('mutation');
-    OrderRef::updateReference('mutation');
+
+    DB::transStart();
 
     DB::table('bank_mutations')->insert($data);
     $insertID = DB::insertID();
 
     if ($insertID) {
+      OrderRef::updateReference('mutation');
+
       PaymentValidation::add([
         'mutation'    => $data['reference'],
         'amount'      => $data['amount'],
@@ -45,6 +48,8 @@ class BankMutation
 
       self::update((int)$insertID, ['status' => 'waiting_transfer']);
     }
+
+    DB::transComplete();
 
     return $insertID;
   }

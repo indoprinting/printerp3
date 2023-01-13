@@ -14,18 +14,11 @@ class PaymentValidation
     if (!empty($data['sale'])) {
       $sale = Sale::getRow(['reference' => $data['sale']]);
       $data['reference']  = $sale->reference;
-      $data['sale_id']    = $sale->id; // Obsolete
     }
 
     if (!empty($data['mutation'])) {
       $mutation = BankMutation::getRow(['reference' => $data['mutation']]);
       $data['reference']    = $mutation->reference;
-      $data['mutation_id']  = $mutation->id; // Obsolete
-    }
-
-    if (!empty($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id']  = $biller->id; // Obsolete
     }
 
     if (empty($data['status'])) {
@@ -37,7 +30,7 @@ class PaymentValidation
     $data = setCreatedBy($data);
     $data = setExpired($data);
 
-    DB::table('payment_validations')->insert($data);
+    DB::table('paymentvalidation')->insert($data);
     return DB::insertID();
   }
 
@@ -46,7 +39,7 @@ class PaymentValidation
    */
   public static function delete(array $where)
   {
-    DB::table('payment_validations')->delete($where);
+    DB::table('paymentvalidation')->delete($where);
     return DB::affectedRows();
   }
 
@@ -55,7 +48,7 @@ class PaymentValidation
    */
   public static function get($where = [])
   {
-    return DB::table('payment_validations')->get($where);
+    return DB::table('paymentvalidation')->get($where);
   }
 
   /**
@@ -102,7 +95,7 @@ class PaymentValidation
    */
   public static function select(string $columns, $escape = TRUE)
   {
-    return DB::table('payment_validations')->select($columns, $escape);
+    return DB::table('paymentvalidation')->select($columns, $escape);
   }
 
   public static function sync()
@@ -153,7 +146,7 @@ class PaymentValidation
    */
   public static function update(int $id, array $data)
   {
-    DB::table('payment_validations')->update($data, ['id' => $id]);
+    DB::table('paymentvalidation')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }
 

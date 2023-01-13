@@ -69,26 +69,24 @@ class BankReconciliation
       return FALSE;
     }
 
-    $res = json_decode($data);
-
-    echo '<pre>';
-    print_r($res);
-    echo '</pre>';
-    die;
+    $res = getJSON($data);
 
     if (!$res) {
       setLastError('Failed get data from api mutasibank accounts.');
       return FALSE;
     }
 
-    $banks = Bank::select('banks.number, banks.name, banks.holder, banks.type')
+    $bankGroups = DB::table('banks')->select('number, name, holder, type')
       ->where('active', 1)
       ->where("number <> '2222004005'")
-      ->notLike('type', 'Cash')
+      ->whereIn('type', ['EDC', 'Transfer'])
       ->groupBy('number');
 
-    foreach ($banks->get() as $row) { // Grouped by bank number.
-      $banks = Bank::get(['active' => 1]);
+    $bankGroup = $bankGroups->get();
+
+    $banks = Bank::get(['active' => 1]);
+
+    foreach ($bankGroup as $row) { // Grouped by bank number.
       $mutasi_bank = NULL;
       $totalBalance = 0;
 
@@ -98,7 +96,7 @@ class BankReconciliation
         }
       }
 
-      foreach ($res as $mb) {
+      foreach ($res->data as $mb) {
         if (strcmp($mb->account_no, $row->number) === 0) {
           $mutasi_bank = $mb;
           break;
@@ -108,35 +106,35 @@ class BankReconciliation
       $recon = self::getRow(['account_no' => $row->number]);
 
       if ($recon) { // If exist, then update.
-        $recon_data = [
-          'erp_acc_name' => $row->holder,
-          'account_no'   => $row->number,
-          'amount_erp'   => $totalBalance
+        $reconData = [
+          'erp_acc_name'  => $row->holder,
+          'account_no'    => $row->number,
+          'amount_erp'    => $totalBalance
         ];
 
         if ($mutasi_bank) {
-          $recon_data['mb_acc_name']    = $mutasi_bank->account_name;
-          $recon_data['mb_bank_name']   = $mutasi_bank->bank;
-          $recon_data['amount_mb']      = $mutasi_bank->balance;
-          $recon_data['last_sync_date'] = $mutasi_bank->last_bot_activity;
+          $reconData['mb_acc_name']     = $mutasi_bank->account_name;
+          $reconData['mb_bank_name']    = $mutasi_bank->bank;
+          $reconData['amount_mb']       = $mutasi_bank->balance;
+          $reconData['last_sync_date']  = $mutasi_bank->last_bot_activity;
         }
 
-        self::update((int)$recon->id, $recon_data);
+        self::update((int)$recon->id, $reconData);
       } else { // If not exist, insert new.
-        $recon_data = [
+        $reconData = [
           'erp_acc_name' => $row->holder,
           'account_no'   => $row->number,
           'amount_erp'   => $totalBalance
         ];
 
         if ($mutasi_bank) {
-          $recon_data['mb_acc_name']    = $mutasi_bank->account_name;
-          $recon_data['mb_bank_name']   = $mutasi_bank->bank;
-          $recon_data['amount_mb']      = $mutasi_bank->balance;
-          $recon_data['last_sync_date'] = $mutasi_bank->last_bot_activity;
+          $reconData['mb_acc_name']    = $mutasi_bank->account_name;
+          $reconData['mb_bank_name']   = $mutasi_bank->bank;
+          $reconData['amount_mb']      = $mutasi_bank->balance;
+          $reconData['last_sync_date'] = $mutasi_bank->last_bot_activity;
         }
 
-        self::add($recon_data);
+        self::add($reconData);
       }
     }
 

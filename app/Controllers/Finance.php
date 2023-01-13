@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\{DataTables, FileUpload};
-use App\Models\{Attachment, Bank, BankMutation, BankReconciliation, DB, Payment, PaymentValidation};
+use App\Models\{Attachment, Bank, BankMutation, BankReconciliation, DB, Expense, Payment, PaymentValidation};
 
 class Finance extends BaseController
 {
@@ -17,11 +17,11 @@ class Finance extends BaseController
   {
     checkPermission('Bank.View');
 
-    $dt = new DataTables('bank');
+    $dt = new DataTables('banks');
     $dt
-      ->select("bank.id AS id, bank.code, bank.name, bank.number,
-      bank.holder, bank.type, bank.amount, biller.name AS biller_name, bank.bic, bank.active")
-      ->join('biller', 'biller.code = bank.biller', 'left')
+      ->select("banks.id AS id, banks.code, banks.name, banks.number,
+      banks.holder, banks.type, banks.amount, biller.name AS biller_name, banks.bic, banks.active")
+      ->join('biller', 'biller.id = banks.biller_id', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -49,6 +49,55 @@ class Finance extends BaseController
       })
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
+      })
+      ->generate();
+  }
+
+  public function getExpenses()
+  {
+    checkPermission('Expense.View');
+
+    $dt = new DataTables('expenses');
+    $dt
+      ->select("expenses.id AS id, expenses.created_at, expenses.reference, biller.name AS biller_name,
+        expense_categories.name AS category_name, expenses.amount, expenses.note, banks.name AS bank_name,
+        creator.fullname, expenses.payment_date, expenses.status, expenses.payment_status,
+        suppliers.name AS supplier_name, expenses.attachment")
+      ->join('banks', 'banks.code = expenses.bank', 'left')
+      ->join('biller', 'biller.code = expenses.biller', 'left')
+      ->join('expense_categories', 'expense_categories.id = expenses.category_id', 'left')
+      ->join('suppliers', 'suppliers.id = expenses.supplier_id', 'left')
+      ->join('users creator', 'creator.id = expenses.created_by', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-page"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('finance/bank/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> Edit
+              </a>
+              <a class="dropdown-item" href="' . base_url('finance/bank/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> Delete
+              </a>
+            </div>
+          </div>';
+      })
+      ->editColumn('status', function ($data) {
+        return renderStatus($data['status']);
+      })
+      ->editColumn('payment_status', function ($data) {
+        return renderStatus($data['payment_status']);
+      })
+      ->editColumn('amount', function ($data) {
+        return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
+      })
+      ->editColumn('attachment', function ($data) {
+        return renderAttachment($data['attachment']);
       })
       ->generate();
   }
@@ -103,27 +152,27 @@ class Finance extends BaseController
   {
     checkPermission('PaymentValidation.View');
 
-    $dt = new DataTables('paymentvalidation');
+    $dt = new DataTables('payment_validations');
     $dt
-      ->select("paymentvalidation.id AS id, paymentvalidation.created_at,
-        paymentvalidation.reference, creator.fullname, biller.name AS biller_name,
+      ->select("payment_validations.id AS id, payment_validations.created_at,
+      payment_validations.reference, creator.fullname, biller.name AS biller_name,
         IF(
-          LENGTH(customer.company),
-          CONCAT(customer.name, ' (', customer.company, ')'),
-          customer.name
-        ) AS customer_name, bank.name AS bank_name, bank.number AS bank_number,
-        paymentvalidation.amount,
-        (paymentvalidation.amount + paymentvalidation.unique) AS total,
-        paymentvalidation.expired_at, paymentvalidation.transaction_at,
-        paymentvalidation.unique,
-        paymentvalidation.note, paymentvalidation.status,
-        paymentvalidation.attachment")
-      ->join('bank', 'bank.code = paymentvalidation.bank', 'left')
-      ->join('biller', 'biller.code = paymentvalidation.biller', 'left')
-      ->join('sale', 'sale.reference = paymentvalidation.sale', 'left')
-      ->join('customer', 'customer.phone = sale.customer', 'left')
-      ->join('bankmutation', 'bankmutation.reference = paymentvalidation.mutation', 'left')
-      ->join('users creator', 'creator.id = paymentvalidation.created_by', 'left')
+          LENGTH(customers.company),
+          CONCAT(customers.name, ' (', customers.company, ')'),
+          customers.name
+        ) AS customer_name, banks.name AS bank_name, banks.number AS bank_number,
+        payment_validations.amount,
+        (payment_validations.amount + payment_validations.unique_code) AS total,
+        payment_validations.expired_at, payment_validations.transaction_at,
+        payment_validations.verified_at, payment_validations.unique,
+        payment_validations.note, payment_validations.status,
+        payment_validations.attachment")
+      ->join('banks', 'banks.code = payment_validations.bank', 'left')
+      ->join('biller', 'biller.code = payment_validations.biller', 'left')
+      ->join('sales', 'sales.reference = payment_validations.sale', 'left')
+      ->join('customers', 'customers.phone = sales.customer', 'left')
+      ->join('bank_mutations', 'bank_mutations.reference = payment_validations.mutation', 'left')
+      ->join('users creator', 'creator.id = payment_validations.created_by', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -162,15 +211,15 @@ class Finance extends BaseController
   {
     checkPermission('BankReconciliation.View');
 
-    $dt = new DataTables('bankreconciliation');
+    $dt = new DataTables('bank_reconciliations');
     $dt
-      ->select("bank_name, number, amount_mb, amount, (amount_mb - amount) AS balance,
-        acc_name_mb, acc_name, sync_at")
+      ->select("mb_bank_name, account_no, amount_mb, amount_erp, (amount_mb - amount_erp) AS balance,
+        mb_acc_name, erp_acc_name, last_sync_date")
       ->editColumn('amount_mb', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount_mb']) . '</div>';
       })
-      ->editColumn('amount', function ($data) {
-        return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
+      ->editColumn('amount_erp', function ($data) {
+        return '<div class="float-right">' . formatNumber($data['amount_erp']) . '</div>';
       })
       ->editColumn('balance', function ($data) {
         return '<div class="float-right">' . formatNumber($data['balance']) . '</div>';
@@ -247,7 +296,12 @@ class Finance extends BaseController
     checkPermission('Bank.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (Bank::delete(['id' => $bankId])) {
+      DB::transStart();
+      Bank::delete(['id' => $bankId]);
+      Payment::delete(['bank_id' => $bankId]);
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(200, ['message' => 'Bank has been deleted.']);
       }
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -256,6 +310,112 @@ class Finance extends BaseController
   }
 
   protected function bank_edit($bankId = NULL)
+  {
+    checkPermission('Bank.Edit');
+
+    $bank = Bank::getRow(['id' => $bankId]);
+
+    if (!$bank) $this->response(404, ['message' => 'Bank is not found.']);
+
+    if (requestMethod() == 'POST') {
+      $billerData = [
+        'biller'  => getPost('biller'),
+        'code'    => getPost('code'),
+        'name'    => getPost('name'),
+        'number'  => getPost('number'),
+        'holder'  => getPost('holder'),
+        'type'    => getPost('type'),
+        'bic'     => getPost('bic'),
+        'active'  => (getPost('active') == 1 ? 1 : 0)
+      ];
+
+      $this->response(400, ['message' => var_dump($billerData)]);
+
+      if (Bank::update((int)$bankId, $billerData)) {
+        $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $bank->name)]);
+      }
+      $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $bank->name)]);
+    }
+
+    $this->data['bank'] = $bank;
+    $this->data['title'] = lang('App.editbankaccount');
+
+    $this->response(200, ['content' => view('Finance/Bank/edit', $this->data)]);
+  }
+
+  public function expense()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    checkPermission('Expense.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.finance'), 'slug' => 'finance', 'url' => '#'],
+        ['name' => lang('App.expense'), 'slug' => 'expense', 'url' => '#']
+      ],
+      'content' => 'Finance/Expense/index',
+      'title' => lang('App.expense')
+    ];
+
+    return $this->buildPage($this->data);
+  }
+
+  protected function expense_add()
+  {
+    checkPermission('Expense.Add');
+
+    if (requestMethod() == 'POST') {
+      $expenseData = [
+        'biller'      => getPost('biller'),
+        'category'    => getPost('category'),
+        'supplier'    => getPost('supplier'),
+        'bank'        => getPost('bank'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note')),
+        'created_at'  => dateTimeJS(getPost('created_at'))
+      ];
+
+      $this->response(400, ['data' => json_encode($expenseData)]);
+
+      if (Expense::add($expenseData)) {
+        $this->response(201, ['message' => 'Expense has been added.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->data['title'] = lang('App.addexpense');
+
+    $this->response(200, ['content' => view('Finance/Expense/add', $this->data)]);
+  }
+
+  protected function expense_delete($expenseId = NULL)
+  {
+    checkPermission('Expense.Delete');
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      DB::transStart();
+      Expense::delete(['id' => $expenseId]);
+      Payment::delete(['expense_id' => $expenseId]);
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Expense has been deleted.']);
+      }
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+    $this->response(400, ['message' => 'Failed to delete expense.']);
+  }
+
+  protected function expense_edit($bankId = NULL)
   {
     checkPermission('Bank.Edit');
 
@@ -352,8 +512,7 @@ class Finance extends BaseController
           $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
         }
 
-        $attachmentId = $upload->store();
-        $mutationData['attachment'] = Attachment::getRow(['id' => $attachmentId])->hashname;
+        $mutationData['attachment'] = $upload->store();
       }
 
       BankMutation::add($mutationData);
@@ -387,7 +546,7 @@ class Finance extends BaseController
       Attachment::delete(['hashname' => $mutation->attachment]);
       BankMutation::delete(['id' => $mutationId]);
       PaymentValidation::delete(['mutation' => $mutation->reference]);
-      Payment::delete(['mutation_id' => $mutationId]);
+      Payment::delete(['mutation' => $mutation->reference]);
       DB::transComplete();
 
       if (DB::transStatus()) {

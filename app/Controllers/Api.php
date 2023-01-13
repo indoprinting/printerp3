@@ -71,7 +71,7 @@ class Api extends BaseController
       }
     }
 
-    $this->response(200, $data);
+    $this->response(200, ['data' => $data]);
   }
 
   public function mutasibank_accountStatements()

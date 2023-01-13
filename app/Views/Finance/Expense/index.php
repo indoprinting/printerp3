@@ -4,6 +4,9 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
+            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('finance/expense/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+              <i class="fad fa-plus-circle"></i>
+            </a>
           </div>
         </div>
         <div class="card-body">
@@ -13,19 +16,16 @@
                 <th class="col-sm-1"></th>
                 <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
-                <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.biller'); ?></th>
-                <th><?= lang('App.customer'); ?></th>
-                <th><?= lang('App.bankaccount'); ?></th>
-                <th><?= lang('App.number'); ?></th>
+                <th><?= lang('App.category'); ?></th>
                 <th><?= lang('App.amount'); ?></th>
-                <th><?= lang('App.total'); ?></th>
-                <th><?= lang('App.expireddate'); ?></th>
-                <th><?= lang('App.transactiondate'); ?></th>
-                <th><?= lang('App.verifiedat'); ?></th>
-                <th><?= lang('App.uniquecode'); ?></th>
-                <th><?= lang('App.description'); ?></th>
+                <th><?= lang('App.note'); ?></th>
+                <th><?= lang('App.bankaccount'); ?></th>
+                <th><?= lang('App.createdby'); ?></th>
+                <th><?= lang('App.paymentdate'); ?></th>
                 <th><?= lang('App.status'); ?></th>
+                <th><?= lang('App.paymentstatus'); ?></th>
+                <th><?= lang('App.supplier'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </thead>
@@ -34,19 +34,16 @@
                 <th></th>
                 <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
-                <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.biller'); ?></th>
-                <th><?= lang('App.customer'); ?></th>
-                <th><?= lang('App.bankaccount'); ?></th>
-                <th><?= lang('App.number'); ?></th>
+                <th><?= lang('App.category'); ?></th>
                 <th><?= lang('App.amount'); ?></th>
-                <th><?= lang('App.total'); ?></th>
-                <th><?= lang('App.expireddate'); ?></th>
-                <th><?= lang('App.transactiondate'); ?></th>
-                <th><?= lang('App.verifiedat'); ?></th>
-                <th><?= lang('App.uniquecode'); ?></th>
-                <th><?= lang('App.description'); ?></th>
+                <th><?= lang('App.note'); ?></th>
+                <th><?= lang('App.bankaccount'); ?></th>
+                <th><?= lang('App.createdby'); ?></th>
+                <th><?= lang('App.paymentdate'); ?></th>
                 <th><?= lang('App.status'); ?></th>
+                <th><?= lang('App.paymentstatus'); ?></th>
+                <th><?= lang('App.supplier'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </tfoot>
@@ -66,10 +63,10 @@
           <?= csrf_token() ?>: '<?= csrf_hash() ?>'
         },
         method: 'POST',
-        url: base_url + '/finance/getPaymentValidations'
+        url: base_url + '/finance/getExpenses'
       },
       columnDefs: [{
-        targets: [0, 16],
+        targets: [0, 13],
         orderable: false
       }],
       fixedHeader: false,

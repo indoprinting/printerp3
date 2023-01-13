@@ -61,6 +61,18 @@ function checkPermission(string $permission = NULL)
 }
 
 /**
+ * Convert JS time to PHP time or vice versa.
+ */
+function dateTimeJS(string $datetime)
+{
+  if (strlen($datetime) && strpos($datetime, 'T') !== FALSE) {
+    return str_replace('T', ' ', $datetime);
+  }
+
+  return str_replace(' ', 'T', $datetime);
+}
+
+/**
  * Print debug output.
  */
 function dbgprint()
@@ -375,7 +387,6 @@ function sendJSON($data, $options = [])
 function setCreatedBy(array $data)
 {
   $data['created_at'] = ($data['created_at'] ?? date('Y-m-d H:i:s'));
-  $data['date'] = $data['created_at']; // Obsolete
 
   if (empty($data['created_by']) && isLoggedIn()) {
     $data['created_by'] = session('login')->user_id;

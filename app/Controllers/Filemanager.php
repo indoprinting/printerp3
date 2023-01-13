@@ -18,7 +18,13 @@ class Filemanager extends BaseController
       $this->response(400, ['message' => 'Hashname required.']);
     }
 
-    $this->data['attachment'] = Attachment::getRow(['hashname' => $hashname]);
+    $attachment = Attachment::select('*')->where('hashname', $hashname)->orWhere('id', $hashname)->getRow();
+
+    if (!$attachment) {
+      $this->response(404, ['message' => 'Attachment is not found.']);
+    }
+
+    $this->data['attachment'] = $attachment;
     $this->response(200, ['content' => view('FileManager/view', $this->data)]);
   }
 }

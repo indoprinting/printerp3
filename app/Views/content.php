@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="<?= base_url() ?>/assets/app/css/common.css?v=<?= $resver ?>">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/app/css/loader.css?v=<?= $resver ?>">
   <script>
+    const <?= csrf_token() ?> = '<?= csrf_hash() ?>';
     const base_url = '<?= base_url(); ?>';
     const langId = '<?= session('login')->lang ?>';
     const lang = JSON.parse(atob('<?= $lang64 ?>'));
@@ -249,7 +250,7 @@
                   <?php endif; ?>
                   <?php if (hasAccess('Expense.View')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
+                      <a href="<?= base_url('finance/expense') ?>" class="nav-link" data-action="link" data-slug="expense">
                         <i class="nav-icon fad fa-arrow-alt-left"></i>
                         <p><?= lang('App.expense') ?></p>
                       </a>
@@ -257,7 +258,7 @@
                   <?php endif; ?>
                   <?php if (hasAccess('Income.View')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
+                      <a href="<?= base_url('finance/income') ?>" class="nav-link" data-action="link" data-slug="income">
                         <i class="nav-icon fad fa-arrow-alt-right"></i>
                         <p><?= lang('App.income') ?></p>
                       </a>
