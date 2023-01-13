@@ -67,6 +67,8 @@
         if (isObject(xhr.responseJSON) && xhr.status == 401) {
           toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
           location.reload();
+        } else if (isObject(xhr.responseJSON)) {
+          toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
         } else {
           toastr.error(xhr.statusText, xhr.status);
         }
@@ -122,8 +124,50 @@
 $(document).ready(function () {
   initControls();
 
-  $(document).on('click', '.html-edit', function () {
-    console.log('ok');
+  // Fix select2 on jQuery 3.6.x
+  $(document).on("select2:open", () => {
+    setTimeout(() => {
+      document.querySelector(".select2-container--open .select2-search__field").focus()
+    }, 10);
+  });
+
+  $(document).on('click', '[data-action="confirm"]', function (e) {
+    e.preventDefault();
+
+    let url = this.href;
+
+    Swal.fire({
+      icon: 'warning',
+      text: lang.Msg.areYouSure,
+      title: lang.Msg.areYouSure,
+      showCancelButton: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          data: {
+            __: __
+          },
+          error: (xhr) => {
+            Swal.fire({
+              icon: 'error',
+              text: xhr.responseJSON.message,
+              title: lang.App.failed
+            });
+          },
+          method: 'POST',
+          success: (data) => {
+            Swal.fire({
+              icon: 'success',
+              text: data.message,
+              title: lang.App.success
+            });
+
+            if (typeof Table !== 'undefined') Table.draw(false);
+          },
+          url: url
+        });
+      }
+    });
   });
 
   $(document).on('click', '[data-action="darkmode"]', function () {
@@ -133,10 +177,14 @@ $(document).ready(function () {
       darkMode = 0;
       $(this).find('i').removeClass('fa-sun').addClass('fa-moon');
       $('body').removeClass('dark-mode');
+      $('.main-header').removeClass('navbar-dark bg-gradient-dark').addClass('navbar-light bg-gradient-white');
+      $('.main-sidebar').removeClass('sidebar-dark-primary').addClass('sidebar-light-primary');
     } else {
       darkMode = 1;
       $(this).find('i').removeClass('fa-moon').addClass('fa-sun');
       $('body').addClass('dark-mode');
+      $('.main-header').removeClass('navbar-light bg-gradient-white').addClass('navbar-dark bg-gradient-dark');
+      $('.main-sidebar').removeClass('sidebar-light-primary').addClass('sidebar-dark-primary');
     }
 
     $.ajax({
@@ -146,7 +194,98 @@ $(document).ready(function () {
       success: (data) => {
 
       },
-      url: base_url + '/settings/theme?darkmode=' + darkMode
+      url: base_url + '/setting/theme?darkmode=' + darkMode
+    })
+  });
+
+  $(document).on('click', '[data-action="http-get"]', function (e) {
+    e.preventDefault();
+
+    let url = this.href;
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
+
+    this.dataset.progress = 'true';
+
+    $(fa).removeClass(faClass).addClass(faClassProgress);
+
+    $.ajax({
+      error: (xhr) => {
+        Swal.fire({
+          icon: 'error',
+          text: xhr.responseJSON.message,
+          title: lang.App.failed
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      method: 'GET',
+      success: (data) => {
+        Swal.fire({
+          icon: 'success',
+          text: data.message,
+          title: lang.App.success
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+
+        if (typeof Table !== 'undefined') Table.draw(false);
+      },
+      url: url
+    })
+  });
+
+  $(document).on('click', '[data-action="http-post"]', function (e) {
+    e.preventDefault();
+
+    let url = this.href;
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
+
+    this.dataset.progress = 'true';
+
+    $(fa).removeClass(faClass).addClass(faClassProgress);
+
+    $.ajax({
+      data: {
+        __: __
+      },
+      error: (xhr) => {
+        Swal.fire({
+          icon: 'error',
+          text: xhr.responseJSON.message,
+          title: lang.App.failed
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      method: 'POST',
+      success: (data) => {
+        Swal.fire({
+          icon: 'success',
+          text: data.message,
+          title: lang.App.success
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+
+        if (typeof Table !== 'undefined') Table.draw(false);
+      },
+      url: url
     })
   });
 
@@ -156,7 +295,7 @@ $(document).ready(function () {
         if (isObject(data)) {
           if (data.code == 200) {
             toastr.success(data.message);
-            setTimeout(() => location.reload());
+            setTimeout(() => location.href = '/auth/login');
             return true;
           }
 
@@ -182,6 +321,10 @@ $(document).ready(function () {
       },
       url: this.href
     });
+  });
+
+  $(document).on('keyup', '.currency', function (e) {
+    if (e.key != '.') $(this).val(formatCurrency($(this).val())).trigger('change');
   });
 
   $(document).on('click', '[data-toggle="modal"]', function (e) {
@@ -221,10 +364,10 @@ $(document).ready(function () {
   });
 
   $(document).on('show.bs.modal', '.modal', function () {
-    $('body').addClass('modal-open'); // Fix body layout.
+    // $('body').addClass('modal-open'); // Fix body layout.
 
     // Make stackable modal.
-    const zIndex = 1040 + 10 * $('.modal:visible').length;
+    const zIndex = 3 + 10 * $('.modal:visible').length;
     $(this).css('z-index', zIndex);
     setTimeout(() => {
       $('.modal-backdrop').not('.stacked').css('z-index', zIndex - 1).addClass('stacked')
@@ -240,15 +383,24 @@ $(document).ready(function () {
     $.ajax({
       error: (xhr) => {
         delete this.dataset.remote;
-
-        Swal.fire({ icon: 'error', text: xhr.statusText, title: xhr.status }).then((result) => {
-          $(this).modal('hide');
-        });
+        if (isObject(xhr.responseJSON)) {
+          Swal.fire({ icon: 'error', text: xhr.responseJSON.message, title: xhr.status }).then((result) => {
+            $(this).modal('hide');
+          });
+        } else {
+          Swal.fire({ icon: 'error', text: xhr.statusText, title: xhr.status }).then((result) => {
+            $(this).modal('hide');
+          });
+        }
       },
       success: (data) => {
         delete this.dataset.remote;
 
         if (isObject(data) && data.code == 200) {
+
+          if (typeof data.content == 'undefined') {
+            console.error('Modal cannot loaded. Object "content" is not defined.');
+          }
           $(this).find('.modal-content').html(data.content)
             .closest(this).draggable({ handle: '.modal-header' });
         } else if (isObject(data) && data.code != 200) {

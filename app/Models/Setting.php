@@ -270,7 +270,7 @@ class Setting
           }
 
           if (!$isValid) {
-            setLastError(lang('App.accessDenied'));
+            setLastError(lang('Msg.accessdenied'));
             return FALSE;
           }
         }

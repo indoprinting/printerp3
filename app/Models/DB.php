@@ -33,8 +33,8 @@ class DB
 
   public static function connect($groupName)
   {
-    self::$db = db_connect($groupName);
-    self::$qb = self::$db->table(self::$table);
+    self::$db       = db_connect($groupName);
+    self::$qb       = self::$db->table(self::$table);
     self::$instance = new self;
     return self::$instance;
   }
@@ -50,6 +50,14 @@ class DB
   {
     self::$qb->delete($where, $limit, $resetData);
     return self::$db->affectedRows();
+  }
+
+  /**
+   * Returns the last error code and message.
+   */
+  public static function error()
+  {
+    return self::$db->error();
   }
 
   public function from($table)
@@ -91,6 +99,33 @@ class DB
   }
 
   /**
+   * Group by.
+   */
+  public function groupBy($by, bool $escape = NULL)
+  {
+    self::$qb->groupBy($by, $escape);
+    return self::$instance;
+  }
+
+  /**
+   * Starts a query group.
+   */
+  public function groupStart()
+  {
+    self::$qb->groupStart();
+    return self::$instance;
+  }
+
+  /**
+   * Ends a query group
+   */
+  public function groupEnd()
+  {
+    self::$qb->groupEnd();
+    return self::$instance;
+  }
+
+  /**
    * Separates multiple calls with 'AND'.
    *
    * @param array|RawSql|string $key
@@ -125,6 +160,24 @@ class DB
   public static function insertID()
   {
     return self::$db->insertID();
+  }
+
+  /**
+   * Is not NULL
+   */
+  public function isNotNull($field)
+  {
+    self::$qb->where("{$field} IS NOT NULL");
+    return self::$instance;
+  }
+
+  /**
+   * Is NULL
+   */
+  public function isNull($field)
+  {
+    self::$qb->where("{$field} IS NULL");
+    return self::$instance;
   }
 
   /**
@@ -312,6 +365,15 @@ class DB
   }
 
   /**
+   * Sets a flag which tells the query string compiler to add DISTINCT
+   */
+  public function distinct($val = TRUE)
+  {
+    self::$qb->distinct($val);
+    return self::$instance;
+  }
+
+  /**
    * Generates a SELECT MAX(field) portion of a query
    */
   public function selectMax($select = '', $alias = '')
@@ -344,11 +406,79 @@ class DB
    */
   public static function table(string $name)
   {
-    self::$db = db_connect();
-    self::$qb = self::$db->table($name);
+    self::$db       = db_connect();
+    self::$qb       = self::$db->table($name);
     self::$instance = new self;
-    self::$table = $name;
+    self::$table    = $name;
     return self::$instance;
+  }
+
+  /**
+   * Begin Transaction
+   */
+  public static function transBegin(bool $testMode = FALSE)
+  {
+    self::$db = db_connect();
+    return self::$db->transBegin($testMode);
+  }
+
+  /**
+   * Commit Transaction
+   */
+  public static function transCommit()
+  {
+    return self::$db->transCommit();
+  }
+
+  /**
+   * Complete Transaction
+   */
+  public static function transComplete()
+  {
+    return self::$db->transComplete();
+  }
+
+  /**
+   * Disable Transactions
+   */
+  public static function transOff()
+  {
+    self::$db = db_connect();
+    return self::$db->transOff();
+  }
+
+  /**
+   * Rollback Transaction
+   */
+  public static function transRollback()
+  {
+    return self::$db->transRollback();
+  }
+
+  /**
+   * Start Transaction
+   */
+  public static function transStart(bool $testMode = FALSE)
+  {
+    self::$db = db_connect();
+    return self::$db->transStart($testMode);
+  }
+
+  /**
+   * Lets you retrieve the transaction flag to determine if it has failed
+   */
+  public static function transStatus()
+  {
+    return self::$db->transStatus();
+  }
+
+  /**
+   * Enable/disable Transaction Strict Mode
+   */
+  public static function transStrict()
+  {
+    self::$db = db_connect();
+    return self::$db->transStrict();
   }
 
   /**

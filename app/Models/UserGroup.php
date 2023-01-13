@@ -12,7 +12,12 @@ class UserGroup
    */
   public static function add(array $data)
   {
-    DB::table('groups')->insert($data);
+    if (empty($data['name'])) {
+      setLastError('Group name is required.');
+      return FALSE;
+    }
+
+    DB::table('usergroup')->insert($data);
     return DB::insertID();
   }
 
@@ -22,7 +27,14 @@ class UserGroup
    */
   public static function delete(array $clause)
   {
-    DB::table('groups')->delete($clause);
+    if (isset($clause['id'])) {
+      if ($clause['id'] == 1) {
+        setLastError('OWNER usergroup cannot be deleted.');
+        return FALSE;
+      }
+    }
+
+    DB::table('usergroup')->delete($clause);
     return DB::affectedRows();
   }
 
@@ -32,7 +44,7 @@ class UserGroup
    */
   public static function get($clause = [])
   {
-    return DB::table('groups')->get($clause);
+    return DB::table('usergroup')->get($clause);
   }
 
   /**
@@ -54,7 +66,7 @@ class UserGroup
    */
   public static function select(string $columns, $escape = TRUE)
   {
-    return DB::table('groups')->select($columns, $escape);
+    return DB::table('usergroup')->select($columns, $escape);
   }
 
   /**
@@ -69,6 +81,11 @@ class UserGroup
         setLastError('Owner group must has all permissions.');
         return FALSE;
       }
+
+      if (isset($data['name']) && $data['name'] != 'OWNER') {
+        setLastError('Owner group name must be OWNER.');
+        return FALSE;
+      }
     }
 
     if (isset($data['name'])) {
@@ -78,7 +95,7 @@ class UserGroup
       }
     }
 
-    DB::table('groups')->update($data, ['id' => $id]);
+    DB::table('usergroup')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }
 }

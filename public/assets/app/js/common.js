@@ -18,14 +18,149 @@ toastr.options.timeOut = 2000;
   });
 })(this, document);
 
-function dtRenderCheck(id) {
-  return `<div class="text-center"><input class="icheck-tbody" data-row-id="${id}" type="checkbox"></div>`;
+/**
+ * Create google maps.
+ * @param {Object} options { element: {map, searchBox, latitude = null, longitude = null}, lat, lon }
+ */
+function createGoogleMaps(options) {
+  if (typeof options.lat != 'undefined') {
+    let v = parseFloat(options.lat);
+    options.lat = (isNaN(v) ? null : v);
+  }
+
+  if (typeof options.lon != 'undefined') {
+    let v = parseFloat(options.lon);
+    options.lon = (isNaN(v) ? null : v);
+  }
+
+  let input = $(options.element.searchBox)[0];
+  let geocoder = new google.maps.Geocoder();
+  let map = new google.maps.Map($(options.element.map)[0], {
+    center: {
+      lat: (options.lat ?? 0),
+      lng: (options.lon ?? 0)
+    },
+    zoom: 15
+  });
+  let marker = null;
+
+  function setMarker(map, latLng) {
+    let lat = latLng.lat;
+    let lon = latLng.lng;
+
+    if (options.element.latitude) {
+      $(options.element.latitude).val(lat);
+    }
+
+    if (options.element.longitude) {
+      $(options.element.longitude).val(lon);
+    }
+
+    if (geocoder) {
+      geocoder.geocode({
+        location: {
+          lat: lat,
+          lng: lon
+        }
+      }).then((response) => {
+        if (response.results[0]) {
+          $(options.element.searchBox).val(response.results[0].formatted_address);
+        } else {
+          window.alert("No results found");
+        }
+      });
+    }
+
+    if (marker) {
+      marker.setPosition({
+        lat: lat,
+        lng: lon
+      });
+    } else {
+      marker = new google.maps.Marker({
+        map: map,
+        position: {
+          lat: lat,
+          lng: lon
+        }
+      });
+    }
+  }
+
+  let searchBox = new google.maps.places.SearchBox(input);
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      let lat = (options.lat ?? pos.coords.latitude);
+      let lon = (options.lon ?? pos.coords.longitude);
+
+      map.setCenter({
+        lat: lat,
+        lng: lon
+      });
+
+      setMarker(map, {
+        lat: lat,
+        lng: lon
+      });
+    });
+  }
+
+  map.addListener('click', (event) => {
+    let lat = event.latLng.lat();
+    let lon = event.latLng.lng();
+
+    setMarker(map, {
+      lat: lat,
+      lng: lon
+    });
+  })
+
+  // Bias the SearchBox results towards current map's viewport.
+  map.addListener("bounds_changed", () => {
+    searchBox.setBounds(map.getBounds());
+  });
+
+  // Listen for the event fired when the user selects a prediction and retrieve
+  // more details for that place.
+  searchBox.addListener("places_changed", () => {
+    const places = searchBox.getPlaces();
+
+    if (places.length == 0) {
+      return;
+    }
+
+    // For each place, get the icon, name and location.
+    const bounds = new google.maps.LatLngBounds();
+
+    places.forEach((place) => {
+      if (!place.geometry || !place.geometry.location) {
+        console.warn("Returned place contains no geometry");
+        return;
+      }
+
+      let lat = place.geometry.location.lat();
+      let lon = place.geometry.location.lng();
+
+      setMarker(map, {
+        lat: lat,
+        lng: lon
+      });
+
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        bounds.union(place.geometry.viewport);
+      } else {
+        bounds.extend(place.geometry.location);
+      }
+    });
+
+    map.fitBounds(bounds);
+  });
 }
 
-function dtRenderAvatar(img) {
-  if (!img) img = 'default-male.png';
-  let image = base_url + '/assets/app/img/avatar/' + img;
-  return `<img src="${image}">`;
+function dtRenderCheck(id) {
+  return `<div class="text-center"><input class="icheck-tbody" data-row-id="${id}" type="checkbox"></div>`;
 }
 
 function dtRenderLabel(label) {
@@ -58,7 +193,24 @@ function dtRenderStatus(status) {
   return `<div class="text-center"><span class="badge badge-${classStatus}">${uc(status)}</span></div>`;
 }
 
+function filterDecimal(str) {
+  if (str == null) str = 0;
+  if (str.toString().length == 0) str = 0;
+  if (typeof str == 'string') str = str.replaceAll(/([^0-9\.\-])/g, '');
+  if (isNaN(parseFloat(str))) str = 0;
+
+  return parseFloat(str);
+}
+
+function formatCurrency(str) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'IDR', currencyDisplay: 'narrowSymbol',
+    maximumFractionDigits: 2, minimumFractionDigits: 0
+  }).format(filterDecimal(str));
+}
+
 function initControls() {
+
   if (isFunction('bsCustomFileInput.init')) bsCustomFileInput.init();
 
   if (!isObject($.fn) || isEmpty($.fn.jquery)) {
@@ -69,13 +221,16 @@ function initControls() {
     $('input').iCheck({
       checkboxClass: 'icheckbox_square-blue',
       radioClass: 'iradio_square-blue',
-      increaseArea: '20%'
+      increaseArea: '0%'
     });
   }
 
   if (isFunction('$.fn.select2')) {
-    $('.select2').select2();
-    $('.select2-allow-clear').select2({ allowClear: true });
+    /** Do no use class name .select2, use .select instead. */
+    $('.select').select2();
+    $('.select-allow-clear').select2({ allowClear: true });
+    $('.select-tags').select2({ tags: true });
+    $('.select-allow-clear-tags').select2({ allowClear: true, tags: true });
   }
 
   if (isFunction('$.fn.datepicker')) {
@@ -95,6 +250,10 @@ function initControls() {
     // $('.modal-body').overlayScrollbars({
     //   sizeAutoCapable: true
     // });
+  }
+
+  if (isFunction('formatCurrency')) {
+    $('.currency').val(formatCurrency($('.currency').val()));
   }
 }
 
@@ -118,7 +277,7 @@ function initModalForm(opt = {}) {
       return false;
     }
 
-    $(this).prepend(`<i class="fad fa-spinner fa-spin"></i> `);
+    $(this).prepend(`<i class="fad fa-spinner-third fa-spin"></i> `);
     $(this).prop('disabled', true);
 
     let formData = new FormData(typeof opt.form == 'string' ? $(opt.form)[0] : opt.form);
@@ -214,49 +373,6 @@ function showPass(show = false) {
   } else {
     $('.pass').prop('type', 'password');
     $('.fa-eye').addClass('fa-eye-slash').removeClass('fa-eye');
-  }
-}
-
-function templateAcademic(data, permissions = []) {
-  if (isArray(data)) {
-    let html = '';
-
-    for (let row of data) {
-      html +=
-        `<div class="callout callout-danger bg-gradient-white">
-          <h5 class="font-weight-bold">${row.title}</h5>
-          <p>
-            ${lang.App.publishedBy} ${row.created_by} ${lang.App.at} ${row.created_at}
-          </p>
-          <p>
-            <i class="fad fa-file"></i>
-            <a href="${base_url}/filemanager/view/${row.attachments.filename}" data-toggle="modal"
-              data-target="#ModalDefault" data-modal-class="modal-lg">
-              ${row.attachments.origin_name}
-            </a>
-          </p>`;
-
-      if (isArray(permissions) && (permissions.indexOf('All') >= 0 || permissions.indexOf('AcademicInfo.Edit') >= 0)) {
-        html +=
-          `<div>
-            <a class="btn bg-gradient-danger text-white"
-              href="${base_url}/academicinfo/delete/${row.id}" data-action="confirm"
-              data-text="${lang.Msg.academicInfoDeleteConfirm}" data-title="${lang.App.deleteAcademicInfo}">
-              <i class="fad fa-trash"></i>
-            </a>
-            <a class="btn bg-gradient-dark text-white"
-              href="${base_url}/academicinfo/edit/${row.id}" data-toggle="modal"
-              data-target="#ModalDefault" data-modal-class="modal-dialog-centered">
-              <i class="fad fa-edit"></i>
-            </a>
-          </div>`;
-      }
-
-      html +=
-        '</div>';
-    }
-
-    return html;
   }
 }
 

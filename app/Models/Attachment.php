@@ -7,7 +7,7 @@ namespace App\Models;
 class Attachment
 {
   /**
-   * Add new attachment.
+   * Add new Attachment.
    *
    * @param array $data [ *data, *filename, *hashname, *mime, *size, created_at, created_by ]
    * @return false|int Return new attachment id or FALSE if failed.
@@ -25,7 +25,7 @@ class Attachment
   }
 
   /**
-   * Delete attachments.
+   * Delete Attachment.
    *
    * @param array $clause
    */
@@ -43,7 +43,7 @@ class Attachment
   }
 
   /**
-   * Get attachments collection.
+   * Get Attachment collection.
    * @param array $where [ id, filename, mime, created_by, updated_by ]
    */
   public static function get($where = [])
@@ -52,7 +52,7 @@ class Attachment
   }
 
   /**
-   * Get attachment row.
+   * Get Attachment row.
    * @param array $where [ id, filename, mime, created_by, updated_by ]
    */
   public static function getRow($where = [])
@@ -64,13 +64,19 @@ class Attachment
   }
 
   /**
-   * Update attachment.
+   * Select Attachment.
+   */
+  public static function select(string $columns, $escape = TRUE)
+  {
+    return DB::table('attachment')->select($columns, $escape);
+  }
+
+  /**
+   * Update Attachment.
    * @param array $data [ id, filename, hashname, mime ]
    */
   public static function update(int $id, array $data)
   {
-    $db = get_instance()->db;
-    $db->update('attachment', $data, ['id' => $id]);
     DB::table('attachment')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }
