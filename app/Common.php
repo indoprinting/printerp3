@@ -404,7 +404,7 @@ function setExpired(array $data)
 {
   if (empty($data['expired_at'])) {
     $data['expired_at']   = date('Y-m-d H:i:s', strtotime('+1 day', time()));
-    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Obsolete
+    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Compatibility
   }
 
   return $data;

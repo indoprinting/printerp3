@@ -16,19 +16,20 @@ class BankMutation
       $data['biller_id'] = $biller->id;
     }
 
-    if (empty($data['bankfrom'])) {
+    if (isset($data['bankfrom'])) {
       $bankFrom = Bank::getRow(['code' => $data['bankfrom']]);
       $data['from_bank_id']   = $bankFrom->id;
       $data['from_bank_name'] = $bankFrom->name;
     }
 
-    if (empty($data['bankto'])) {
-      $bankTo = Bank::getRow(['code' => $data['bankfrom']]);
+    if (isset($data['bankto'])) {
+      $bankTo = Bank::getRow(['code' => $data['bankto']]);
       $data['to_bank_id']   = $bankTo->id;
       $data['to_bank_name'] = $bankTo->name;
     }
 
     $data = setCreatedBy($data);
+    $data['date'] = $data['created_at']; // Compatibility.
     $data['reference'] = OrderRef::getReference('mutation');
 
     DB::transStart();
