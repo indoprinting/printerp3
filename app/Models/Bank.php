@@ -11,14 +11,11 @@ class Bank
    */
   public static function add(array $data)
   {
-<<<<<<< HEAD
-=======
     if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
       $data['biller_id'] = $biller->id;
     }
 
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     DB::table('banks')->insert($data);
     return DB::insertID();
   }
@@ -26,21 +23,12 @@ class Bank
   /**
    * Get bank balance.
    */
-<<<<<<< HEAD
-  public static function balance($clause = [])
-  {
-    $res = Bank::select('(COALESCE(recv.total, 0) - COALESCE(sent.total, 0)) AS balance')
-      ->join("(SELECT bank_id, SUM(amount) AS total FROM payment WHERE type LIKE 'received' GROUP BY bank_id) recv", 'recv.bank_id = bank.id', 'left')
-      ->join("(SELECT bank_id, SUM(amount) AS total FROM payment WHERE type LIKE 'sent' GROUP BY bank_id) sent", 'sent.bank_id = bank.id', 'left')
-      ->where($clause)
-=======
   public static function balance(int $bankId)
   {
     $res = Bank::select('(COALESCE(recv.total, 0) - COALESCE(sent.total, 0)) AS balance')
       ->join("(SELECT bank_id, SUM(amount) AS total FROM payments WHERE type LIKE 'received' GROUP BY bank_id) recv", 'recv.bank_id = banks.id', 'left')
       ->join("(SELECT bank_id, SUM(amount) AS total FROM payments WHERE type LIKE 'sent' GROUP BY bank_id) sent", 'sent.bank_id = banks.id', 'left')
       ->where('banks.id', $bankId)
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       ->getRow();
 
     if ($res) {
@@ -115,14 +103,11 @@ class Bank
    */
   public static function update(int $id, array $data)
   {
-<<<<<<< HEAD
-=======
     if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
       $data['biller_id'] = $biller->id;
     }
 
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     DB::table('banks')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }

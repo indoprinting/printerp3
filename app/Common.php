@@ -61,8 +61,6 @@ function checkPermission(string $permission = NULL)
 }
 
 /**
-<<<<<<< HEAD
-=======
  * Convert JS time to PHP time or vice versa.
  */
 function dateTimeJS(string $datetime)
@@ -75,7 +73,6 @@ function dateTimeJS(string $datetime)
 }
 
 /**
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
  * Print debug output.
  */
 function dbgprint()
@@ -96,11 +93,7 @@ function dbgprint()
  */
 function filterDecimal($num)
 {
-<<<<<<< HEAD
-  return (float)preg_replace('/([^\-\.0-9Ee])/', '', $num);
-=======
   return (float)preg_replace('/([^\-\.0-9Ee])/', '', strval($num));
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
 }
 
 /**
@@ -254,8 +247,6 @@ function isLoggedIn()
 }
 
 /**
-<<<<<<< HEAD
-=======
  * Determine special customer (Privilege or TOP) by customer id.
  * @param int $customerId Customer ID.
  */
@@ -299,7 +290,6 @@ function isWeb2Print($sale_id)
 }
 
 /**
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
  * Nulling empty data.
  */
 function nulling(array $data, array $keys)
@@ -415,11 +405,7 @@ function setExpired(array $data)
 {
   if (empty($data['expired_at'])) {
     $data['expired_at']   = date('Y-m-d H:i:s', strtotime('+1 day', time()));
-<<<<<<< HEAD
-    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Obsolete
-=======
     $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Compatibility
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   }
 
   return $data;

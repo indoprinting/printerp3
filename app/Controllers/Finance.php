@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\{DataTables, FileUpload};
-<<<<<<< HEAD
-use App\Models\{Attachment, Bank, BankMutation, BankReconciliation, DB, Payment, PaymentValidation};
-=======
 use App\Models\{Attachment, Bank, BankMutation, BankReconciliation, DB, Expense, Payment, PaymentValidation};
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
 
 class Finance extends BaseController
 {
@@ -21,19 +17,11 @@ class Finance extends BaseController
   {
     checkPermission('Bank.View');
 
-<<<<<<< HEAD
-    $dt = new DataTables('bank');
-    $dt
-      ->select("bank.id AS id, bank.code, bank.name, bank.number,
-      bank.holder, bank.type, bank.amount, biller.name AS biller_name, bank.bic, bank.active")
-      ->join('biller', 'biller.code = bank.biller', 'left')
-=======
     $dt = new DataTables('banks');
     $dt
       ->select("banks.id AS id, banks.code, banks.name, banks.number,
       banks.holder, banks.type, banks.amount, biller.name AS biller_name, banks.bic, banks.active")
       ->join('biller', 'biller.id = banks.biller_id', 'left')
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -65,8 +53,6 @@ class Finance extends BaseController
       ->generate();
   }
 
-<<<<<<< HEAD
-=======
   public function getExpenses()
   {
     checkPermission('Expense.View');
@@ -116,7 +102,6 @@ class Finance extends BaseController
       ->generate();
   }
 
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   public function getMutations()
   {
     checkPermission('BankMutation.View');
@@ -167,29 +152,6 @@ class Finance extends BaseController
   {
     checkPermission('PaymentValidation.View');
 
-<<<<<<< HEAD
-    $dt = new DataTables('paymentvalidation');
-    $dt
-      ->select("paymentvalidation.id AS id, paymentvalidation.created_at,
-        paymentvalidation.reference, creator.fullname, biller.name AS biller_name,
-        IF(
-          LENGTH(customer.company),
-          CONCAT(customer.name, ' (', customer.company, ')'),
-          customer.name
-        ) AS customer_name, bank.name AS bank_name, bank.number AS bank_number,
-        paymentvalidation.amount,
-        (paymentvalidation.amount + paymentvalidation.unique) AS total,
-        paymentvalidation.expired_at, paymentvalidation.transaction_at,
-        paymentvalidation.unique,
-        paymentvalidation.note, paymentvalidation.status,
-        paymentvalidation.attachment")
-      ->join('bank', 'bank.code = paymentvalidation.bank', 'left')
-      ->join('biller', 'biller.code = paymentvalidation.biller', 'left')
-      ->join('sale', 'sale.reference = paymentvalidation.sale', 'left')
-      ->join('customer', 'customer.phone = sale.customer', 'left')
-      ->join('bankmutation', 'bankmutation.reference = paymentvalidation.mutation', 'left')
-      ->join('users creator', 'creator.id = paymentvalidation.created_by', 'left')
-=======
     $dt = new DataTables('payment_validations');
     $dt
       ->select("payment_validations.id AS id, payment_validations.created_at,
@@ -211,7 +173,6 @@ class Finance extends BaseController
       ->join('customers', 'customers.phone = sales.customer', 'left')
       ->join('bank_mutations', 'bank_mutations.reference = payment_validations.mutation', 'left')
       ->join('users creator', 'creator.id = payment_validations.created_by', 'left')
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -250,17 +211,6 @@ class Finance extends BaseController
   {
     checkPermission('BankReconciliation.View');
 
-<<<<<<< HEAD
-    $dt = new DataTables('bankreconciliation');
-    $dt
-      ->select("bank_name, number, amount_mb, amount, (amount_mb - amount) AS balance,
-        acc_name_mb, acc_name, sync_at")
-      ->editColumn('amount_mb', function ($data) {
-        return '<div class="float-right">' . formatNumber($data['amount_mb']) . '</div>';
-      })
-      ->editColumn('amount', function ($data) {
-        return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
-=======
     $dt = new DataTables('bank_reconciliations');
     $dt
       ->select("mb_bank_name, account_no, amount_mb, amount_erp, (amount_mb - amount_erp) AS balance,
@@ -270,7 +220,6 @@ class Finance extends BaseController
       })
       ->editColumn('amount_erp', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount_erp']) . '</div>';
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       })
       ->editColumn('balance', function ($data) {
         return '<div class="float-right">' . formatNumber($data['balance']) . '</div>';
@@ -347,16 +296,12 @@ class Finance extends BaseController
     checkPermission('Bank.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
-<<<<<<< HEAD
-      if (Bank::delete(['id' => $bankId])) {
-=======
       DB::transStart();
       Bank::delete(['id' => $bankId]);
       Payment::delete(['bank_id' => $bankId]);
       DB::transComplete();
 
       if (DB::transStatus()) {
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
         $this->response(200, ['message' => 'Bank has been deleted.']);
       }
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -398,8 +343,6 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Bank/edit', $this->data)]);
   }
 
-<<<<<<< HEAD
-=======
   public function expense()
   {
     if ($args = func_get_args()) {
@@ -506,7 +449,6 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Bank/edit', $this->data)]);
   }
 
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   public function mutation()
   {
     if ($args = func_get_args()) {
@@ -570,12 +512,7 @@ class Finance extends BaseController
           $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
         }
 
-<<<<<<< HEAD
-        $attachmentId = $upload->store();
-        $mutationData['attachment'] = Attachment::getRow(['id' => $attachmentId])->hashname;
-=======
         $mutationData['attachment'] = $upload->store();
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       }
 
       BankMutation::add($mutationData);
@@ -609,11 +546,7 @@ class Finance extends BaseController
       Attachment::delete(['hashname' => $mutation->attachment]);
       BankMutation::delete(['id' => $mutationId]);
       PaymentValidation::delete(['mutation' => $mutation->reference]);
-<<<<<<< HEAD
-      Payment::delete(['mutation_id' => $mutationId]);
-=======
       Payment::delete(['mutation' => $mutation->reference]);
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       DB::transComplete();
 
       if (DB::transStatus()) {

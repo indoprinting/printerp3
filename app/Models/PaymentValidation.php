@@ -11,23 +11,6 @@ class PaymentValidation
    */
   public static function add(array $data)
   {
-<<<<<<< HEAD
-    if (!empty($data['sale'])) {
-      $sale = Sale::getRow(['reference' => $data['sale']]);
-      $data['reference']  = $sale->reference;
-      $data['sale_id']    = $sale->id; // Obsolete
-    }
-
-    if (!empty($data['mutation'])) {
-      $mutation = BankMutation::getRow(['reference' => $data['mutation']]);
-      $data['reference']    = $mutation->reference;
-      $data['mutation_id']  = $mutation->id; // Obsolete
-    }
-
-    if (!empty($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id']  = $biller->id; // Obsolete
-=======
     if (isset($data['sale'])) {
       $sale = Sale::getRow(['reference' => $data['sale']]);
       $data['reference']  = $sale->reference;
@@ -43,19 +26,14 @@ class PaymentValidation
     if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
       $data['biller_id']  = $biller->id; // Compatibility.
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     }
 
     if (empty($data['status'])) {
       $data['status'] = 'pending';
     }
 
-<<<<<<< HEAD
-    $data['unique_code'] = self::getUniqueCode();
-=======
     $data['unique'] = self::getUniqueCode();
     $data['unique_code'] = $data['unique']; // Compatibility.
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
 
     $data = setCreatedBy($data);
     $data = setExpired($data);
@@ -182,11 +160,8 @@ class PaymentValidation
 
   /**
    * Validate payment validation.
-<<<<<<< HEAD
-=======
    * @param string $response Response from Mutasibank.
    * @param array $options [ sale_id, mutation_id, attachment ]
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
    */
   public static function validate(string $response, array $options = [])
   {
@@ -195,16 +170,6 @@ class PaymentValidation
     }
 
     $paymentValidated = FALSE;
-<<<<<<< HEAD
-    $mb_res = getJSON($response);
-
-    self::sync(); // Change pending payment to expired if any.
-    return true;
-    $sale_id     = ($options['sale_id'] ?? NULL);
-    $mutation_id = ($options['mutation_id'] ?? NULL);
-    $status = ($sale_id || $mutation_id ? ['expired', 'pending'] : 'pending');
-    // $status = ($sale_id || $mutation_id ? ['pending'] : 'pending'); // New
-=======
     $mbResponse = getJSON($response);
 
     self::sync(); // Change pending payment to expired if any.
@@ -213,36 +178,23 @@ class PaymentValidation
     $mutationId = ($options['mutation_id'] ?? NULL);
     // Expired required for manual validation.
     $status = ($saleId || $mutationId ? ['expired', 'pending'] : 'pending');
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     $paymentValidation = self::get(['status' => $status]);
     $validatedCount = 0;
 
     if ($paymentValidation) {
       foreach ($paymentValidation as $pv) {
-<<<<<<< HEAD
-        $accountNo  = $mb_res->account_number;
-        $dataMutasi = $mb_res->data_mutasi;
-
-        foreach ($dataMutasi as $dm) { // DM = Data Mutasi.
-          $amount_match = ((floatval($pv->amount) + floatval($pv->unique_code)) == floatval($dm->amount) ? TRUE : FALSE);
-=======
         $accountNo  = $mbResponse->account_number;
         $dataMutasi = $mbResponse->data_mutasi;
 
         foreach ($dataMutasi as $dm) { // DM = Data Mutasi.
           $amount_match = ((floatval($pv->amount) + floatval($pv->unique)) == floatval($dm->amount) ? TRUE : FALSE);
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
           // If amount same as unique_code + amount OR sale_id same OR mutation_id same
           // Executed by CRON or Manually.
           // CR(mutasibank) = Masuk ke rekening.
           // DB(mutasibank) = Keluar dari rekening.
           if (
             ($amount_match && $dm->type == 'CR') ||
-<<<<<<< HEAD
-            ($sale_id && $sale_id == $pv->sale_id) || ($mutation_id && $mutation_id == $pv->mutation_id)
-=======
             ($saleId && $saleId == $pv->sale_id) || ($mutationId && $mutationId == $pv->mutation_id)
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
           ) {
 
             $bank = Bank::getRow(['number' => $accountNo, 'biller_id' => $pv->biller_id]);
@@ -251,11 +203,7 @@ class PaymentValidation
               die('Bank not defined');
             }
 
-<<<<<<< HEAD
-            $pv_data = [
-=======
             $pvData = [
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
               'bank_id'           => $bank->id,
               'transaction_date'  => $dm->transaction_date,
               'description'       => $dm->description,
@@ -263,13 +211,6 @@ class PaymentValidation
             ];
 
             if (!empty($options['manual'])) {
-<<<<<<< HEAD
-              $pv_data = setCreatedBy($pv_data);
-              $pv_data['description'] = '(MANUAL) ' . $pv_data['description'];
-            }
-
-            if (self::update((int)$pv->id, $pv_data)) {
-=======
               $pvData = setCreatedBy($pvData);
               $pvData['description'] = '(MANUAL) ' . $pvData['description'];
             } else {
@@ -277,7 +218,6 @@ class PaymentValidation
             }
 
             if (self::update((int)$pv->id, $pvData)) {
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
               if ($pv->sale_id) { // If sale_id exists.
                 $sale = Sale::getRow(['id' => $pv->sale_id]);
 
@@ -291,11 +231,7 @@ class PaymentValidation
                   'type'            => 'received'
                 ];
 
-<<<<<<< HEAD
-                if (isset($options['attachment_id'])) $payment['attachment_id'] = $options['attachment_id'];
-=======
                 if (isset($options['attachment'])) $payment['attachment'] = $options['attachment'];
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
 
                 Sale::addPayment((int)$payment['sale_id'], $payment);
                 $customer = Customer::getRow(['id' => $sale->customer_id]);

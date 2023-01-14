@@ -29,11 +29,7 @@ class Division extends BaseController
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('division/biller/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
-<<<<<<< HEAD
-                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-=======
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
                 <i class="fad fa-fw fa-edit"></i> Edit
               </a>
               <a class="dropdown-item" href="' . base_url('division/biller/delete/' . $data['id']) . '"
