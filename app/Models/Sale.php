@@ -18,12 +18,20 @@ class Sale
   /**
    * Add sale payment.
    * @param int $saleId Sale ID.
+<<<<<<< HEAD
    * @param array $data [ *amount, *bank_id ]
+=======
+   * @param array $data [ *amount, *bank_id, attachment ]
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
    */
   public static function addPayment(int $saleId, array $data)
   {
     $sale = self::getRow(['id' => $saleId]);
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     Payment::add([
       'reference'       => $sale->reference,
       'reference_date'  => $sale->created_at,
@@ -32,6 +40,10 @@ class Sale
       'sale_id'         => $sale->id,
       'amount'          => $data['amount'],
       'type'            => 'received',
+<<<<<<< HEAD
+=======
+      'attachment'      => ($data['attachment'] ?? NULL)
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     ]);
 
     self::sync(['id' => $sale->id]);

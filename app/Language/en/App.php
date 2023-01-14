@@ -154,6 +154,11 @@ return [
   'out'                   => 'Out',
   'password'              => 'Password',
   'payment'               => 'Payment',
+<<<<<<< HEAD
+=======
+  'paymentdate'           => 'Payment Date',
+  'paymentstatus'         => 'Payment Status',
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   'paymentvalidation'     => 'Payment Validation',
   'payroll'               => 'Payroll',
   'period'                => 'Period',
@@ -235,6 +240,10 @@ return [
   'usergroups'            => 'User Groups',
   'username'              => 'Username',
   'users'                 => 'Users',
+<<<<<<< HEAD
+=======
+  'verifiedat'            => 'Verified At',
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   'view'                  => 'View',
   'viewbankaccount'       => 'View Bank Account',
   'viewbankmutation'      => 'View Bank Mutation',

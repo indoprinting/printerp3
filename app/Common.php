@@ -1,6 +1,9 @@
 <?php
 
 declare(strict_types=1);
+
+use App\Models\{Customer, CustomerGroup, User};
+
 /**
  * The goal of this file is to allow developers a location
  * where they can overwrite core procedural functions and
@@ -58,6 +61,21 @@ function checkPermission(string $permission = NULL)
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Convert JS time to PHP time or vice versa.
+ */
+function dateTimeJS(string $datetime)
+{
+  if (strlen($datetime) && strpos($datetime, 'T') !== FALSE) {
+    return str_replace('T', ' ', $datetime);
+  }
+
+  return str_replace(' ', 'T', $datetime);
+}
+
+/**
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
  * Print debug output.
  */
 function dbgprint()
@@ -78,7 +96,11 @@ function dbgprint()
  */
 function filterDecimal($num)
 {
+<<<<<<< HEAD
   return (float)preg_replace('/([^\-\.0-9Ee])/', '', $num);
+=======
+  return (float)preg_replace('/([^\-\.0-9Ee])/', '', strval($num));
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
 }
 
 /**
@@ -196,6 +218,26 @@ function isCLI()
 }
 
 /**
+ * Check if status completed. Currently 'completed', 'completed_partial' or 'delivered' as completed.
+ * @param string $status Status to check.
+ */
+function isCompleted($status)
+{
+  return ($status == 'completed' || $status == 'completed_partial' ||
+    $status == 'delivered' || $status == 'finished' ? TRUE : FALSE);
+}
+
+/**
+ * Check if due date has happened.
+ * @param string $due_date Due date
+ * @example 1 isDueDate('2020-01-20 20:40:11'); // Return FALSE if current time less then due date.
+ */
+function isDueDate($due_date)
+{
+  return (strtotime($due_date) > time() ? FALSE : TRUE);
+}
+
+/**
  * Check if current environment is same as value.
  */
 function isEnv($environment)
@@ -212,6 +254,52 @@ function isLoggedIn()
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Determine special customer (Privilege or TOP) by customer id.
+ * @param int $customerId Customer ID.
+ */
+function isSpecialCustomer($customerId)
+{
+  $customer = Customer::getRow(['id' => $customerId]);
+  $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
+
+  if ($csGroup) {
+    return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? TRUE : FALSE);
+  }
+  return FALSE;
+}
+
+/**
+ * Check if user_id is W2P or not.
+ */
+function isW2PUser($user_id)
+{
+  $user = User::getRow(['id' => $user_id]);
+
+  if ($user) {
+    return (strcasecmp($user->username, 'W2P') === 0 ? TRUE : FALSE);
+  }
+  return FALSE;
+}
+
+/**
+ * Check if invoice from W2P or note.
+ */
+function isWeb2Print($sale_id)
+{
+  $sale = Sale::getRow(['id' => $sale_id]);
+
+  if ($sale) {
+    $saleJS = getJSON($sale->json_data);
+
+    return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0 ? TRUE : FALSE);
+  }
+  return FALSE;
+}
+
+/**
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
  * Nulling empty data.
  */
 function nulling(array $data, array $keys)
@@ -327,7 +415,11 @@ function setExpired(array $data)
 {
   if (empty($data['expired_at'])) {
     $data['expired_at']   = date('Y-m-d H:i:s', strtotime('+1 day', time()));
+<<<<<<< HEAD
     $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Obsolete
+=======
+    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Compatibility
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   }
 
   return $data;

@@ -33,8 +33,8 @@ class DB
 
   public static function connect($groupName)
   {
-    self::$db = db_connect($groupName);
-    self::$qb = self::$db->table(self::$table);
+    self::$db       = db_connect($groupName);
+    self::$qb       = self::$db->table(self::$table);
     self::$instance = new self;
     return self::$instance;
   }
@@ -406,10 +406,10 @@ class DB
    */
   public static function table(string $name)
   {
-    self::$db = db_connect();
-    self::$qb = self::$db->table($name);
+    self::$db       = db_connect();
+    self::$qb       = self::$db->table($name);
     self::$instance = new self;
-    self::$table = $name;
+    self::$table    = $name;
     return self::$instance;
   }
 

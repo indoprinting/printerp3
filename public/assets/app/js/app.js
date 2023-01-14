@@ -124,10 +124,56 @@
 $(document).ready(function () {
   initControls();
 
+<<<<<<< HEAD
+=======
+  // Fix select2 on jQuery 3.6.x
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   $(document).on("select2:open", () => {
     setTimeout(() => {
       document.querySelector(".select2-container--open .select2-search__field").focus()
     }, 10);
+<<<<<<< HEAD
+=======
+  });
+
+  $(document).on('click', '[data-action="confirm"]', function (e) {
+    e.preventDefault();
+
+    let url = this.href;
+
+    Swal.fire({
+      icon: 'warning',
+      text: lang.Msg.areYouSure,
+      title: lang.Msg.areYouSure,
+      showCancelButton: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          data: {
+            __: __
+          },
+          error: (xhr) => {
+            Swal.fire({
+              icon: 'error',
+              text: xhr.responseJSON.message,
+              title: lang.App.failed
+            });
+          },
+          method: 'POST',
+          success: (data) => {
+            Swal.fire({
+              icon: 'success',
+              text: data.message,
+              title: lang.App.success
+            });
+
+            if (typeof Table !== 'undefined') Table.draw(false);
+          },
+          url: url
+        });
+      }
+    });
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   });
 
   $(document).on('click', '[data-action="darkmode"]', function () {
@@ -155,6 +201,100 @@ $(document).ready(function () {
 
       },
       url: base_url + '/setting/theme?darkmode=' + darkMode
+<<<<<<< HEAD
+=======
+    })
+  });
+
+  $(document).on('click', '[data-action="http-get"]', function (e) {
+    e.preventDefault();
+
+    let url = this.href;
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
+
+    this.dataset.progress = 'true';
+
+    $(fa).removeClass(faClass).addClass(faClassProgress);
+
+    $.ajax({
+      error: (xhr) => {
+        Swal.fire({
+          icon: 'error',
+          text: xhr.responseJSON.message,
+          title: lang.App.failed
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      method: 'GET',
+      success: (data) => {
+        Swal.fire({
+          icon: 'success',
+          text: data.message,
+          title: lang.App.success
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+
+        if (typeof Table !== 'undefined') Table.draw(false);
+      },
+      url: url
+    })
+  });
+
+  $(document).on('click', '[data-action="http-post"]', function (e) {
+    e.preventDefault();
+
+    let url = this.href;
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
+
+    this.dataset.progress = 'true';
+
+    $(fa).removeClass(faClass).addClass(faClassProgress);
+
+    $.ajax({
+      data: {
+        __: __
+      },
+      error: (xhr) => {
+        Swal.fire({
+          icon: 'error',
+          text: xhr.responseJSON.message,
+          title: lang.App.failed
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      method: 'POST',
+      success: (data) => {
+        Swal.fire({
+          icon: 'success',
+          text: data.message,
+          title: lang.App.success
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+
+        if (typeof Table !== 'undefined') Table.draw(false);
+      },
+      url: url
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     })
   });
 
@@ -252,9 +392,13 @@ $(document).ready(function () {
     $.ajax({
       error: (xhr) => {
         delete this.dataset.remote;
+<<<<<<< HEAD
         console.log(xhr.responseJSON);
         if (isObject(xhr.responseJSON)) {
           console.log('Executed');
+=======
+        if (isObject(xhr.responseJSON)) {
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
           Swal.fire({ icon: 'error', text: xhr.responseJSON.message, title: xhr.status }).then((result) => {
             $(this).modal('hide');
           });

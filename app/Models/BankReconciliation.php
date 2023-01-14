@@ -69,18 +69,23 @@ class BankReconciliation
       return FALSE;
     }
 
+<<<<<<< HEAD
     $res = json_decode($data);
 
     echo '<pre>';
     print_r($res);
     echo '</pre>';
     die;
+=======
+    $res = getJSON($data);
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
 
     if (!$res) {
       setLastError('Failed get data from api mutasibank accounts.');
       return FALSE;
     }
 
+<<<<<<< HEAD
     $banks = Bank::select('banks.number, banks.name, banks.holder, banks.type')
       ->where('active', 1)
       ->where("number <> '2222004005'")
@@ -89,6 +94,19 @@ class BankReconciliation
 
     foreach ($banks->get() as $row) { // Grouped by bank number.
       $banks = Bank::get(['active' => 1]);
+=======
+    $bankGroups = DB::table('banks')->select('number, name, holder, type')
+      ->where('active', 1)
+      ->where("number <> '2222004005'")
+      ->whereIn('type', ['EDC', 'Transfer'])
+      ->groupBy('number');
+
+    $bankGroup = $bankGroups->get();
+
+    $banks = Bank::get(['active' => 1]);
+
+    foreach ($bankGroup as $row) { // Grouped by bank number.
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       $mutasi_bank = NULL;
       $totalBalance = 0;
 
@@ -98,7 +116,11 @@ class BankReconciliation
         }
       }
 
+<<<<<<< HEAD
       foreach ($res as $mb) {
+=======
+      foreach ($res->data as $mb) {
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
         if (strcmp($mb->account_no, $row->number) === 0) {
           $mutasi_bank = $mb;
           break;
@@ -108,6 +130,7 @@ class BankReconciliation
       $recon = self::getRow(['account_no' => $row->number]);
 
       if ($recon) { // If exist, then update.
+<<<<<<< HEAD
         $recon_data = [
           'erp_acc_name' => $row->holder,
           'account_no'   => $row->number,
@@ -124,12 +147,31 @@ class BankReconciliation
         self::update((int)$recon->id, $recon_data);
       } else { // If not exist, insert new.
         $recon_data = [
+=======
+        $reconData = [
+          'erp_acc_name'  => $row->holder,
+          'account_no'    => $row->number,
+          'amount_erp'    => $totalBalance
+        ];
+
+        if ($mutasi_bank) {
+          $reconData['mb_acc_name']     = $mutasi_bank->account_name;
+          $reconData['mb_bank_name']    = $mutasi_bank->bank;
+          $reconData['amount_mb']       = $mutasi_bank->balance;
+          $reconData['last_sync_date']  = $mutasi_bank->last_bot_activity;
+        }
+
+        self::update((int)$recon->id, $reconData);
+      } else { // If not exist, insert new.
+        $reconData = [
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
           'erp_acc_name' => $row->holder,
           'account_no'   => $row->number,
           'amount_erp'   => $totalBalance
         ];
 
         if ($mutasi_bank) {
+<<<<<<< HEAD
           $recon_data['mb_acc_name']    = $mutasi_bank->account_name;
           $recon_data['mb_bank_name']   = $mutasi_bank->bank;
           $recon_data['amount_mb']      = $mutasi_bank->balance;
@@ -137,6 +179,15 @@ class BankReconciliation
         }
 
         self::add($recon_data);
+=======
+          $reconData['mb_acc_name']    = $mutasi_bank->account_name;
+          $reconData['mb_bank_name']   = $mutasi_bank->bank;
+          $reconData['amount_mb']      = $mutasi_bank->balance;
+          $reconData['last_sync_date'] = $mutasi_bank->last_bot_activity;
+        }
+
+        self::add($reconData);
+>>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
       }
     }
 
