@@ -4,11 +4,7 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-<<<<<<< HEAD
-            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('finance/reconciliation/sync') ?>" data-action="confirm" data-message="Sync Bank Reconciliation?">
-=======
             <a class="btn btn-tool bg-gradient-success" href="<?= base_url('finance/reconciliation/sync') ?>" data-action="http-get" data-message="Sync Bank Reconciliation?">
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
               <i class="fad fa-sync"></i>
             </a>
           </div>

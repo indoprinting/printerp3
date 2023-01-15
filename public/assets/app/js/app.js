@@ -124,16 +124,11 @@
 $(document).ready(function () {
   initControls();
 
-<<<<<<< HEAD
-=======
   // Fix select2 on jQuery 3.6.x
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   $(document).on("select2:open", () => {
     setTimeout(() => {
       document.querySelector(".select2-container--open .select2-search__field").focus()
     }, 10);
-<<<<<<< HEAD
-=======
   });
 
   $(document).on('click', '[data-action="confirm"]', function (e) {
@@ -173,7 +168,6 @@ $(document).ready(function () {
         });
       }
     });
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   });
 
   $(document).on('click', '[data-action="darkmode"]', function () {
@@ -201,8 +195,6 @@ $(document).ready(function () {
 
       },
       url: base_url + '/setting/theme?darkmode=' + darkMode
-<<<<<<< HEAD
-=======
     })
   });
 
@@ -294,7 +286,6 @@ $(document).ready(function () {
         if (typeof Table !== 'undefined') Table.draw(false);
       },
       url: url
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
     })
   });
 
@@ -392,13 +383,7 @@ $(document).ready(function () {
     $.ajax({
       error: (xhr) => {
         delete this.dataset.remote;
-<<<<<<< HEAD
-        console.log(xhr.responseJSON);
         if (isObject(xhr.responseJSON)) {
-          console.log('Executed');
-=======
-        if (isObject(xhr.responseJSON)) {
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
           Swal.fire({ icon: 'error', text: xhr.responseJSON.message, title: xhr.status }).then((result) => {
             $(this).modal('hide');
           });

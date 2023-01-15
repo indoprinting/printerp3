@@ -82,8 +82,6 @@ table.dataTable tbody tr {
   margin: 0 4px 0 0;
 }
 
-<<<<<<< HEAD
-=======
 @media print {
 
   .invoice {
@@ -95,7 +93,6 @@ table.dataTable tbody tr {
   border: none;
 }
 
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
 .layout-navbar-fixed .wrapper .main-header {
   z-index: 1;
 }

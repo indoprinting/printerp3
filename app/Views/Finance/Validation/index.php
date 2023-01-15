@@ -4,12 +4,6 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-<<<<<<< HEAD
-            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('finance/bank/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-              <i class="fad fa-plus-circle"></i>
-            </a>
-=======
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
           </div>
         </div>
         <div class="card-body">
@@ -28,10 +22,7 @@
                 <th><?= lang('App.total'); ?></th>
                 <th><?= lang('App.expireddate'); ?></th>
                 <th><?= lang('App.transactiondate'); ?></th>
-<<<<<<< HEAD
-=======
                 <th><?= lang('App.verifiedat'); ?></th>
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
                 <th><?= lang('App.uniquecode'); ?></th>
                 <th><?= lang('App.description'); ?></th>
                 <th><?= lang('App.status'); ?></th>
@@ -52,10 +43,7 @@
                 <th><?= lang('App.total'); ?></th>
                 <th><?= lang('App.expireddate'); ?></th>
                 <th><?= lang('App.transactiondate'); ?></th>
-<<<<<<< HEAD
-=======
                 <th><?= lang('App.verifiedat'); ?></th>
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
                 <th><?= lang('App.uniquecode'); ?></th>
                 <th><?= lang('App.description'); ?></th>
                 <th><?= lang('App.status'); ?></th>
@@ -81,11 +69,7 @@
         url: base_url + '/finance/getPaymentValidations'
       },
       columnDefs: [{
-<<<<<<< HEAD
-        targets: [0, 14],
-=======
         targets: [0, 16],
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
         orderable: false
       }],
       fixedHeader: false,

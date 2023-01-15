@@ -36,7 +36,7 @@
               <tbody>
                 <?php foreach (\App\Models\Permission::get() as $permission) : ?>
                   <tr>
-                    <?php $actions = getJSON($permission->actions); ?>
+                    <?php $actions = json_decode($permission->actions, TRUE); ?>
                     <?php if (strcasecmp($permission->name, 'All') === 0) : ?>
                       <td class="font-weight-bold"><?= lang('App.allaccess') ?></td>
                       <td></td>
