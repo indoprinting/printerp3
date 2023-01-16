@@ -62,6 +62,7 @@ return [
   'customergroup'         => 'Grup Pelanggan',
   'dailyperformance'      => 'Performa Harian',
   'dashboard'             => 'Beranda',
+  'date'                  => 'Tanggal',
   'debt'                  => 'Hutang',
   'decrease'              => 'Berkurang',
   'delete'                => 'Hapus',
@@ -152,15 +153,10 @@ return [
   'option'                => 'Opsi',
   'out'                   => 'Keluar',
   'password'              => 'Kata Sandi',
-<<<<<<< HEAD
-  'payment'               => 'Payment',
-  'paymentvalidation'     => 'Payment Validation',
-=======
   'payment'               => 'Pembayaran',
   'paymentdate'           => 'Tgl. Pembayaran',
   'paymentstatus'         => 'Status Pembayaran',
   'paymentvalidation'     => 'Validasi Pembayaran',
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   'payroll'               => 'Penggajian',
   'period'                => 'Periode',
   'permission'            => 'Izin',
@@ -242,10 +238,7 @@ return [
   'usergroups'            => 'Grup Pengguna',
   'username'              => 'Username',
   'users'                 => 'Pengguna',
-<<<<<<< HEAD
-=======
   'verifiedat'            => 'Terverifikasi Pada',
->>>>>>> 1ae6785e697272c1e35ec80607179c1cf3a00170
   'view'                  => 'Lihat',
   'viewbankaccount'       => 'Lihat Akun Bank',
   'viewbankmutation'      => 'Lihat Mutasi Bank',
