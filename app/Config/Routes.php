@@ -38,6 +38,7 @@ $routes->setAutoRoute(true);
 $routes->get('/', 'Home::index');
 $routes->add('/attachment/(:any)', 'Home::attachment/$1');
 $routes->add('/lang/(:any)', 'Home::lang/$1');
+$routes->add('/select2/(:any)', 'Home::select2/$1');
 /*
  * --------------------------------------------------------------------
  * Additional Routing
