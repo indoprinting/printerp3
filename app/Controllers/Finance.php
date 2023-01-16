@@ -59,10 +59,10 @@ class Finance extends BaseController
 
     $dt = new DataTables('expenses');
     $dt
-      ->select("expenses.id AS id, expenses.created_at, expenses.reference, biller.name AS biller_name,
+      ->select("expenses.id AS id, expenses.date, expenses.reference, biller.name AS biller_name,
         expense_categories.name AS category_name, expenses.amount, expenses.note, banks.name AS bank_name,
         creator.fullname, expenses.payment_date, expenses.status, expenses.payment_status,
-        suppliers.name AS supplier_name, expenses.attachment")
+        suppliers.name AS supplier_name, expenses.created_at, expenses.attachment")
       ->join('banks', 'banks.code = expenses.bank', 'left')
       ->join('biller', 'biller.code = expenses.biller', 'left')
       ->join('expense_categories', 'expense_categories.id = expenses.category_id', 'left')
