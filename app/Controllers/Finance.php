@@ -108,10 +108,10 @@ class Finance extends BaseController
 
     $dt = new DataTables('bank_mutations');
     $dt
-      ->select("bank_mutations.id AS id, bank_mutations.created_at, bank_mutations.reference,
+      ->select("bank_mutations.id AS id, bank_mutations.date, bank_mutations.reference,
         bankfrom.name AS bankfrom_name, bankto.name AS bankto_name,
         bank_mutations.note, bank_mutations.amount, biller.name AS biller_name,
-        creator.fullname, bank_mutations.status,
+        creator.fullname, bank_mutations.status, bank_mutations.created_at,
         bank_mutations.attachment")
       ->join('banks bankfrom', 'bankfrom.id = bank_mutations.from_bank_id', 'left')
       ->join('banks bankto', 'bankto.id = bank_mutations.to_bank_id', 'left')
@@ -561,30 +561,69 @@ class Finance extends BaseController
   {
     checkPermission('BankMutation.Edit');
 
-    $this->response(501, ['message' => 'Not implemented']);
-
     $mutation = BankMutation::getRow(['id' => $mutationId]);
 
     if (!$mutation) $this->response(404, ['message' => 'Bank Mutation is not found.']);
 
     if (requestMethod() == 'POST') {
-      $billerData = [
-        'biller'  => getPost('biller'),
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'number'  => getPost('number'),
-        'holder'  => getPost('holder'),
-        'type'    => getPost('type'),
-        'bic'     => getPost('bic'),
-        'active'  => (getPost('active') == 1 ? 1 : 0)
+      $mutationData = [
+        'date'      => dateTimeJS(getPost('date')),
+        'amount'    => filterDecimal(getPost('amount')),
+        'biller'    => getPost('biller'),
+        'bankfrom'  => getPost('bankfrom'),
+        'bankto'    => getPost('bankto'),
+        'note'      => stripTags(getPost('note'))
       ];
 
-      $this->response(400, ['message' => var_dump($billerData)]);
-
-      if (BankMutation::update((int)$mutationId, $billerData)) {
-        $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $mutation->name)]);
+      if (empty($mutationData['amount']) || $mutationData['amount'] < 1) {
+        $this->response(400, ['message' => 'Amount required.']);
       }
-      $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $mutation->name)]);
+
+      if (empty($mutationData['biller'])) {
+        $this->response(400, ['message' => 'Biller required.']);
+      }
+
+      if (empty($mutationData['bankfrom'])) {
+        $this->response(400, ['message' => 'Bank from required.']);
+      }
+
+      if (empty($mutationData['bankto'])) {
+        $this->response(400, ['message' => 'Bank to required.']);
+      }
+
+      DB::transStart();
+
+      $upload = new FileUpload();
+
+      if ($upload->has('attachment')) {
+        if ($upload->getSize('mb') > 2) {
+          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+        }
+
+        $mutationData['attachment'] = $upload->store();
+      }
+
+      // We have to add new payment validation dan last payment (if any) if amount changed.
+      if ($mutation->amount != $mutationData['amount']) {
+        Payment::delete(['mutation_id' => $mutation->id]);
+        $mutationData['status'] = 'waiting_transfer';
+
+        PaymentValidation::add([
+          'mutation'    => $mutationData['reference'],
+          'amount'      => $mutationData['amount'],
+          'biller'      => $mutationData['biller'],
+          'attachment'  => ($mutationData['attachment'] ?? NULL)
+        ]);
+      }
+
+      BankMutation::update((int)$mutationId, $mutationData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => sprintf(lang('Msg.mutationEditOK'), $mutation->reference)]);
+      }
+      $this->response(400, ['message' => sprintf(lang('Msg.mutationEditNO'), $mutation->reference)]);
     }
 
     $this->data['mutation'] = $mutation;

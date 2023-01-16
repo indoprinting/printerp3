@@ -14,7 +14,7 @@
             <thead>
               <tr>
                 <th class="col-sm-1"></th>
-                <th><?= lang('App.createdat'); ?></th>
+                <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
                 <th><?= lang('App.from'); ?></th>
                 <th><?= lang('App.to'); ?></th>
@@ -23,13 +23,14 @@
                 <th><?= lang('App.biller'); ?></th>
                 <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.status'); ?></th>
+                <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </thead>
             <tfoot>
               <tr>
                 <th></th>
-                <th><?= lang('App.createdat'); ?></th>
+                <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
                 <th><?= lang('App.from'); ?></th>
                 <th><?= lang('App.to'); ?></th>
@@ -38,6 +39,7 @@
                 <th><?= lang('App.biller'); ?></th>
                 <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.status'); ?></th>
+                <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </tfoot>
