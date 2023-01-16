@@ -32,8 +32,6 @@ class BankMutation
     $data['date'] = $data['created_at']; // Compatibility.
     $data['reference'] = OrderRef::getReference('mutation');
 
-    DB::transStart();
-
     DB::table('bank_mutations')->insert($data);
     $insertID = DB::insertID();
 
@@ -49,8 +47,6 @@ class BankMutation
 
       self::update((int)$insertID, ['status' => 'waiting_transfer']);
     }
-
-    DB::transComplete();
 
     return $insertID;
   }
