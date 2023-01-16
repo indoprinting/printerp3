@@ -238,7 +238,7 @@ class Finance extends BaseController
       }
     }
 
-    checkPermission('Bank.View');
+    checkPermission('BankAccount.View');
 
     $this->data['page'] = [
       'bc' => [
@@ -254,7 +254,7 @@ class Finance extends BaseController
 
   protected function bank_add()
   {
-    checkPermission('Bank.Add');
+    checkPermission('BankAccount.Add');
 
     if (requestMethod() == 'POST') {
       $billerData = [
@@ -293,7 +293,7 @@ class Finance extends BaseController
 
   protected function bank_delete($bankId = NULL)
   {
-    checkPermission('Bank.Delete');
+    checkPermission('BankAccount.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
       DB::transStart();
@@ -311,7 +311,7 @@ class Finance extends BaseController
 
   protected function bank_edit($bankId = NULL)
   {
-    checkPermission('Bank.Edit');
+    checkPermission('BankAccount.Edit');
 
     $bank = Bank::getRow(['id' => $bankId]);
 
