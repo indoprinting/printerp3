@@ -69,6 +69,10 @@ function dateTimeJS(string $datetime)
     return str_replace('T', ' ', $datetime);
   }
 
+  if (empty($datetime)) {
+    return date('Y-m-d H:i:s');
+  }
+
   return str_replace(' ', 'T', $datetime);
 }
 
