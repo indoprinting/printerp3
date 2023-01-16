@@ -75,7 +75,7 @@ class Finance extends BaseController
               <i class="fad fa-page"></i>
             </a>
             <div class="dropdown-menu">
-              <a class="dropdown-item" href="' . base_url('finance/bank/edit/' . $data['id']) . '"
+              <a class="dropdown-item" href="' . base_url('finance/expense/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> Edit
@@ -296,6 +296,12 @@ class Finance extends BaseController
     checkPermission('BankAccount.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
+      $bank = Bank::getRow(['id' => $bankId]);
+
+      if (!$bank) {
+        $this->response(404, ['message' => 'Bank is not found.']);
+      }
+
       DB::transStart();
       Bank::delete(['id' => $bankId]);
       Payment::delete(['bank_id' => $bankId]);
@@ -374,18 +380,43 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $expenseData = [
+        'date'        => dateTimeJS(getPost('date')),
         'biller'      => getPost('biller'),
         'category'    => getPost('category'),
         'supplier'    => getPost('supplier'),
         'bank'        => getPost('bank'),
         'amount'      => filterDecimal(getPost('amount')),
         'note'        => stripTags(getPost('note')),
-        'created_at'  => dateTimeJS(getPost('created_at'))
+        'created_at'  => date('Y-m-d H:i:s')
       ];
 
-      $this->response(400, ['data' => json_encode($expenseData)]);
+      if (empty($expenseData['biller'])) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
 
-      if (Expense::add($expenseData)) {
+      if (empty($expenseData['category'])) {
+        $this->response(400, ['message' => 'Category is required.']);
+      }
+
+      if (empty($expenseData['supplier'])) {
+        $this->response(400, ['message' => 'Supplier is required.']);
+      }
+
+      if (empty($expenseData['bank'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($expenseData['amount'])) {
+        $this->response(400, ['message' => 'Amount is required.']);
+      }
+
+      DB::transStart();
+
+      Expense::add($expenseData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(201, ['message' => 'Expense has been added.']);
       }
 
