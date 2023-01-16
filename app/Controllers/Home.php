@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{Attachment, Locale, User};
+use App\Models\{Attachment, Customer, Locale, Supplier, User};
 
 class Home extends BaseController
 {
@@ -27,7 +27,7 @@ class Home extends BaseController
   {
     $download = getGet('d');
     $attachment = Attachment::getRow(['hashname' => $hashName]);
-    
+
     if ($attachment) {
       if ($download == 1) {
         header("Content-Disposition: attachment; filename=\"{$attachment->filename}\"");
@@ -73,5 +73,38 @@ class Home extends BaseController
     $log->write($this->request->getRawInput());
 
     echo "OK";
+  }
+
+  public function select2($mode = NULL)
+  {
+    $mode = strtolower($mode);
+    $results = [];
+    $term = getGet('term');
+
+    switch ($mode) {
+      case 'customer':
+        $q = Customer::select("id, (CASE WHEN company IS NOT NULL THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
+          ->limit(10);
+
+        if ($term) {
+          $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+        }
+
+        $results = $q->get();
+
+        break;
+      case 'supplier':
+        $q = Supplier::select("id, (CASE WHEN company IS NOT NULL THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
+          ->limit(10);
+
+        if ($term) {
+          $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+        }
+
+        $results = $q->get();
+
+        break;
+    }
+    $this->response(200, ['results' => $results]);
   }
 }
