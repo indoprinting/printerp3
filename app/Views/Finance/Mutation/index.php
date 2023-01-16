@@ -62,7 +62,7 @@
         url: base_url + '/finance/getMutations'
       },
       columnDefs: [{
-        targets: [0, 10],
+        targets: [0, 11],
         orderable: false
       }],
       fixedHeader: false,
