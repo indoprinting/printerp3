@@ -14,14 +14,14 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="created_at"><?= lang('App.createdat') ?> *</label>
-                  <input type="datetime-local" id="created_at" name="created_at" class="form-control form-control-border form-control-sm">
+                  <label for="date"><?= lang('App.date') ?> *</label>
+                  <input type="datetime-local" id="date" name="date" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style=" width:100%">
+                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
                     <option value=""></option>
                     <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
                       <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
@@ -70,7 +70,14 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-12">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="supplier"><?= lang('App.supplier') ?></label>
+                  <select id="supplier" name="supplier" class="select-supplier" data-placeholder="<?= lang('App.supplier') ?>" style="width:100%">
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
                 <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">

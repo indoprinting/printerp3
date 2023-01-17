@@ -26,10 +26,25 @@ class Expense
       $data['category_id'] = $category->id;
     }
 
+    if (isset($data['supplier'])) { // Compatibility.
+      $supplier = Supplier::getRow(['id' => $data['supplier']]);
+      $data['supplier_id'] = $supplier->id;
+      unset($data['supplier']);
+    }
+
     $data = setCreatedBy($data);
+    $data['reference'] = OrderRef::getReference('expense');
+    $data['status'] = 'pending';
+    $data['payment_status'] = 'need_approval';
 
     DB::table('expenses')->insert($data);
-    return DB::insertID();
+    $insertID = DB::insertID();
+
+    if ($insertID) {
+      OrderRef::updateReference('expense');
+    }
+
+    return $insertID;
   }
 
   /**
