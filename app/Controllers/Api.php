@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{PaymentValidation, Sale};
+use App\Models\{DB, PaymentValidation, Sale, Voucher};
 
 class Api extends BaseController
 {
@@ -153,5 +153,164 @@ class Api extends BaseController
     } else {
       $this->response(406, ['message' => 'Not Validated']);
     }
+  }
+
+  protected function v1_voucher($mode = NULL)
+  {
+    if (requestMethod() == 'POST') {
+      if (!$mode) {
+        $this->voucher_add();
+      } else if ($mode == 'delete') {
+        $this->voucher_delete();
+      } else if ($mode == 'use') {
+        $this->voucher_use();
+      }
+    }
+
+    $code = getGet('code');
+
+    if (!$code) {
+      $this->response(400, ['message' => 'Voucher code is required.']);
+    }
+
+    $voucher = Voucher::getRow(['code' => $code]);
+
+    if ($voucher) {
+      $this->response(200, ['data' => [
+        'code'        => $voucher->code,
+        'name'        => $voucher->name,
+        'amount'      => floatval($voucher->amount),
+        'quota'       => floatval($voucher->quota),
+        'valid_from'  => $voucher->valid_from,
+        'valid_to'    => $voucher->valid_to
+      ]]);
+    }
+
+    $this->response(404, ['message' => 'Voucher is not found.']);
+  }
+
+  protected function voucher_add()
+  {
+    $code       = getPost('code');
+    $name       = getPost('name');
+    $amount     = getPost('amount');
+    $quota      = getPost('quota');
+    $validFrom  = getPost('valid_from');
+    $validTo    = getPost('valid_to');
+
+    $voucher = Voucher::getRow(['code' => $code]);
+
+    if ($voucher) {
+      $this->response(400, ['message' => 'Voucher code is already present.']);
+    }
+
+    if (!$code) {
+      $this->response(400, ['message' => 'Voucher code is required.']);
+    }
+
+    if (!$name) {
+      $this->response(400, ['message' => 'Voucher name is required.']);
+    }
+
+    if (!$amount) {
+      $this->response(400, ['message' => 'Voucher amount is required.']);
+    }
+
+    if (!strtotime($validFrom)) {
+      $this->response(400, ['message' => 'Voucher valid_from is invalid.']);
+    }
+
+    // $this->response(400, ['valid_from' => $validFrom, 'valid_to' => $validTo]);
+
+    if (!strtotime($validTo)) {
+      $this->response(400, ['message' => 'Voucher valid_to is invalid.']);
+    }
+
+    $data = [
+      'code'        => $code,
+      'name'        => $name,
+      'amount'      => floatval($amount),
+      'quota'       => floatval($quota ? $quota : 1),
+      'valid_from'  => ($validFrom ? $validFrom : date('Y-m-d H:i:s')),
+      'valid_to'    => ($validTo ? $validTo : date('Y-m-d H:i:s', strtotime('+1 day')))
+    ];
+
+    DB::transStart();
+
+    Voucher::add($data);
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(201, ['message' => 'Voucher has been created.', 'data' => $data]);
+    }
+
+    $this->response(400, ['message' => 'Failed to create voucher.']);
+  }
+
+  protected function voucher_delete()
+  {
+    $code = getPost('code');
+
+    $voucher = Voucher::getRow(['code' => $code]);
+
+    if (!$voucher) {
+      $this->response(404, ['message' => 'Voucher is not found.']);
+    }
+
+    DB::transStart();
+
+    Voucher::delete(['code' => $code]);
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Voucher has been deleted.']);
+    }
+
+    $this->response(400, ['message' => 'Failed to delete voucher']);
+  }
+
+  protected function voucher_use()
+  {
+    $code = getPost('code');
+    $invoice = getPost('invoice');
+
+    $voucher  = Voucher::getRow(['code' => $code]);
+    $sale     = Sale::getRow(['reference' => $invoice]);
+
+    if (!$voucher) {
+      $this->response(404, ['message' => 'Voucher is not found.']);
+    }
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    if (strtotime($voucher->valid_from) > time()) {
+      $this->response(400, ['message' => 'Voucher is too early to be used.']);
+    }
+
+    if (strtotime($voucher->valid_to) < time()) {
+      $this->response(400, ['message' => 'Voucher has been expired.']);
+    }
+
+    if (intval($voucher->quota) == 0) {
+      $this->response(400, ['message' => 'Voucher quota has been exceeded']);
+    }
+
+    DB::transStart();
+
+    Sale::update((int)$sale->id, ['discount' => $voucher->amount]);
+    Sale::sync(['id' => $sale->id]);
+    Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1]);
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Voucher has been used.']);
+    }
+
+    $this->response(400, ['message' => 'Failed to use voucher.']);
   }
 }
