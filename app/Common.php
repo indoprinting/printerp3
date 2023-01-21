@@ -92,6 +92,14 @@ function dbgprint()
 }
 
 /**
+ * Format date to readable date.
+ */
+function formatDate(string $dateTime)
+{
+  return date('d M Y H:i:s', strtotime($dateTime));
+}
+
+/**
  * Filter number string into float.
  * @param mixed $num Number string.
  */
@@ -257,6 +265,11 @@ function isLoggedIn()
 function isSpecialCustomer($customerId)
 {
   $customer = Customer::getRow(['id' => $customerId]);
+
+  if (!$customer) {
+    return FALSE;
+  }
+
   $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
@@ -391,7 +404,6 @@ function sendJSON($data, $options = [])
 function setCreatedBy(array $data)
 {
   $data['created_at'] = ($data['created_at'] ?? date('Y-m-d H:i:s'));
-  $data['date'] = $data['created_at']; // Obsolete
 
   if (empty($data['created_by']) && isLoggedIn()) {
     $data['created_by'] = session('login')->user_id;
