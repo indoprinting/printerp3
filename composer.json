@@ -12,7 +12,9 @@
     "minimum-stability": "stable",
     "require": {
         "codeigniter4/framework": "^4.2",
-        "phpoffice/phpspreadsheet": "^1.25",
-        "google/apiclient": "^2.12"
+        "google/apiclient": "^2.12",
+        "kint-php/kint": "^5.0",
+        "php": ">=7.4",
+        "phpoffice/phpspreadsheet": "^1.25"
     }
 }
