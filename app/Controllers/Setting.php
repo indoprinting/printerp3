@@ -36,17 +36,18 @@ class Setting extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('setting/permission/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('setting/permission/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';

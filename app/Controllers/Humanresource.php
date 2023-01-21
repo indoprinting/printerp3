@@ -27,17 +27,18 @@ class Humanresource extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('humanresource/customer/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('humanresource/customer/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -75,17 +76,18 @@ class Humanresource extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('humanresource/customergroup/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('humanresource/customergroup/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -117,17 +119,18 @@ class Humanresource extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('humanresource/supplier/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('humanresource/supplier/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -146,17 +149,18 @@ class Humanresource extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('humanresource/usergroup/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('humanresource/usergroup/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -203,7 +207,7 @@ class Humanresource extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('humanresource/user/edit/' . $data['id']) . '"
@@ -211,14 +215,15 @@ class Humanresource extends BaseController
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
-              <a class="dropdown-item" href="' . base_url('humanresource/user/delete/' . $data['id']) . '"
-                data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
-              </a>
               <a class="dropdown-item" href="' . base_url('humanresource/user/view/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalDefault"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('humanresource/user/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -321,6 +326,7 @@ class Humanresource extends BaseController
     if (Customer::delete(['id' => $customerId])) {
       $this->response(200, ['message' => lang('Msg.customerDeleteOK')]);
     }
+
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
   }
 
@@ -350,6 +356,7 @@ class Humanresource extends BaseController
       if (Customer::update((int)$customerId, $customerData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.customerEditOK'), $customer->name)]);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
@@ -418,6 +425,7 @@ class Humanresource extends BaseController
     if (CustomerGroup::delete(['id' => $customerGroupId])) {
       $this->response(200, ['message' => lang('Msg.customerGroupDeleteOK')]);
     }
+
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
   }
 
@@ -441,6 +449,7 @@ class Humanresource extends BaseController
       if (CustomerGroup::update((int)$customerGroupId, $customerGroupData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.customerGroupEditOK'), $customerGroup->name)]);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
@@ -518,8 +527,10 @@ class Humanresource extends BaseController
       if (UserGroup::delete(['id' => $userGroupId])) {
         $this->response(200, ['message' => 'User group has been deleted.']);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
+
     $this->response(400, ['message' => 'Failed to delete user group.']);
   }
 
@@ -538,6 +549,7 @@ class Humanresource extends BaseController
       if (UserGroup::update((int)$userGroup->id, $userGroupData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.userGroupEditOK'), $userGroup->name)]);
       }
+
       $this->response(400, ['message' => sprintf(lang('Msg.userGroupEditNO'), $userGroup->name)]);
     }
 
@@ -627,6 +639,7 @@ class Humanresource extends BaseController
     if (User::delete(['id' => $userId])) {
       $this->response(200, ['message' => lang('Msg.userDeleteOK')]);
     }
+
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
   }
 
@@ -681,6 +694,7 @@ class Humanresource extends BaseController
       if (User::update((int)$userId, $userData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.userEditOK'), $user->fullname)]);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
@@ -773,6 +787,7 @@ class Humanresource extends BaseController
     if (Supplier::delete(['id' => $supplierId])) {
       $this->response(200, ['message' => lang('Msg.supplierDeleteOK')]);
     }
+
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
   }
 
@@ -810,6 +825,7 @@ class Humanresource extends BaseController
       if (Supplier::update((int)$supplierId, $supplierData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.supplierEditOK'), $supplier->name)]);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 

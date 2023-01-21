@@ -29,7 +29,6 @@ class BankMutation
     }
 
     $data = setCreatedBy($data);
-    $data['date'] = $data['created_at']; // Compatibility.
     $data['reference'] = OrderRef::getReference('mutation');
 
     DB::table('bank_mutations')->insert($data);

@@ -34,17 +34,21 @@ class Expense
 
     $data = setCreatedBy($data);
     $data['reference'] = OrderRef::getReference('expense');
-    $data['status'] = 'pending';
-    $data['payment_status'] = 'need_approval';
+    $data['status'] = 'need_approval';
+    $data['payment_status'] = 'pending';
 
     DB::table('expenses')->insert($data);
     $insertID = DB::insertID();
 
     if ($insertID) {
       OrderRef::updateReference('expense');
+
+      return $insertID;
     }
 
-    return $insertID;
+    setLastError(DB::error()['message']);
+
+    return FALSE;
   }
 
   /**
@@ -88,6 +92,26 @@ class Expense
    */
   public static function update(int $id, array $data)
   {
+    if (isset($data['bank'])) { // Compatibility.
+      $bank = Bank::getRow(['code' => $data['bank']]);
+      $data['bank_id'] = $bank->id;
+    }
+
+    if (isset($data['biller'])) { // Compatibility.
+      $biller = Biller::getRow(['code' => $data['biller']]);
+      $data['biller_id'] = $biller->id;
+    }
+
+    if (isset($data['category'])) { // Compatibility.
+      $category = ExpenseCategory::getRow(['code' => $data['category']]);
+      $data['category_id'] = $category->id;
+    }
+
+    if (isset($data['supplier'])) { // Compatibility.
+      $supplier = Supplier::getRow(['id' => $data['supplier']]);
+      $data['supplier_id'] = $supplier->id;
+    }
+
     DB::table('expenses')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }

@@ -726,7 +726,15 @@
   <script src="<?= base_url() ?>/assets/modules/select2/js/select2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/sweetalert2/sweetalert2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/toastr/toastr.min.js"></script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDP-hGcct-nQS50RHHdXjwXgNxi71jRaU8&libraries=places&v=weekly"></script>
+  <script>
+    /**
+     * Not Used. Required by google maps.
+     */
+    function initmap() {
+
+    }
+  </script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDP-hGcct-nQS50RHHdXjwXgNxi71jRaU8&libraries=places&v=weekly&callback=initmap"></script>
   <!-- AdminLTE App -->
   <script src="<?= base_url() ?>/assets/dist/js/adminlte.min.js"></script>
   <!-- Custom -->

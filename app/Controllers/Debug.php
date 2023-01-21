@@ -20,6 +20,13 @@ class Debug extends BaseController
     ]);
   }
 
+  public function datetime()
+  {
+    $dt = date('Y-m-d H:i:s', strtotime('2023-01-20LSDFJ17:00:00'));
+
+    dd($dt);
+  }
+
   public function modal()
   {
     $this->response(200, [

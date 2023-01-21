@@ -1,5 +1,5 @@
 <div class="modal-header bg-gradient-dark">
-  <h5 class="modal-title"><i class="fad fa-user-plus"></i> <?= $title ?></h5>
+  <h5 class="modal-title"><i class="fad fa-fw fa-user-plus"></i> <?= $title ?></h5>
   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
@@ -14,16 +14,8 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="date"><?= lang('App.date') ?> *</label>
+                  <label for="date"><?= lang('App.date') ?></label>
                   <input type="datetime-local" id="date" name="date" class="form-control form-control-border form-control-sm" value="<?= dateTimeJS($mutation->date) ?>">
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $mutation->amount ?>">
                 </div>
               </div>
               <div class="col-md-6">
@@ -40,7 +32,13 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-12">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="amount"><?= lang('App.amount') ?> *</label>
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $mutation->amount ?>">
+                </div>
+              </div>
+              <div class="col-md-6">
                 <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
