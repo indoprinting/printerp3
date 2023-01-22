@@ -1,52 +1,88 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="col-lg-6">
+    <div class="col-md-12">
       <div class="card">
         <div class="card-header">
-          <h5 class="card-title">Weekly Sales</h5>
+          <h5 class="card-title">Monthly Sales</h5>
         </div>
         <div class="card-body">
-            <canvas id="weekly-sales-chart" height="200" width="400"></canvas>
+          <canvas id="monthly-sales-chart"></canvas>
         </div>
       </div>
-
-      <div class="card card-primary card-outline">
-        <div class="card-body">
-          <h5 class="card-title">Card title</h5>
-
-          <p class="card-text">
-            Some quick example text to build on the card title and make up the bulk of the card's
-            content.
-          </p>
-          <a href="#" class="card-link">Card link</a>
-          <a href="#" class="card-link">Another link</a>
-        </div>
-      </div><!-- /.card -->
     </div>
-    <!-- /.col-md-6 -->
   </div>
-  <!-- /.row -->
-</div><!-- /.container-fluid -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title">Target Revenue</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="target-revenue-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
   $(function() {
-    window.weeklySales = new Chart('weekly-sales-chart', {
+    window.chartMonthlySales = new Chart('monthly-sales-chart', {
       type: 'bar',
-      data: {
-        labels: ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'AHAD'],
-        datasets: [{
-            label: 'Grand Total',
-            backgroundColor: '#007bff',
-            borderColor: '#007bff',
-            data: [1000, 2000, 3000, 2500, 2700, 2500, 3000]
-          },
-          {
-            label: 'Balance',
-            backgroundColor: '#ced4da',
-            borderColor: '#ced4da',
-            data: [700, 1700, 2700, 2000, 1800, 1500, 2000]
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            ticks: {
+              callback: function(value, index, ticks) {
+                return '$' + value;
+              }
+            }
           }
-        ]
+        }
       }
     });
+
+    window.chartTargetRevenue = new Chart('target-revenue-chart', {
+      type: 'bar',
+      options: {
+        responsive: true
+      }
+    });
+  });
+
+  $(document).ready(function() {
+    fetch(base_url + '/chart/monthlySales', {
+      method: 'GET'
+    }).then(response => response.json()).then((response) => {
+      chartMonthlySales.data.labels = response.data.labels;
+      chartMonthlySales.data.datasets = response.data.datasets;
+      chartMonthlySales.update();
+    });
+
+    fetch(base_url + '/chart/targetRevenue', {
+      method: 'GET'
+    }).then(response => response.json()).then((response) => {
+      chartTargetRevenue.data.labels = response.data.labels;
+      chartTargetRevenue.data.datasets = response.data.datasets;
+      chartTargetRevenue.update();
+    });
+
+    let hChart = setInterval(async () => {
+      fetch(base_url + '/chart/monthlySales', {
+        method: 'GET'
+      }).then(response => response.json()).then((response) => {
+        chartMonthlySales.data.labels = response.data.labels;
+        chartMonthlySales.data.datasets = response.data.datasets;
+        chartMonthlySales.update();
+      });
+
+      fetch(base_url + '/chart/targetRevenue', {
+        method: 'GET'
+      }).then(response => response.json()).then((response) => {
+        chartTargetRevenue.data.labels = response.data.labels;
+        chartTargetRevenue.data.datasets = response.data.datasets;
+        chartTargetRevenue.update();
+      });
+    }, 1000 * 60);
   });
 </script>
