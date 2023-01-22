@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{Attachment, Customer, Locale, Supplier, User};
+use App\Models\{Attachment, Biller, Customer, DB, Locale, ProductTransfer, Sale, Supplier, User};
 
 class Home extends BaseController
 {
@@ -46,6 +46,129 @@ class Home extends BaseController
     }
   }
 
+  public function chart($mode = NULL)
+  {
+    if (!$mode) {
+      $this->response(400, ['message' => 'Bad request.']);
+    }
+
+    $data = [];
+
+    switch ($mode) {
+      case 'monthlySales':
+        $data = $this->getMonthlySales();
+        break;
+      case 'targetRevenue':
+        $data = $this->getTargetRevenue();
+    }
+
+    $this->response(200, ['data' => $data]);
+  }
+
+  protected function getMonthlySales()
+  {
+    $labels       = [];
+    $grandTotals  = [];
+    $paids        = [];
+    $balances     = [];
+
+    // 12 = 12 month ago, if 24 then take data from 24 month ago.
+    for ($a = 12; $a >= 0; $a--) {
+      $dateMonth = date('Y-m', strtotime('-' . $a . ' month', strtotime(date('Y-m-') . '01')));
+
+      $row = DB::table('sales')
+        ->select("COALESCE(SUM(grand_total), 0) AS total, COALESCE(SUM(paid), 0) AS total_paid, COALESCE(SUM(balance), 0) AS total_balance")
+        ->where("date LIKE '{$dateMonth}%'")
+        ->getRow();
+
+      if ($row) {
+        $total          = $row->total;
+        $total_paid     = $row->total_paid;
+        $total_balance  = $row->total_balance;
+
+        $labels[]       = date('Y M', strtotime($dateMonth));
+        $grandTotals[]  = $total;
+        $paids[]        = $total_paid;
+        $balances[]     = $total_balance;
+      }
+    }
+
+    return [
+      'labels' => $labels,
+      'datasets' => [
+        [
+          'label' => 'Grand Total',
+          'backgroundColor' => '#0000ff',
+          'data' => $grandTotals
+        ],
+        [
+          'label' => 'Paid',
+          'backgroundColor' => '#00ff00',
+          'data' => $paids
+        ],
+        [
+          'label' => 'Balance',
+          'backgroundColor' => '#ff0000',
+          'data' => $balances
+        ],
+      ]
+    ];
+  }
+
+  protected function getTargetRevenue()
+  {
+    $labels   = [];
+    $targets  = [];
+    $revenues = [];
+    $paids = [];
+    $startDate  = date('Y-m-') . '01';
+    $endDate    = date('Y-m-d');
+
+    $billers = Biller::get(['active' => 1]);
+
+    foreach ($billers as $biller) {
+      $billerJS = getJSON($biller->json);
+
+      if (strcasecmp($biller->code, 'LUC') != 0) {
+        $inv = Sale::select('SUM(grand_total) AS revenue, SUM(paid) AS paid')
+        ->where('biller', $biller->code)
+        ->where("date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
+        ->notLike('status', 'need_payment')
+        ->getRow();
+      } else { // Lucretai
+        $inv = ProductTransfer::select('SUM(grand_total) AS revenue, SUM(paid) AS paid')
+        ->where("date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
+        ->getRow();
+      }
+
+      $labels[]   = $biller->name;
+      $targets[]  = $billerJS->target;
+      $revenues[] = $inv->revenue;
+      $paids[]    = $inv->paid;
+    }
+
+    return [
+      'labels' => $labels,
+      'datasets' => [
+        [
+          'label' => 'Target',
+          'backgroundColor' => '#0080ff',
+          'data' => $targets
+        ],
+        [
+          'label' => 'Revenue',
+          'backgroundColor' => '#ff8000',
+          'data' => $revenues
+        ],
+        [
+          'label' => 'Paid',
+          'backgroundColor' => '#00ff00',
+          'data' => $paids
+        ],
+      ]
+    ];
+  }
+
   public function lang($localeCode = 'id')
   {
     checkPermission();
@@ -77,6 +200,10 @@ class Home extends BaseController
 
   public function select2($mode = NULL)
   {
+    if (!$mode) {
+      $this->response(400, ['message' => 'Bad request.']);
+    }
+
     $mode = strtolower($mode);
     $results = [];
     $term = getGet('term');
