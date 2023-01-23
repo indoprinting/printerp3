@@ -183,6 +183,7 @@ class FileUpload
 
   /**
    * Store file with random name to attachment table as BLOB.
+   * @return string Return stored hashname.
    */
   public function storeRandom()
   {

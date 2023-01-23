@@ -13,6 +13,10 @@
   border-bottom: 2px solid purple;
 }
 
+.input-group {
+  flex-wrap: nowrap;
+}
+
 select.is-invalid ~ .select2-container .select2-selection {
   border-color: red;
 }

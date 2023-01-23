@@ -21,6 +21,26 @@ class Bank
   }
 
   /**
+   * Decrease amount.
+   * @param int $bankId Bank ID.
+   * @param float $amount Amount (positive) to decrease.
+   */
+  public static function amountDecrease(int $bankId, float $amount)
+  {
+    return self::update($bankId, ['amount' => self::getRow(['id' => $bankId])->amount - $amount]);
+  }
+
+  /**
+   * Increase amount.
+   * @param int $bankId Bank ID.
+   * @param float $amount Amount (positive) to increase.
+   */
+  public static function amountIncrease(int $bankId, float $amount)
+  {
+    return self::update($bankId, ['amount' => self::getRow(['id' => $bankId])->amount + $amount]);
+  }
+
+  /**
    * Get bank balance.
    */
   public static function balance(int $bankId)

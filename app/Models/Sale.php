@@ -18,7 +18,7 @@ class Sale
   /**
    * Add sale payment.
    * @param int $saleId Sale ID.
-   * @param array $data [ *amount, *bank_id ]
+   * @param array $data [ *amount, *bank_id, attachment ]
    */
   public static function addPayment(int $saleId, array $data)
   {
@@ -32,6 +32,7 @@ class Sale
       'sale_id'         => $sale->id,
       'amount'          => $data['amount'],
       'type'            => 'received',
+      'attachment'      => ($data['attachment'] ?? NULL)
     ]);
 
     self::sync(['id' => $sale->id]);
@@ -81,20 +82,15 @@ class Sale
 
     // $this->syncPaymentValidations(); // Cause memory crash (looping).
 
-    if (!empty($clause['sale_id'])) {
-      $saleType = gettype($clause['sale_id']);
-
-      if ($saleType == 'array') {
-        $sales = $clause['sale_id'];
-      } else if ($saleType == 'integer' || $saleType == 'string') {
-        if ($sale = self::getRow(['id' => $clause['sale_id']])) {
-          $sales[] = $sale;
+    if (!empty($clause)) {
+      if (isset($clause['id']) && is_array($clause['id'])) {
+        foreach ($clause['id'] as $id) {
+          $sales[] = self::getRow(['id' => $id]);
         }
       } else {
-        setLastError("Sale::sync() Unknown data type '" . gettype($clause['sale_id']) . "'");
-        return FALSE;
+        $sales = self::get($clause);
       }
-    } else { // Default if sale_id is NULL.
+    } else { // Default if id is NULL.
       $sales = self::get();
     }
 

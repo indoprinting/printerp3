@@ -9,7 +9,6 @@
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/fontawesome/css/all.min.css">
   <!-- Third party -->
-  <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/chart.js/Chart.min.css">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/datatables/datatables.min.css">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/flag-icon/css/flag-icon.min.css">
@@ -716,7 +715,7 @@
   <!-- Application -->
   <script src="<?= base_url() ?>/assets/modules/bootstrap-validate/bootstrap-validate.js"></script>
   <script src="<?= base_url() ?>/assets/modules/bs-custom-file-input/bs-custom-file-input.min.js"></script>
-  <script src="<?= base_url() ?>/assets/modules/chart.js/Chart.min.js"></script>
+  <script src="<?= base_url() ?>/assets/modules/chart.js/chart.umd.js"></script>
   <script src="<?= base_url() ?>/assets/modules/datatables/datatables.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/fullcalendar/lib/main.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/icheck/icheck.min.js"></script>
@@ -726,7 +725,15 @@
   <script src="<?= base_url() ?>/assets/modules/select2/js/select2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/sweetalert2/sweetalert2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/toastr/toastr.min.js"></script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDP-hGcct-nQS50RHHdXjwXgNxi71jRaU8&libraries=places&v=weekly"></script>
+  <script>
+    /**
+     * Not Used. Required by google maps.
+     */
+    function initmap() {
+
+    }
+  </script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDP-hGcct-nQS50RHHdXjwXgNxi71jRaU8&libraries=places&v=weekly&callback=initmap"></script>
   <!-- AdminLTE App -->
   <script src="<?= base_url() ?>/assets/dist/js/adminlte.min.js"></script>
   <!-- Custom -->

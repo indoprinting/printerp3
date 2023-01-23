@@ -62,11 +62,13 @@ class Auth extends BaseController
       if (isAJAX()) {
         $this->response(200, ['message' => 'Logout success']);
       }
+
       return redirect()->to('auth/login');
     } else {
       if (isAJAX()) {
         $this->response(200, ['message' => 'Logout success']);
       }
+
       return redirect()->to('auth/login');
     }
   }

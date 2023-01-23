@@ -231,6 +231,20 @@ function initControls() {
     $('.select-allow-clear').select2({ allowClear: true });
     $('.select-tags').select2({ tags: true });
     $('.select-allow-clear-tags').select2({ allowClear: true, tags: true });
+    $('.select-customer').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/customer'
+      }
+    });
+    $('.select-supplier').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/supplier'
+      }
+    });
   }
 
   if (isFunction('$.fn.datepicker')) {

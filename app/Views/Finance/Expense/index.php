@@ -14,7 +14,7 @@
             <thead>
               <tr>
                 <th class="col-sm-1"></th>
-                <th><?= lang('App.createdat'); ?></th>
+                <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
                 <th><?= lang('App.biller'); ?></th>
                 <th><?= lang('App.category'); ?></th>
@@ -26,13 +26,14 @@
                 <th><?= lang('App.status'); ?></th>
                 <th><?= lang('App.paymentstatus'); ?></th>
                 <th><?= lang('App.supplier'); ?></th>
+                <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </thead>
             <tfoot>
               <tr>
                 <th></th>
-                <th><?= lang('App.createdat'); ?></th>
+                <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
                 <th><?= lang('App.biller'); ?></th>
                 <th><?= lang('App.category'); ?></th>
@@ -44,6 +45,7 @@
                 <th><?= lang('App.status'); ?></th>
                 <th><?= lang('App.paymentstatus'); ?></th>
                 <th><?= lang('App.supplier'); ?></th>
+                <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </tfoot>
@@ -66,7 +68,7 @@
         url: base_url + '/finance/getExpenses'
       },
       columnDefs: [{
-        targets: [0, 13],
+        targets: [0, 14],
         orderable: false
       }],
       fixedHeader: false,

@@ -26,17 +26,18 @@ class Finance extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('finance/bank/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('finance/bank/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -59,10 +60,10 @@ class Finance extends BaseController
 
     $dt = new DataTables('expenses');
     $dt
-      ->select("expenses.id AS id, expenses.created_at, expenses.reference, biller.name AS biller_name,
+      ->select("expenses.id AS id, expenses.date, expenses.reference, biller.name AS biller_name,
         expense_categories.name AS category_name, expenses.amount, expenses.note, banks.name AS bank_name,
         creator.fullname, expenses.payment_date, expenses.status, expenses.payment_status,
-        suppliers.name AS supplier_name, expenses.attachment")
+        suppliers.name AS supplier_name, expenses.created_at, expenses.attachment")
       ->join('banks', 'banks.code = expenses.bank', 'left')
       ->join('biller', 'biller.code = expenses.biller', 'left')
       ->join('expense_categories', 'expense_categories.id = expenses.category_id', 'left')
@@ -72,17 +73,29 @@ class Finance extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
-              <a class="dropdown-item" href="' . base_url('finance/bank/edit/' . $data['id']) . '"
+              <a class="dropdown-item" href="' . base_url('finance/expense/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
-              <a class="dropdown-item" href="' . base_url('finance/bank/delete/' . $data['id']) . '"
+              <a class="dropdown-item" href="' . base_url('finance/expense/view/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('payment/add/expense/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.addpayment') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('finance/expense/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -108,10 +121,10 @@ class Finance extends BaseController
 
     $dt = new DataTables('bank_mutations');
     $dt
-      ->select("bank_mutations.id AS id, bank_mutations.created_at, bank_mutations.reference,
+      ->select("bank_mutations.id AS id, bank_mutations.date, bank_mutations.reference,
         bankfrom.name AS bankfrom_name, bankto.name AS bankto_name,
         bank_mutations.note, bank_mutations.amount, biller.name AS biller_name,
-        creator.fullname, bank_mutations.status,
+        creator.fullname, bank_mutations.status, bank_mutations.created_at,
         bank_mutations.attachment")
       ->join('banks bankfrom', 'bankfrom.id = bank_mutations.from_bank_id', 'left')
       ->join('banks bankto', 'bankto.id = bank_mutations.to_bank_id', 'left')
@@ -121,17 +134,18 @@ class Finance extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('finance/mutation/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('finance/mutation/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -177,17 +191,18 @@ class Finance extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('finance/validation/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('finance/validation/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -238,7 +253,7 @@ class Finance extends BaseController
       }
     }
 
-    checkPermission('Bank.View');
+    checkPermission('BankAccount.View');
 
     $this->data['page'] = [
       'bc' => [
@@ -254,7 +269,7 @@ class Finance extends BaseController
 
   protected function bank_add()
   {
-    checkPermission('Bank.Add');
+    checkPermission('BankAccount.Add');
 
     if (requestMethod() == 'POST') {
       $billerData = [
@@ -293,9 +308,15 @@ class Finance extends BaseController
 
   protected function bank_delete($bankId = NULL)
   {
-    checkPermission('Bank.Delete');
+    checkPermission('BankAccount.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
+      $bank = Bank::getRow(['id' => $bankId]);
+
+      if (!$bank) {
+        $this->response(404, ['message' => 'Bank is not found.']);
+      }
+
       DB::transStart();
       Bank::delete(['id' => $bankId]);
       Payment::delete(['bank_id' => $bankId]);
@@ -304,16 +325,18 @@ class Finance extends BaseController
       if (DB::transStatus()) {
         $this->response(200, ['message' => 'Bank has been deleted.']);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
+
     $this->response(400, ['message' => 'Failed to delete bank.']);
   }
 
-  protected function bank_edit($bankId = NULL)
+  protected function bank_edit($id = NULL)
   {
-    checkPermission('Bank.Edit');
+    checkPermission('BankAccount.Edit');
 
-    $bank = Bank::getRow(['id' => $bankId]);
+    $bank = Bank::getRow(['id' => $id]);
 
     if (!$bank) $this->response(404, ['message' => 'Bank is not found.']);
 
@@ -331,9 +354,10 @@ class Finance extends BaseController
 
       $this->response(400, ['message' => var_dump($billerData)]);
 
-      if (Bank::update((int)$bankId, $billerData)) {
+      if (Bank::update((int)$id, $billerData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $bank->name)]);
       }
+
       $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $bank->name)]);
     }
 
@@ -374,18 +398,49 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $expenseData = [
+        'date'        => dateTimeJS(getPost('date')),
         'biller'      => getPost('biller'),
         'category'    => getPost('category'),
         'supplier'    => getPost('supplier'),
         'bank'        => getPost('bank'),
         'amount'      => filterDecimal(getPost('amount')),
         'note'        => stripTags(getPost('note')),
-        'created_at'  => dateTimeJS(getPost('created_at'))
+        'created_at'  => date('Y-m-d H:i:s')
       ];
 
-      $this->response(400, ['data' => json_encode($expenseData)]);
+      if (empty($expenseData['biller'])) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
 
-      if (Expense::add($expenseData)) {
+      if (empty($expenseData['category'])) {
+        $this->response(400, ['message' => 'Category is required.']);
+      }
+
+      if (empty($expenseData['bank'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($expenseData['amount'])) {
+        $this->response(400, ['message' => 'Amount is required.']);
+      }
+
+      DB::transStart();
+
+      $upload = new FileUpload();
+
+      if ($upload->has('attachment')) {
+        if ($upload->getSize('mb') > 2) {
+          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+        }
+
+        $expenseData['attachment'] = $upload->store();
+      }
+
+      Expense::add($expenseData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(201, ['message' => 'Expense has been added.']);
       }
 
@@ -397,56 +452,158 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Expense/add', $this->data)]);
   }
 
-  protected function expense_delete($expenseId = NULL)
+  protected function expense_approve($id = NULL)
+  {
+    checkPermission('Expense.Approval');
+
+    $expense = Expense::getRow(['id' => $id]);
+
+    if (!$expense) {
+      $this->response(404, ['message' => 'Expense is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $expenseData = [
+        'approved_at' => date('Y-m-d H:i:s'),
+        'approved_by' => session('login')->user_id
+      ];
+
+      if ($expense->status == 'need_approval') {
+        $expenseData['status'] = 'approved';
+      } else {
+        $expenseData['status'] = 'need_approval';
+        $expenseData['approved_at'] = NULL;
+        $expenseData['approved_by'] = NULL;
+      }
+
+      DB::transStart();
+
+      Expense::update((int)$id, $expenseData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        if ($expenseData['status'] == 'approved') {
+          $this->response(200, ['message' => 'Expense has been approved.']);
+        } else {
+          $this->response(200, ['message' => 'Expense has been disapproved.']);
+        }
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->response(400, ['message' => 'Failed to approve expense.']);
+  }
+
+  protected function expense_delete($id = NULL)
   {
     checkPermission('Expense.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
+      $expense = Expense::getRow(['id' => $id]);
+
+      if (!$expense) {
+        $this->response(404, ['message' => 'Expense is not found.']);
+      }
+
       DB::transStart();
-      Expense::delete(['id' => $expenseId]);
-      Payment::delete(['expense_id' => $expenseId]);
+      Attachment::delete(['hashname' => $expense->attachment]);
+      Expense::delete(['id' => $id]);
+      Payment::delete(['expense' => $expense->reference]);
       DB::transComplete();
 
       if (DB::transStatus()) {
         $this->response(200, ['message' => 'Expense has been deleted.']);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
+
     $this->response(400, ['message' => 'Failed to delete expense.']);
   }
 
-  protected function expense_edit($bankId = NULL)
+  protected function expense_edit($id = NULL)
   {
-    checkPermission('Bank.Edit');
+    checkPermission('Expense.Add');
 
-    $bank = Bank::getRow(['id' => $bankId]);
+    $expense = Expense::getRow(['id' => $id]);
 
-    if (!$bank) $this->response(404, ['message' => 'Bank is not found.']);
-
-    if (requestMethod() == 'POST') {
-      $billerData = [
-        'biller'  => getPost('biller'),
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'number'  => getPost('number'),
-        'holder'  => getPost('holder'),
-        'type'    => getPost('type'),
-        'bic'     => getPost('bic'),
-        'active'  => (getPost('active') == 1 ? 1 : 0)
-      ];
-
-      $this->response(400, ['message' => var_dump($billerData)]);
-
-      if (Bank::update((int)$bankId, $billerData)) {
-        $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $bank->name)]);
-      }
-      $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $bank->name)]);
+    if (!$expense) {
+      $this->response(404, ['message' => 'Expense is not found.']);
     }
 
-    $this->data['bank'] = $bank;
-    $this->data['title'] = lang('App.editbankaccount');
+    if (requestMethod() == 'POST') {
+      $expenseData = [
+        'date'        => dateTimeJS(getPost('date')),
+        'biller'      => getPost('biller'),
+        'category'    => getPost('category'),
+        'supplier'    => getPost('supplier'),
+        'bank'        => getPost('bank'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note')),
+        'created_at'  => date('Y-m-d H:i:s')
+      ];
 
-    $this->response(200, ['content' => view('Finance/Bank/edit', $this->data)]);
+      if (empty($expenseData['biller'])) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
+      if (empty($expenseData['category'])) {
+        $this->response(400, ['message' => 'Category is required.']);
+      }
+
+      if (empty($expenseData['bank'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($expenseData['amount'])) {
+        $this->response(400, ['message' => 'Amount is required.']);
+      }
+
+      DB::transStart();
+
+      $upload = new FileUpload();
+
+      if ($upload->has('attachment')) {
+        if ($upload->getSize('mb') > 2) {
+          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+        }
+
+        $expenseData['attachment'] = $upload->store(NULL, $expense->attachment);
+      }
+
+      Expense::update((int)$id, $expenseData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Expense has been updated.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->data['expense'] = $expense;
+    $this->data['title'] = lang('App.editexpense');
+
+    $this->response(200, ['content' => view('Finance/Expense/edit', $this->data)]);
+  }
+
+  protected function expense_view($id = NULL)
+  {
+    checkPermission('Expense.View');
+
+    $expense = Expense::getRow(['id' => $id]);
+
+    if (!$expense) {
+      $this->response(404, ['message' => 'Expense is not found.']);
+    }
+
+    $this->data['expense']  = $expense;
+    $this->data['title']    = lang('App.viewexpense');
+
+    $this->response(200, ['content' => view('Finance/Expense/view', $this->data)]);
   }
 
   public function mutation()
@@ -480,6 +637,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $mutationData = [
+        'date'      => dateTimeJS(getPost('date')),
         'amount'    => filterDecimal(getPost('amount')),
         'biller'    => getPost('biller'),
         'bankfrom'  => getPost('bankfrom'),
@@ -544,7 +702,7 @@ class Finance extends BaseController
 
       DB::transStart();
       Attachment::delete(['hashname' => $mutation->attachment]);
-      BankMutation::delete(['id' => $mutationId]);
+      BankMutation::delete(['id' => $mutation->id]);
       PaymentValidation::delete(['mutation' => $mutation->reference]);
       Payment::delete(['mutation' => $mutation->reference]);
       DB::transComplete();
@@ -552,8 +710,10 @@ class Finance extends BaseController
       if (DB::transStatus()) {
         $this->response(200, ['message' => 'Bank mutation has been deleted.']);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
+
     $this->response(400, ['message' => 'Failed to delete bank mutation.']);
   }
 
@@ -561,30 +721,72 @@ class Finance extends BaseController
   {
     checkPermission('BankMutation.Edit');
 
-    $this->response(501, ['message' => 'Not implemented']);
-
     $mutation = BankMutation::getRow(['id' => $mutationId]);
 
-    if (!$mutation) $this->response(404, ['message' => 'Bank Mutation is not found.']);
+    if (!$mutation) {
+      $this->response(404, ['message' => 'Bank Mutation is not found.']);
+    }
 
     if (requestMethod() == 'POST') {
-      $billerData = [
-        'biller'  => getPost('biller'),
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'number'  => getPost('number'),
-        'holder'  => getPost('holder'),
-        'type'    => getPost('type'),
-        'bic'     => getPost('bic'),
-        'active'  => (getPost('active') == 1 ? 1 : 0)
+      $mutationData = [
+        'date'      => dateTimeJS(getPost('date')),
+        'amount'    => filterDecimal(getPost('amount')),
+        'biller'    => getPost('biller'),
+        'bankfrom'  => getPost('bankfrom'),
+        'bankto'    => getPost('bankto'),
+        'note'      => stripTags(getPost('note'))
       ];
 
-      $this->response(400, ['message' => var_dump($billerData)]);
-
-      if (BankMutation::update((int)$mutationId, $billerData)) {
-        $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $mutation->name)]);
+      if (empty($mutationData['amount']) || $mutationData['amount'] < 1) {
+        $this->response(400, ['message' => 'Amount required.']);
       }
-      $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $mutation->name)]);
+
+      if (empty($mutationData['biller'])) {
+        $this->response(400, ['message' => 'Biller required.']);
+      }
+
+      if (empty($mutationData['bankfrom'])) {
+        $this->response(400, ['message' => 'Bank from required.']);
+      }
+
+      if (empty($mutationData['bankto'])) {
+        $this->response(400, ['message' => 'Bank to required.']);
+      }
+
+      DB::transStart();
+
+      $upload = new FileUpload();
+
+      if ($upload->has('attachment')) {
+        if ($upload->getSize('mb') > 2) {
+          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+        }
+
+        $mutationData['attachment'] = $upload->store(NULL, $mutation->attachment);
+      }
+
+      // We have to add new payment validation dan last payment (if any) if amount changed.
+      if ($mutation->amount != $mutationData['amount']) {
+        Payment::delete(['mutation_id' => $mutation->id]);
+        $mutationData['status'] = 'waiting_transfer';
+
+        PaymentValidation::add([
+          'mutation'    => $mutationData['reference'],
+          'amount'      => $mutationData['amount'],
+          'biller'      => $mutationData['biller'],
+          'attachment'  => ($mutationData['attachment'] ?? NULL)
+        ]);
+      }
+
+      BankMutation::update((int)$mutationId, $mutationData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => sprintf(lang('Msg.mutationEditOK'), $mutation->reference)]);
+      }
+
+      $this->response(400, ['message' => sprintf(lang('Msg.mutationEditNO'), $mutation->reference)]);
     }
 
     $this->data['mutation'] = $mutation;
@@ -660,6 +862,8 @@ class Finance extends BaseController
   {
     checkPermission('PaymentValidation.Add');
 
+    $this->response(501, ['message' => 'Not implemented']);
+
     if (requestMethod() == 'POST') {
       $billerData = [
         'biller'  => getPost('biller'),
@@ -688,6 +892,8 @@ class Finance extends BaseController
   {
     checkPermission('PaymentValidation.Delete');
 
+    $this->response(501, ['message' => 'Not implemented']);
+
     if (requestMethod() == 'POST' && isAJAX()) {
       $validation = PaymentValidation::getRow(['id' => $validationId]);
 
@@ -698,8 +904,10 @@ class Finance extends BaseController
       if (PaymentValidation::delete(['id' => $validationId])) {
         $this->response(200, ['message' => 'Payment Validation has been deleted.']);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
+
     $this->response(400, ['message' => 'Failed to delete Payment Validation.']);
   }
 
@@ -711,7 +919,9 @@ class Finance extends BaseController
 
     $validation = PaymentValidation::getRow(['id' => $validationId]);
 
-    if (!$validation) $this->response(404, ['message' => 'Payment Validation is not found.']);
+    if (!$validation) {
+      $this->response(404, ['message' => 'Payment Validation is not found.']);
+    }
 
     if (requestMethod() == 'POST') {
       $validationData = [
@@ -725,11 +935,16 @@ class Finance extends BaseController
         'active'  => (getPost('active') == 1 ? 1 : 0)
       ];
 
-      $this->response(400, ['message' => var_dump($validationData)]);
+      DB::transStart();
 
-      if (PaymentValidation::update((int)$validationId, $validationData)) {
+      PaymentValidation::update((int)$validationId, $validationData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $validation->name)]);
       }
+
       $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $validation->name)]);
     }
 

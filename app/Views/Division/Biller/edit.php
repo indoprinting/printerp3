@@ -1,5 +1,5 @@
 <div class="modal-header bg-gradient-dark">
-  <h5 class="modal-title"><i class="fad fa-user-plus"></i> <?= $title ?></h5>
+  <h5 class="modal-title"><i class="fad fa-fw fa-user-plus"></i> <?= $title ?></h5>
   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>

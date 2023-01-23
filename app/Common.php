@@ -69,6 +69,10 @@ function dateTimeJS(string $datetime)
     return str_replace('T', ' ', $datetime);
   }
 
+  if (empty($datetime)) {
+    return date('Y-m-d H:i:s');
+  }
+
   return str_replace(' ', 'T', $datetime);
 }
 
@@ -85,6 +89,14 @@ function dbgprint()
     echo ($str);
     echo ('</pre>');
   }
+}
+
+/**
+ * Format date to readable date.
+ */
+function formatDate(string $dateTime)
+{
+  return date('d M Y H:i:s', strtotime($dateTime));
 }
 
 /**
@@ -253,6 +265,11 @@ function isLoggedIn()
 function isSpecialCustomer($customerId)
 {
   $customer = Customer::getRow(['id' => $customerId]);
+
+  if (!$customer) {
+    return FALSE;
+  }
+
   $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
@@ -404,7 +421,7 @@ function setExpired(array $data)
 {
   if (empty($data['expired_at'])) {
     $data['expired_at']   = date('Y-m-d H:i:s', strtotime('+1 day', time()));
-    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Obsolete
+    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Compatibility
   }
 
   return $data;

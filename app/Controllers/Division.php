@@ -24,17 +24,18 @@ class Division extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('division/biller/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('division/biller/delete/' . $data['id']) . '"
                 data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
             </div>
           </div>';
@@ -62,7 +63,7 @@ class Division extends BaseController
         return '
           <div class="btn-group btn-action">
             <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
+              <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('division/warehouse/edit/' . $data['id']) . '"
@@ -70,6 +71,7 @@ class Division extends BaseController
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> Edit
               </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('division/warehouse/delete/' . $data['id']) . '"
                 data-action="confirm">
                 <i class="fad fa-fw fa-trash"></i> Delete
@@ -149,8 +151,10 @@ class Division extends BaseController
       if (Biller::delete(['id' => $userGroupId])) {
         $this->response(200, ['message' => 'Biller has been deleted.']);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
+
     $this->response(400, ['message' => 'Failed to delete biller.']);
   }
 
@@ -177,6 +181,7 @@ class Division extends BaseController
       if (Biller::update((int)$biller->id, $billerData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.billerEditOK'), $biller->name)]);
       }
+
       $this->response(400, ['message' => sprintf(lang('Msg.billerEditNO'), $biller->name)]);
     }
 
@@ -268,6 +273,7 @@ class Division extends BaseController
     if (Warehouse::delete(['id' => $warehouseId])) {
       $this->response(200, ['message' => lang('Msg.warehouseDeleteOK')]);
     }
+
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
   }
 
@@ -313,6 +319,7 @@ class Division extends BaseController
       if (Warehouse::update((int)$warehouseId, $warehouseData)) {
         $this->response(200, ['message' => sprintf(lang('Msg.warehouseEditOK'), $warehouse->name)]);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
