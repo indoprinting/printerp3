@@ -22,7 +22,7 @@ class Cache extends BaseConfig
      *
      * @var string
      */
-    public $handler = 'file';
+    public $handler = 'redis';
 
     /**
      * --------------------------------------------------------------------------
@@ -35,7 +35,7 @@ class Cache extends BaseConfig
      *
      * @var string
      */
-    public $backupHandler = 'dummy';
+    public $backupHandler = 'file';
 
     /**
      * --------------------------------------------------------------------------
