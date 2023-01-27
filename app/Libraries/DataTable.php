@@ -203,7 +203,7 @@ class DataTables
     // Return number of filtered rows.
     $recordsFiltered = self::$qb->countAllResults(FALSE);
 
-    if ($this->order && gettype($this->order) == 'array') {
+    if ($this->order && is_array($this->order)) {
       foreach ($this->order as $order) {
         // Since first column is 0 from client, MySQL need column min. 1 for orderding.
         // So we add this by one.
@@ -315,7 +315,7 @@ class DataTables
   {
     $cols = [];
 
-    if (!empty($columns) && gettype($columns) == 'string') {
+    if (!empty($columns) && is_string($columns)) {
       $len = strlen($columns);
       $a = 0;
       $brackets = 0;
