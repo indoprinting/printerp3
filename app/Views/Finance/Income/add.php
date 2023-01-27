@@ -1,5 +1,5 @@
 <div class="modal-header bg-gradient-dark">
-  <h5 class="modal-title"><i class="fad fa-fw fa-money-bill"></i> <?= $title . " ({$modeLang})" ?></h5>
+  <h5 class="modal-title"><i class="fad fa-fw fa-user-plus"></i> <?= $title ?></h5>
   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
@@ -35,17 +35,16 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $amount ?>">
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="0">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="method"><?= lang('App.method') ?> *</label>
-                  <select id="method" name="method" class="select" data-placeholder="<?= lang('App.method') ?>" style=" width:100%">
+                  <label for="category"><?= lang('App.category') ?> *</label>
+                  <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
                     <option value=""></option>
-                    <?php $bankTypes = \App\Models\Bank::select('type')->distinct()->get(['active' => 1]); ?>
-                    <?php foreach ($bankTypes as $bankType) : ?>
-                      <option value="<?= $bankType->type ?>"><?= lang('App.' . strtolower($bankType->type)) ?></option>
+                    <?php foreach (\App\Models\IncomeCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
+                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
                     <?php endforeach; ?>
                   </select>
                 </div>
@@ -58,7 +57,6 @@
                   <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                     <option value=""></option>
                     <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bk->biller) continue; ?>
                       <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
                     <?php endforeach; ?>
                   </select>
@@ -71,19 +69,8 @@
                 </div>
               </div>
             </div>
-            <div class="row payment-validation" style="display: none">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="skip_validation"><?= lang('App.paymentvalidation') ?></label>
-                  <div class="input-group">
-                    <input type="checkbox" id="skip_validation" name="skip_validation">
-                    <label for="skip_validation"><?= lang('App.skippaymentvalidation') ?></label>
-                  </div>
-                </div>
-              </div>
-            </div>
             <div class="row">
-              <div class="col-md-12">
+              <div class="col-md-6">
                 <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
@@ -118,8 +105,6 @@
   })();
 
   $(document).ready(function() {
-    let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
-
     let editor = new Quill('#editor', {
       theme: 'snow'
     });
@@ -134,28 +119,13 @@
           $('#bankbalance').val(formatCurrency(data.data));
         },
         url: base_url + '/finance/bank/balance/' + this.value
-      });
+      })
     });
-
-    $('#method').change(function() {
-      if (this.value == 'Transfer' && hasSkipValidation) {
-        $('.payment-validation').slideDown();
-      } else {
-        $('.payment-validation').slideUp();
-      }
-    });
-
-    if (!hasSkipValidation) {
-      $('#skip_validation').iCheck('disable');
-    }
-
-    $('#bank').val('<?= $bank ?>').trigger('change');
-    $('#biller').val('<?= $biller ?>').trigger('change');
 
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/payment/add/<?= $mode ?>/<?= $id ?>'
+      url: base_url + '/finance/income/add'
     });
   });
 </script>

@@ -13,50 +13,56 @@ class Payment
   {
     $data = setCreatedBy($data);
 
-    if (isset($data['expense'])) { // Compatibility
-      $inv = Expense::getRow(['code' => $data['expense']]);
+    if (isset($data['expense'])) {
+      $inv = Expense::getRow(['reference' => $data['expense']]);
       $data['expense_id'] = $inv->id;
       $data['reference']  = $inv->reference;
     }
 
-    if (isset($data['income'])) { // Compatibility
-      $inv = Income::getRow(['code' => $data['income']]);
-      $data['income_id'] = $inv->id;
+    if (isset($data['income'])) {
+      $inv = Income::getRow(['reference' => $data['income']]);
+      $data['income_id']  = $inv->id;
       $data['reference']  = $inv->reference;
     }
 
-    if (isset($data['mutation'])) { // Compatibility
-      $inv = BankMutation::getRow(['code' => $data['mutation']]);
-      $data['mutation_id'] = $inv->id;
+    if (isset($data['mutation'])) {
+      $inv = BankMutation::getRow(['reference' => $data['mutation']]);
+      $data['mutation_id']  = $inv->id;
+      $data['reference']    = $inv->reference;
+    }
+
+    if (isset($data['purchase'])) {
+      $inv = ProductPurchase::getRow(['reference' => $data['purchase']]);
+      $data['purchase_id']  = $inv->id;
+      $data['reference']    = $inv->reference;
+    }
+
+    if (isset($data['sale'])) {
+      $inv = Sale::getRow(['reference' => $data['sale']]);
+      $data['sale_id']    = $inv->id;
       $data['reference']  = $inv->reference;
     }
 
-    if (isset($data['purchase'])) { // Compatibility
-      $inv = ProductPurchase::getRow(['code' => $data['purchase']]);
-      $data['purchase_id'] = $inv->id;
-      $data['reference']  = $inv->reference;
+    if (isset($data['transfer'])) {
+      $inv = ProductTransfer::getRow(['reference' => $data['transfer']]);
+      $data['transfer_id']  = $inv->id;
+      $data['reference']    = $inv->reference;
     }
 
-    if (isset($data['sale'])) { // Compatibility
-      $inv = Sale::getRow(['code' => $data['sale']]);
-      $data['sale_id'] = $inv->id;
-      $data['reference']  = $inv->reference;
-    }
-
-    if (isset($data['transfer'])) { // Compatibility
-      $inv = ProductTransfer::getRow(['code' => $data['transfer']]);
-      $data['transfer_id'] = $inv->id;
-      $data['reference']  = $inv->reference;
-    }
-
-    if (isset($data['bank'])) { // Compatibility
+    if (isset($data['bank'])) {
       $bank = Bank::getRow(['code' => $data['bank']]);
-      $data['bank_id'] = $bank->id;
+      $data['bank_id']  = $bank->id;
+    } else {
+      setLastError('Bank is not set.');
+      return FALSE;
     }
 
-    if (isset($data['biller'])) { // Compatibility
+    if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
+      $data['biller_id']  = $biller->id;
+    } else {
+      setLastError('Biller is not set.');
+      return FALSE;
     }
 
     if (empty($data['amount'])) {

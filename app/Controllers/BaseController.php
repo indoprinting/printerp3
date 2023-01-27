@@ -87,7 +87,7 @@ class BaseController extends Controller
 
 	/**
 	 * Build new page.
-	 * @param array $data [ page, ... ]
+	 * @param array $data [ page['content'], page['url']
 	 */
 	protected function buildPage($data = [])
 	{

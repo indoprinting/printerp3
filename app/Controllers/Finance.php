@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\{DataTables, FileUpload};
-use App\Models\{Attachment, Bank, BankMutation, BankReconciliation, DB, Expense, Payment, PaymentValidation};
+use App\Models\{Attachment, Bank, BankMutation, BankReconciliation, DB, Expense, Income, Payment, PaymentValidation};
 
 class Finance extends BaseController
 {
@@ -92,8 +92,78 @@ class Finance extends BaseController
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.addpayment') . '
               </a>
+              <a class="dropdown-item" href="' . base_url('payment/view/expense/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalDefault"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
+              </a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('finance/expense/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
+      ->editColumn('status', function ($data) {
+        return renderStatus($data['status']);
+      })
+      ->editColumn('payment_status', function ($data) {
+        return renderStatus($data['payment_status']);
+      })
+      ->editColumn('amount', function ($data) {
+        return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
+      })
+      ->editColumn('attachment', function ($data) {
+        return renderAttachment($data['attachment']);
+      })
+      ->generate();
+  }
+
+  public function getIncomes()
+  {
+    checkPermission('Income.View');
+
+    $dt = new DataTables('incomes');
+    $dt
+      ->select("incomes.id AS id, incomes.date, incomes.reference, biller.name AS biller_name,
+        income_categories.name AS category_name, incomes.amount, incomes.note, banks.name AS bank_name,
+        creator.fullname, incomes.payment_date, incomes.status, incomes.payment_status,
+        incomes.created_at, incomes.attachment")
+      ->join('banks', 'banks.code = incomes.bank', 'left')
+      ->join('biller', 'biller.code = incomes.biller', 'left')
+      ->join('income_categories', 'income_categories.id = incomes.category_id', 'left')
+      ->join('users creator', 'creator.id = incomes.created_by', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-gear"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('finance/income/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('finance/income/view/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('payment/add/income/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.addpayment') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('payment/view/income/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalDefault"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('finance/income/delete/' . $data['id']) . '"
                 data-action="confirm">
                 <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
@@ -295,15 +365,15 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Bank/add', $this->data)]);
   }
 
-  protected function bank_balance($bankCode = NULL)
+  protected function bank_balance($id = NULL)
   {
-    $bank = Bank::getRow(['code' => $bankCode]);
+    $bank = Bank::select('*')->where('id', $id)->orWhere('code', $id)->getRow();
 
     if ($bank) {
       $this->response(200, ['data' => $bank->amount]);
     }
 
-    $this->response(400, ['message' => 'Failed to get balance.']);
+    $this->response(404, ['message' => 'Bank not found.']);
   }
 
   protected function bank_delete($bankId = NULL)
@@ -404,8 +474,7 @@ class Finance extends BaseController
         'supplier'    => getPost('supplier'),
         'bank'        => getPost('bank'),
         'amount'      => filterDecimal(getPost('amount')),
-        'note'        => stripTags(getPost('note')),
-        'created_at'  => date('Y-m-d H:i:s')
+        'note'        => stripTags(getPost('note'))
       ];
 
       if (empty($expenseData['biller'])) {
@@ -604,6 +673,244 @@ class Finance extends BaseController
     $this->data['title']    = lang('App.viewexpense');
 
     $this->response(200, ['content' => view('Finance/Expense/view', $this->data)]);
+  }
+
+  public function income()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    checkPermission('Income.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.finance'), 'slug' => 'finance', 'url' => '#'],
+        ['name' => lang('App.income'), 'slug' => 'income', 'url' => '#']
+      ],
+      'content' => 'Finance/Income/index',
+      'title' => lang('App.income')
+    ];
+
+    return $this->buildPage($this->data);
+  }
+
+  protected function income_add()
+  {
+    checkPermission('Income.Add');
+
+    if (requestMethod() == 'POST') {
+      $incomeData = [
+        'date'        => dateTimeJS(getPost('date')),
+        'biller'      => getPost('biller'),
+        'category'    => getPost('category'),
+        'supplier'    => getPost('supplier'),
+        'bank'        => getPost('bank'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note'))
+      ];
+
+      if (empty($incomeData['biller'])) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
+      if (empty($incomeData['category'])) {
+        $this->response(400, ['message' => 'Category is required.']);
+      }
+
+      if (empty($incomeData['bank'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($incomeData['amount'])) {
+        $this->response(400, ['message' => 'Amount is required.']);
+      }
+
+      DB::transStart();
+
+      $upload = new FileUpload();
+
+      if ($upload->has('attachment')) {
+        if ($upload->getSize('mb') > 2) {
+          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+        }
+
+        $incomeData['attachment'] = $upload->store();
+      }
+
+      Income::add($incomeData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Income has been added.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->data['title'] = lang('App.addincome');
+
+    $this->response(200, ['content' => view('Finance/Income/add', $this->data)]);
+  }
+
+  protected function income_approve($id = NULL)
+  {
+    checkPermission('Income.Approval');
+
+    $income = Income::getRow(['id' => $id]);
+
+    if (!$income) {
+      $this->response(404, ['message' => 'Income is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $incomeData = [
+        'approved_at' => date('Y-m-d H:i:s'),
+        'approved_by' => session('login')->user_id
+      ];
+
+      if ($income->status == 'need_approval') {
+        $incomeData['status'] = 'approved';
+      } else {
+        $incomeData['status'] = 'need_approval';
+        $incomeData['approved_at'] = NULL;
+        $incomeData['approved_by'] = NULL;
+      }
+
+      DB::transStart();
+
+      Income::update((int)$id, $incomeData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        if ($incomeData['status'] == 'approved') {
+          $this->response(200, ['message' => 'Income has been approved.']);
+        } else {
+          $this->response(200, ['message' => 'Income has been disapproved.']);
+        }
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->response(400, ['message' => 'Failed to approve income.']);
+  }
+
+  protected function income_delete($id = NULL)
+  {
+    checkPermission('Income.Delete');
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $income = Income::getRow(['id' => $id]);
+
+      if (!$income) {
+        $this->response(404, ['message' => 'Income is not found.']);
+      }
+
+      DB::transStart();
+      Attachment::delete(['hashname' => $income->attachment]);
+      Income::delete(['id' => $id]);
+      Payment::delete(['income' => $income->reference]);
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Income has been deleted.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->response(400, ['message' => 'Failed to delete income.']);
+  }
+
+  protected function income_edit($id = NULL)
+  {
+    checkPermission('Income.Add');
+
+    $income = Income::getRow(['id' => $id]);
+
+    if (!$income) {
+      $this->response(404, ['message' => 'Income is not found.']);
+    }
+
+    if (requestMethod() == 'POST') {
+      $incomeData = [
+        'date'        => dateTimeJS(getPost('date')),
+        'biller'      => getPost('biller'),
+        'category'    => getPost('category'),
+        'supplier'    => getPost('supplier'),
+        'bank'        => getPost('bank'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note')),
+        'created_at'  => date('Y-m-d H:i:s')
+      ];
+
+      if (empty($incomeData['biller'])) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
+      if (empty($incomeData['category'])) {
+        $this->response(400, ['message' => 'Category is required.']);
+      }
+
+      if (empty($incomeData['bank'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($incomeData['amount'])) {
+        $this->response(400, ['message' => 'Amount is required.']);
+      }
+
+      DB::transStart();
+
+      $upload = new FileUpload();
+
+      if ($upload->has('attachment')) {
+        if ($upload->getSize('mb') > 2) {
+          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+        }
+
+        $incomeData['attachment'] = $upload->store(NULL, $income->attachment);
+      }
+
+      Income::update((int)$id, $incomeData);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Income has been updated.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->data['income'] = $income;
+    $this->data['title'] = lang('App.editincome');
+
+    $this->response(200, ['content' => view('Finance/Income/edit', $this->data)]);
+  }
+
+  protected function income_view($id = NULL)
+  {
+    checkPermission('Income.View');
+
+    $income = Income::getRow(['id' => $id]);
+
+    if (!$income) {
+      $this->response(404, ['message' => 'Income is not found.']);
+    }
+
+    $this->data['income']  = $income;
+    $this->data['title']    = lang('App.viewincome');
+
+    $this->response(200, ['content' => view('Finance/Income/view', $this->data)]);
   }
 
   public function mutation()
@@ -811,7 +1118,7 @@ class Finance extends BaseController
     $this->data['page'] = [
       'bc' => [
         ['name' => lang('App.finance'), 'slug' => 'finance', 'url' => '#'],
-        ['name' => lang('App.reconciliation'), 'slug' => 'reconciliation', 'url' => '#']
+        ['name' => lang('App.bankreconciliation'), 'slug' => 'reconciliation', 'url' => '#']
       ],
       'content' => 'Finance/Reconciliation/index',
       'title' => lang('App.bankreconciliation')

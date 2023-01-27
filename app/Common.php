@@ -330,7 +330,7 @@ function renderAttachment(string $attachment = NULL)
     $res = '
       <a href="' . base_url('filemanager/view/' . $attachment) . '"
         data-toggle="modal" data-target="#ModalDefault2" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <i class="fad fa-file-download"></i>
+        <i class="fas fa-paperclip"></i>
       </a>';
   }
 
