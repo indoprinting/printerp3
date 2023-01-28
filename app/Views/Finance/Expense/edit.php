@@ -34,25 +34,6 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $expense->amount ?>">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="category"><?= lang('App.category') ?> *</label>
-                  <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\ExpenseCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
-                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
                   <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                     <option value=""></option>
@@ -72,10 +53,29 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
+                  <label for="amount"><?= lang('App.amount') ?> *</label>
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $expense->amount ?>">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="category"><?= lang('App.category') ?> *</label>
+                  <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
+                    <option value=""></option>
+                    <?php foreach (\App\Models\ExpenseCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
+                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
                   <label for="supplier"><?= lang('App.supplier') ?></label>
                   <select id="supplier" name="supplier" class="select-supplier" data-placeholder="<?= lang('App.supplier') ?>" style="width:100%">
                     <?php $supplier = \App\Models\Supplier::getRow(['id' => $expense->supplier_id]); ?>
-                    <?php if ($supplier) :?>
+                    <?php if ($supplier) : ?>
                       <option value="<?= $supplier->id ?>"><?= (empty($supplier->company) ? $supplier->name : $supplier->name . ' (' . $supplier->company . ')') ?></option>
                     <?php endif; ?>
                   </select>

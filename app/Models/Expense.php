@@ -112,6 +112,8 @@ class Expense
       $data['supplier_id'] = $supplier->id;
     }
 
+    $data = setUpdatedBy($data);
+
     DB::table('expenses')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }

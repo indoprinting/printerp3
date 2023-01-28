@@ -22,9 +22,6 @@
                 <th><?= lang('App.note'); ?></th>
                 <th><?= lang('App.bankaccount'); ?></th>
                 <th><?= lang('App.createdby'); ?></th>
-                <th><?= lang('App.paymentdate'); ?></th>
-                <th><?= lang('App.status'); ?></th>
-                <th><?= lang('App.paymentstatus'); ?></th>
                 <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
@@ -40,9 +37,6 @@
                 <th><?= lang('App.note'); ?></th>
                 <th><?= lang('App.bankaccount'); ?></th>
                 <th><?= lang('App.createdby'); ?></th>
-                <th><?= lang('App.paymentdate'); ?></th>
-                <th><?= lang('App.status'); ?></th>
-                <th><?= lang('App.paymentstatus'); ?></th>
                 <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
@@ -66,7 +60,7 @@
         url: base_url + '/finance/getIncomes'
       },
       columnDefs: [{
-        targets: [0, 13],
+        targets: [0, 10],
         orderable: false
       }],
       fixedHeader: false,

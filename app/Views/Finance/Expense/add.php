@@ -34,25 +34,6 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="0">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="category"><?= lang('App.category') ?> *</label>
-                  <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\ExpenseCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
-                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
                   <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                     <option value=""></option>
@@ -66,6 +47,25 @@
                 <div class="form-group">
                   <label for="bankbalance"><?= lang('App.currentbalance') ?></label>
                   <input id="bankbalance" class="form-control form-control-border form-control-sm float-right" readonly>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="amount"><?= lang('App.amount') ?> *</label>
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="0">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="category"><?= lang('App.category') ?> *</label>
+                  <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
+                    <option value=""></option>
+                    <?php foreach (\App\Models\ExpenseCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
+                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
+                    <?php endforeach; ?>
+                  </select>
                 </div>
               </div>
             </div>

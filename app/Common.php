@@ -19,6 +19,29 @@ use App\Models\{Customer, CustomerGroup, User};
  */
 
 /**
+ * Add new activity.
+ * @param string $data Activity data.
+ * @param array $json JSON data.
+ */
+function addActivity(string $data, array $json = [])
+{
+  $ip = \Config\Services::request()->getIPAddress();
+  $ua = \Config\Services::request()->getUserAgent();
+
+  $data = [
+    'data'        => $data,
+    'ip_address'  => $ip,
+    'user_agent'  => $ua
+  ];
+
+  if ($json) {
+    $data['json'] = json_encode($json);
+  }
+
+  return \App\Models\Activity::add($data);
+}
+
+/**
  * Check for permission and login status.
  * @param string $permission Permission to check. Ex. "User.View". If NULL it will check for login session.
  */
@@ -473,6 +496,7 @@ function setUpdatedBy($data = [])
   if (empty($data['updated_by']) && isLoggedIn()) {
     $data['updated_by'] = session('login')->user_id;
   }
+
   return $data;
 }
 

@@ -23,7 +23,8 @@
         </tr>
         <tr>
           <td><?= lang('App.bankaccount') ?></td>
-          <td><?= \App\Models\Bank::getRow(['code' => $expense->bank])->name ?></td>
+          <?php $bank = \App\Models\Bank::getRow(['code' => $expense->bank]) ?>
+          <td><?= ($bank->number ? $bank->name . " ({$bank->number})" : $bank->name) ?></td>
         </tr>
         <tr>
           <td><?= lang('App.biller') ?></td>

@@ -11,8 +11,6 @@ class Payment
    */
   public static function add(array $data)
   {
-    $data = setCreatedBy($data);
-
     if (isset($data['expense'])) {
       $inv = Expense::getRow(['reference' => $data['expense']]);
       $data['expense_id'] = $inv->id;
@@ -75,6 +73,8 @@ class Payment
       return FALSE;
     }
 
+    $data = setCreatedBy($data);
+
     DB::table('payments')->insert($data);
 
     if (DB::affectedRows()) {
@@ -136,6 +136,66 @@ class Payment
    */
   public static function update(int $id, array $data)
   {
+    if (isset($data['expense'])) {
+      $inv = Expense::getRow(['reference' => $data['expense']]);
+      $data['expense_id'] = $inv->id;
+      $data['reference']  = $inv->reference;
+    }
+
+    if (isset($data['income'])) {
+      $inv = Income::getRow(['reference' => $data['income']]);
+      $data['income_id']  = $inv->id;
+      $data['reference']  = $inv->reference;
+    }
+
+    if (isset($data['mutation'])) {
+      $inv = BankMutation::getRow(['reference' => $data['mutation']]);
+      $data['mutation_id']  = $inv->id;
+      $data['reference']    = $inv->reference;
+    }
+
+    if (isset($data['purchase'])) {
+      $inv = ProductPurchase::getRow(['reference' => $data['purchase']]);
+      $data['purchase_id']  = $inv->id;
+      $data['reference']    = $inv->reference;
+    }
+
+    if (isset($data['sale'])) {
+      $inv = Sale::getRow(['reference' => $data['sale']]);
+      $data['sale_id']    = $inv->id;
+      $data['reference']  = $inv->reference;
+    }
+
+    if (isset($data['transfer'])) {
+      $inv = ProductTransfer::getRow(['reference' => $data['transfer']]);
+      $data['transfer_id']  = $inv->id;
+      $data['reference']    = $inv->reference;
+    }
+
+    if (isset($data['bank'])) {
+      $bank = Bank::getRow(['code' => $data['bank']]);
+      $data['bank_id']  = $bank->id;
+    }
+
+    if (isset($data['biller'])) {
+      $biller = Biller::getRow(['code' => $data['biller']]);
+      $data['biller_id']  = $biller->id;
+    }
+
+    if (isset($data['amount']) && empty($data['amount'])) {
+      setLastError('Amount is empty or zero');
+      return FALSE;
+    }
+
+    if (isset($data['type'])) {
+      if (!in_array($data['type'], ['received', 'sent'])) {
+        setLastError('Type must be received or sent.');
+      }
+      return FALSE;
+    }
+
+    $data = setUpdatedBy($data);
+
     DB::table('payments')->update($data, ['id' => $id]);
     return DB::affectedRows();
   }

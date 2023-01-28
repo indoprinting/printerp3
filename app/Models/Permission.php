@@ -75,6 +75,11 @@ class Permission
   {
     if (isset($data['actions'])) {
       if (is_array($data['actions'])) {
+        if ($id == 1 && array_search('All', $data['actions']) === FALSE) {
+          setLastError('ID 1 must have All permission.');
+          return FALSE;
+        }
+
         $data['actions'] = json_encode($data['actions']);
       } else {
         setLastError('Actions must be an array.');

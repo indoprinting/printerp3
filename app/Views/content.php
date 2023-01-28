@@ -129,7 +129,7 @@
             <img src="<?= base_url() ?>/attachment/<?= session('login')->avatar ?>" class="img-circle elevation-2" alt="User Image">
           </div>
           <div class="info">
-            <a href="#" class="d-block"><?= session('login')->fullname ?></a>
+            <a href="<?= base_url('profile') ?>" class="d-block" data-action="link"><?= session('login')->fullname ?></a>
           </div>
         </div>
 
