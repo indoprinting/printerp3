@@ -316,14 +316,14 @@
             </li>
             <!-- Inventory -->
             <li class="nav-item">
-              <a href="#" class="nav-link">
+              <a href="#" class="nav-link" data-slug="inventory">
                 <i class="nav-icon fad fa-box-open-full"></i>
                 <p><?= lang('App.inventory') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
+                  <a href="<?= base_url('inventory/adjustment') ?>" class="nav-link" data-action="link" data-slug="adjustment">
                     <i class="nav-icon fad fa-sliders"></i>
                     <p><?= lang('App.adjustment') ?></p>
                   </a>

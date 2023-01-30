@@ -5,7 +5,17 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\{DataTables, FileUpload};
-use App\Models\{Attachment, Bank, BankMutation, BankReconciliation, DB, Expense, Income, Payment, PaymentValidation};
+use App\Models\{
+  Attachment,
+  Bank,
+  BankMutation,
+  BankReconciliation,
+  DB,
+  Expense,
+  Income,
+  Payment,
+  PaymentValidation
+};
 
 class Finance extends BaseController
 {
@@ -254,26 +264,6 @@ class Finance extends BaseController
       ->join('customers', 'customers.phone = sales.customer', 'left')
       ->join('bank_mutations', 'bank_mutations.reference = payment_validations.mutation', 'left')
       ->join('users creator', 'creator.id = payment_validations.created_by', 'left')
-      ->editColumn('id', function ($data) {
-        return '
-          <div class="btn-group btn-action">
-            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-gear"></i>
-            </a>
-            <div class="dropdown-menu">
-              <a class="dropdown-item" href="' . base_url('finance/validation/edit/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="' . base_url('finance/validation/delete/' . $data['id']) . '"
-                data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
-              </a>
-            </div>
-          </div>';
-      })
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
       })
@@ -1246,101 +1236,5 @@ class Finance extends BaseController
     ];
 
     return $this->buildPage($this->data);
-  }
-
-  protected function validation_add()
-  {
-    checkPermission('PaymentValidation.Add');
-
-    $this->response(501, ['message' => 'Not implemented']);
-
-    if (requestMethod() == 'POST') {
-      $billerData = [
-        'biller'  => getPost('biller'),
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'number'  => getPost('number'),
-        'holder'  => getPost('holder'),
-        'type'    => getPost('type'),
-        'bic'     => getPost('bic'),
-        'active'  => (getPost('active') == 1 ? 1 : 0)
-      ];
-
-      if (PaymentValidation::add($billerData)) {
-        $this->response(201, ['message' => 'Bank Mutation has been added.']);
-      }
-
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
-    }
-
-    $this->data['title'] = lang('App.addbankmutation');
-
-    $this->response(200, ['content' => view('Finance/Validation/add', $this->data)]);
-  }
-
-  protected function validation_delete($validationId = NULL)
-  {
-    checkPermission('PaymentValidation.Delete');
-
-    $this->response(501, ['message' => 'Not implemented']);
-
-    if (requestMethod() == 'POST' && isAJAX()) {
-      $validation = PaymentValidation::getRow(['id' => $validationId]);
-
-      if (!$validation) {
-        $this->response(404, ['message' => 'Payment Validation is not found.']);
-      }
-
-      if (PaymentValidation::delete(['id' => $validationId])) {
-        $this->response(200, ['message' => 'Payment Validation has been deleted.']);
-      }
-
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
-    }
-
-    $this->response(400, ['message' => 'Failed to delete Payment Validation.']);
-  }
-
-  protected function validation_edit($validationId = NULL)
-  {
-    checkPermission('PaymentValidation.Edit');
-
-    $this->response(501, ['message' => 'Not implemented']);
-
-    $validation = PaymentValidation::getRow(['id' => $validationId]);
-
-    if (!$validation) {
-      $this->response(404, ['message' => 'Payment Validation is not found.']);
-    }
-
-    if (requestMethod() == 'POST') {
-      $validationData = [
-        'biller'  => getPost('biller'),
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'number'  => getPost('number'),
-        'holder'  => getPost('holder'),
-        'type'    => getPost('type'),
-        'bic'     => getPost('bic'),
-        'active'  => (getPost('active') == 1 ? 1 : 0)
-      ];
-
-      DB::transStart();
-
-      PaymentValidation::update((int)$validationId, $validationData);
-
-      DB::transComplete();
-
-      if (DB::transStatus()) {
-        $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $validation->name)]);
-      }
-
-      $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $validation->name)]);
-    }
-
-    $this->data['validation'] = $validation;
-    $this->data['title'] = lang('App.editpaymentvalidation');
-
-    $this->response(200, ['content' => view('Finance/Validation/edit', $this->data)]);
   }
 }
