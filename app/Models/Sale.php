@@ -12,7 +12,14 @@ class Sale
   public static function add(array $data)
   {
     DB::table('sales')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -46,7 +53,14 @@ class Sale
   public static function delete(array $where)
   {
     DB::table('sales')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -271,6 +285,13 @@ class Sale
   public static function update(int $id, array $data)
   {
     DB::table('sales')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

@@ -8,21 +8,38 @@ class StockAdjustment
 {
   /**
    * Add new StockAdjustment.
+   * @param array $data []
+   * @param array $items [ *code, *quantity ]
    */
   public static function add(array $data, array $items)
   {
-    if ($data['warehouse']) {
-      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
-
-      $data['warehouse_id'] = $warehouse->id;
+    if (empty($data['warehouse'])) {
+      setLastError('Warehouse ID is not set.');
+      return false;
     }
+
+    $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
+    $data['warehouse_id'] = $warehouse->id;
 
     DB::table('adjustments')->insert($data);
     $insertID = DB::insertID();
 
     if ($insertID) {
       foreach ($items as $item) {
-        StockAdjustmentItem::add($item);
+        $product = Product::getRow(['code' => $item['code']]);
+        $whProduct = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_id' => $warehouse->id]);
+
+        $adjusted = getAdjustedQty((float)$whProduct->quantity, (float)$item['quantity']);
+
+        Stock::add([
+          'date'            => $data['date'],
+          'adjustment_id'   => $insertID,
+          'product_id'      => $product->id,
+          'warehouse_id'    => $warehouse->id,
+          'quantity'        => $adjusted['quantity'],
+          'adjustment_qty'  => $item['quantity'],
+          'type'            => $adjusted['type']
+        ]);
       }
 
       return $insertID;

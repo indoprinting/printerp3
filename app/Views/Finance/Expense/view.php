@@ -100,7 +100,7 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-default" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
   <?php if (hasAccess('Expense.Approve') && $expense->status == 'need_approval') : ?>
     <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.approve') ?></button>
   <?php endif; ?>

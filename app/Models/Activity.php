@@ -14,7 +14,14 @@ class Activity
     $data = setCreatedBy($data);
 
     DB::table('activity')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -23,7 +30,14 @@ class Activity
   public static function delete(array $where)
   {
     DB::table('activity')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -59,6 +73,13 @@ class Activity
   public static function update(int $id, array $data)
   {
     DB::table('activity')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

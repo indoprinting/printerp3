@@ -12,7 +12,12 @@ class ComboItem
   public static function add(array $data)
   {
     DB::table('combo_items')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    return false;
   }
 
   /**
@@ -21,7 +26,14 @@ class ComboItem
   public static function delete(array $where)
   {
     DB::table('combo_items')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -57,6 +69,13 @@ class ComboItem
   public static function update(int $id, array $data)
   {
     DB::table('combo_items')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

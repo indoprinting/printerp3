@@ -4,7 +4,7 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('inventory/adjustment/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('inventory/stockadjustment/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
               <i class="fad fa-plus-circle"></i>
             </a>
           </div>
@@ -53,7 +53,7 @@
           <?= csrf_token() ?>: '<?= csrf_hash() ?>'
         },
         method: 'POST',
-        url: base_url + '/inventory/getAdjustments'
+        url: base_url + '/inventory/getStockAdjustments'
       },
       columnDefs: [{
         targets: [0, 8],

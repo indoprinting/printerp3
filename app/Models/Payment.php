@@ -77,9 +77,7 @@ class Payment
 
     DB::table('payments')->insert($data);
 
-    if (DB::affectedRows()) {
-      $insertID = DB::insertID();
-
+    if ($insertID = DB::insertID()) {
       if ($data['type'] == 'received') {
         Bank::amountIncrease((int)$bank->id, floatval($data['amount']));
       } else if ($data['type'] == 'sent') {
@@ -100,7 +98,14 @@ class Payment
   public static function delete(array $where)
   {
     DB::table('payments')->delete($where);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -197,6 +202,13 @@ class Payment
     $data = setUpdatedBy($data);
 
     DB::table('payments')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

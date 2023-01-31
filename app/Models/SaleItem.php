@@ -12,10 +12,17 @@ class SaleItem
   public static function add(array $data)
   {
     DB::table('sale_items')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
-  
+
   /**
    * Complete sale item.
    * @param int $id Sale item ID.
@@ -189,7 +196,14 @@ class SaleItem
   public static function delete(array $where)
   {
     DB::table('sale_items')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -225,6 +239,13 @@ class SaleItem
   public static function update(int $id, array $data)
   {
     DB::table('sale_items')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

@@ -323,12 +323,6 @@
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="<?= base_url('inventory/adjustment') ?>" class="nav-link" data-action="link" data-slug="adjustment">
-                    <i class="nav-icon fad fa-sliders"></i>
-                    <p><?= lang('App.adjustment') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-cloud-arrow-down"></i>
                     <p><?= lang('App.sync') ?></p>
@@ -356,6 +350,12 @@
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-box-up"></i>
                     <p><?= lang('App.product') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="<?= base_url('inventory/stockadjustment') ?>" class="nav-link" data-action="link" data-slug="stockadjustment">
+                    <i class="nav-icon fad fa-sliders"></i>
+                    <p><?= lang('App.stockadjustment') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
@@ -733,7 +733,7 @@
 
     }
   </script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDP-hGcct-nQS50RHHdXjwXgNxi71jRaU8&libraries=places&v=weekly&callback=initmap"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=<?= env('API_GMAPS') ?>&libraries=places&v=weekly&callback=initmap"></script>
   <!-- AdminLTE App -->
   <script src="<?= base_url() ?>/assets/dist/js/adminlte.min.js"></script>
   <!-- Custom -->

@@ -14,7 +14,7 @@ class Inventory extends BaseController
     checkPermission();
   }
 
-  public function getAdjustments()
+  public function getStockAdjustments()
   {
     checkPermission('StockAdjustment.View');
 
@@ -32,18 +32,18 @@ class Inventory extends BaseController
               <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
-              <a class="dropdown-item" href="' . base_url('inventory/adjustment/edit/' . $data['id']) . '"
+              <a class="dropdown-item" href="' . base_url('inventory/stockadjustment/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
-              <a class="dropdown-item" href="' . base_url('inventory/adjustment/view/' . $data['id']) . '"
+              <a class="dropdown-item" href="' . base_url('inventory/stockadjustment/view/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
               </a>
               <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="' . base_url('inventory/adjustment/delete/' . $data['id']) . '"
+              <a class="dropdown-item" href="' . base_url('inventory/stockadjustment/delete/' . $data['id']) . '"
                 data-action="confirm">
                 <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
               </a>
@@ -56,7 +56,7 @@ class Inventory extends BaseController
       ->generate();
   }
 
-  public function adjustment()
+  public function stockadjustment()
   {
     if ($args = func_get_args()) {
       $method = __FUNCTION__ . '_' . $args[0];
@@ -72,28 +72,40 @@ class Inventory extends BaseController
     $this->data['page'] = [
       'bc' => [
         ['name' => lang('App.inventory'), 'slug' => 'inventory', 'url' => '#'],
-        ['name' => lang('App.stockadjustment'), 'slug' => 'adjustment', 'url' => '#']
+        ['name' => lang('App.stockadjustment'), 'slug' => 'stockadjustment', 'url' => '#']
       ],
-      'content' => 'Inventory/Adjustment/index',
+      'content' => 'Inventory/StockAdjustment/index',
       'title' => lang('App.stockadjustment')
     ];
 
     return $this->buildPage($this->data);
   }
 
-  protected function adjustment_add()
+  protected function stockadjustment_add()
   {
     checkPermission('StockAdjustment.Add');
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'      => getPost('date'),
+        'date'      => dateTimeJS(getPost('date')),
         'warehouse' => getPost('warehouse'),
         'mode'      => getPost('mode'),
         'note'      => stripTags(getPost('note'))
       ];
 
-      $items = [];
+      $itemCodes  = getPost('item[code]');
+      $itemQty    = getPost('item[quantity]');
+
+      for ($a = 0; $a < count($itemCodes); $a++) {
+        if (empty($itemQty[$a])) {
+          $this->response(400, ['message' => "Item {$itemCodes[$a]} has invalid quantity."]);
+        }
+
+        $items[] = [
+          'code'      => $itemCodes[$a],
+          'quantity'  => $itemQty[$a]
+        ];
+      }
 
       DB::transStart();
 
@@ -116,6 +128,6 @@ class Inventory extends BaseController
 
     $this->data['title'] = lang('App.addstockadjustment');
 
-    $this->response(200, ['content' => view('Inventory/Adjustment/add', $this->data)]);
+    $this->response(200, ['content' => view('Inventory/StockAdjustment/add', $this->data)]);
   }
 }

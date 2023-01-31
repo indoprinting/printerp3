@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{DB, PaymentValidation, Sale, Voucher};
+use App\Models\{DB, PaymentValidation, Product, Sale, Voucher, Warehouse, WarehouseProduct};
 
 class Api extends BaseController
 {
@@ -153,6 +153,64 @@ class Api extends BaseController
     } else {
       $this->response(406, ['message' => 'Not Validated']);
     }
+  }
+
+  protected function v1_product($mode = NULL)
+  {
+    if (requestMethod() == 'POST') {
+      if (!$mode) {
+        $this->product_add();
+      } else if ($mode == 'delete') {
+        $this->product_delete();
+      }
+    }
+
+    $code = getGet('code');
+    $wh = getGet('warehouse');
+
+    if (!$code) {
+      $this->response(400, ['message' => 'Product code is required.']);
+    }
+
+    $product = Product::getRow(['code' => $code]);
+
+    if (!$product) {
+      $this->response(404, ['message' => 'Product is not found.']);
+    }
+
+    $whProduct = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_code' => $wh]);
+
+    if ($product) {
+      $data = [
+        'code'          => $product->code,
+        'name'          => $product->name,
+        'cost'          => floatval($product->cost),
+        'price'         => floatval($product->price),
+        'markon_price'  => floatval($product->markon_price),
+        'iuse_type'     => $product->iuse_type,
+        'type'          => $product->type,
+        'warehouses'    => $product->warehouses,
+        'quantity'      => floatval($product->quantity),
+      ];
+
+      if ($whProduct) {
+        $data['quantity'] = floatval($whProduct->quantity);
+      }
+
+      $this->response(200, ['data' => $data]);
+    }
+
+    $this->response(404, ['message' => 'Product is not found.']);
+  }
+
+  protected function product_add()
+  {
+
+  }
+
+  protected function product_delete()
+  {
+
   }
 
   protected function v1_voucher($mode = NULL)

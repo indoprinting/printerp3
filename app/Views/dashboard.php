@@ -59,6 +59,12 @@
     });
 
     let hChart = setInterval(async () => {
+      if ($('#monthly-sales-chart').length == 0) {
+        console.log('Auto update chart is disabled.');
+        clearInterval(hChart);
+        return false;
+      }
+
       fetch(base_url + '/chart/monthlySales', {
         method: 'GET'
       }).then(response => response.json()).then((response) => {

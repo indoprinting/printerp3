@@ -49,7 +49,14 @@ class Income
   public static function delete(array $where)
   {
     DB::table('incomes')->delete($where);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -102,6 +109,13 @@ class Income
     $data = setUpdatedBy($data);
 
     DB::table('incomes')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

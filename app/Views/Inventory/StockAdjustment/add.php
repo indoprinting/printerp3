@@ -14,18 +14,17 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="date"><?= lang('App.date') ?> *</label>
+                  <label for="date"><?= lang('App.date') ?></label>
                   <input type="datetime-local" id="date" name="date" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
+                  <label for="warehouse"><?= lang('App.warehouse') ?> *</label>
+                  <select id="warehouse" name="warehouse" class="select" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" placeholder="<?= lang('App.warehouse') ?>">
                     <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
+                    <?php foreach (\App\Models\Warehouse::get(['active' => 1]) as $wh) : ?>
+                      <option value="<?= $wh->code ?>"><?= $wh->name ?></option>
                     <?php endforeach; ?>
                   </select>
                 </div>
@@ -34,42 +33,13 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="bank"><?= lang('App.bankaccount') ?> *</label>
-                  <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <label for="mode"><?= lang('App.mode') ?> *</label>
+                  <select class="select" name="mode" data-placeholder="<?= lang('App.mode') ?>" style="width:100%" placeholder="<?= lang('App.mode') ?>">
+                    <option value="overwrite"><?= lang('App.overwrite') ?></option>
+                    <option value="formula"><?= lang('App.formula') ?></option>
                   </select>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="bankbalance"><?= lang('App.currentbalance') ?></label>
-                  <input id="bankbalance" class="form-control form-control-border form-control-sm float-right" readonly>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="0">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="category"><?= lang('App.category') ?> *</label>
-                  <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\IncomeCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
-                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
@@ -93,13 +63,47 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header bg-gradient-primary"><?= lang('App.product') ?></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <select id="product" class="select-product-standard" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <table id="table-stockadjustment" class="table">
+                  <thead>
+                    <tr>
+                      <th><?= lang('App.name') ?></th>
+                      <th><?= lang('App.quantity') ?></th>
+                      <th><?= lang('App.currentstock') ?></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
   <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
 </div>
-<script>
+<script type="module">
+  import {
+    StockAdjustment
+  } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
+
   (function() {
     initControls();
   })();
@@ -113,19 +117,39 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
-    $('#bank').change(function() {
+    $('#product').change(function() {
+      if (!this.value) return false;
+
+      let warehouse = $('#warehouse').val();
+
+      if (!warehouse) {
+        toastr.error('Warehouse is required.');
+
+        $(this).val('').trigger('change');
+
+        return false;
+      }
+
       $.ajax({
-        success: (data) => {
-          $('#bankbalance').val(formatCurrency(data.data));
+        data: {
+          code: this.value,
+          warehouse: warehouse
         },
-        url: base_url + '/finance/bank/balance/' + this.value
-      })
+        success: (data) => {
+          let sa = new StockAdjustment('#table-stockadjustment');
+
+          sa.addItem(data.data);
+
+          $(this).val('').trigger('change');
+        },
+        url: base_url + '/api/v1/product'
+      });
     });
 
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/finance/income/add'
+      url: base_url + '/inventory/stockadjustment/add'
     });
   });
 </script>

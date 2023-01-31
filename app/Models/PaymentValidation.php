@@ -39,7 +39,14 @@ class PaymentValidation
     $data = setExpired($data);
 
     DB::table('payment_validations')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -48,7 +55,14 @@ class PaymentValidation
   public static function delete(array $where)
   {
     DB::table('payment_validations')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -155,7 +169,14 @@ class PaymentValidation
   public static function update(int $id, array $data)
   {
     DB::table('payment_validations')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**

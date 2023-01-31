@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-class IncomeCategory
+class Product
 {
   /**
-   * Add new IncomeCategory.
+   * Add new Product.
    */
   public static function add(array $data)
   {
-    DB::table('income_categories')->insert($data);
+    DB::table('products')->insert($data);
     
     if ($insertID = DB::insertID()) {
       return $insertID;
@@ -23,11 +23,11 @@ class IncomeCategory
   }
 
   /**
-   * Delete IncomeCategory.
+   * Delete Product.
    */
   public static function delete(array $where)
   {
-    DB::table('income_categories')->delete($where);
+    DB::table('products')->delete($where);
     
     if ($affectedRows = DB::affectedRows()) {
       return $affectedRows;
@@ -39,15 +39,15 @@ class IncomeCategory
   }
 
   /**
-   * Get IncomeCategory collections.
+   * Get Product collections.
    */
   public static function get($where = [])
   {
-    return DB::table('income_categories')->get($where);
+    return DB::table('products')->get($where);
   }
 
   /**
-   * Get IncomeCategory row.
+   * Get Product row.
    */
   public static function getRow($where = [])
   {
@@ -58,19 +58,19 @@ class IncomeCategory
   }
 
   /**
-   * Select IncomeCategory.
+   * Select Product.
    */
   public static function select(string $columns, $escape = TRUE)
   {
-    return DB::table('income_categories')->select($columns, $escape);
+    return DB::table('products')->select($columns, $escape);
   }
 
   /**
-   * Update IncomeCategory.
+   * Update Product.
    */
   public static function update(int $id, array $data)
   {
-    DB::table('income_categories')->update($data, ['id' => $id]);
+    DB::table('products')->update($data, ['id' => $id]);
     
     if ($affectedRows = DB::affectedRows()) {
       return $affectedRows;

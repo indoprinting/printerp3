@@ -148,6 +148,20 @@ function formatNumber($num)
 }
 
 /**
+ * Get adjusted quantity.
+ * @return array Return adjusted object [ quantity, type ]
+ */
+function getAdjustedQty(float $oldQty, float $newQty)
+{
+  $adjusted = [
+    'quantity'  => ($oldQty > $newQty ? $oldQty - $newQty : $newQty - $oldQty),
+    'type'      => ($oldQty > $newQty ? 'sent' : 'received')
+  ];
+
+  return $adjusted;
+}
+
+/**
  * Fetch an item from GET data.
  */
 function getCookie($name)

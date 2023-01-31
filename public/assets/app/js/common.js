@@ -238,6 +238,25 @@ function initControls() {
         url: base_url + '/select2/customer'
       }
     });
+    $('.select-product').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/product'
+      }
+    });
+    $('.select-product-standard').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          params.type = 'standard';
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/product'
+      }
+    });
     $('.select-supplier').select2({
       allowClear: true,
       ajax: {

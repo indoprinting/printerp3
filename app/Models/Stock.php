@@ -64,9 +64,7 @@ class Stock
 
     DB::table('stocks')->insert($data);
 
-    if (DB::affectedRows()) {
-      $insertId = DB::insertID();
-
+    if ($insertId = DB::insertID()) {
       if ($data['status'] == 'received')
         WarehouseProduct::increaseQuantity((int)$product->id, (int)$warehouse->id, (float)$data['quantity']);
       if ($data['status'] == 'sent')
@@ -93,7 +91,14 @@ class Stock
   public static function delete(array $where)
   {
     DB::table('stocks')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -153,7 +158,7 @@ class Stock
   }
 
   /**
-   * (OLD) Get total quantity based by product and warehouse.
+   * Get total quantity based by product and warehouse.
    * @param int $productId Product ID.
    * @param int $warehouseId Warehouse ID.
    * @param array $opt [ start_date, end_date, order_by(column,ASC|DESC) ]
@@ -191,6 +196,13 @@ class Stock
   public static function update(int $id, array $data)
   {
     DB::table('stocks')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

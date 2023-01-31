@@ -11,22 +11,22 @@ class Expense
    */
   public static function add(array $data)
   {
-    if (isset($data['bank'])) { // Compatibility.
+    if (isset($data['bank'])) {
       $bank = Bank::getRow(['code' => $data['bank']]);
       $data['bank_id'] = $bank->id;
     }
 
-    if (isset($data['biller'])) { // Compatibility.
+    if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
       $data['biller_id'] = $biller->id;
     }
 
-    if (isset($data['category'])) { // Compatibility.
+    if (isset($data['category'])) {
       $category = ExpenseCategory::getRow(['code' => $data['category']]);
       $data['category_id'] = $category->id;
     }
 
-    if (isset($data['supplier'])) { // Compatibility.
+    if (isset($data['supplier'])) {
       $supplier = Supplier::getRow(['id' => $data['supplier']]);
       $data['supplier_id'] = $supplier->id;
       unset($data['supplier']);
@@ -57,7 +57,14 @@ class Expense
   public static function delete(array $where)
   {
     DB::table('expenses')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -92,22 +99,22 @@ class Expense
    */
   public static function update(int $id, array $data)
   {
-    if (isset($data['bank'])) { // Compatibility.
+    if (isset($data['bank'])) {
       $bank = Bank::getRow(['code' => $data['bank']]);
       $data['bank_id'] = $bank->id;
     }
 
-    if (isset($data['biller'])) { // Compatibility.
+    if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
       $data['biller_id'] = $biller->id;
     }
 
-    if (isset($data['category'])) { // Compatibility.
+    if (isset($data['category'])) {
       $category = ExpenseCategory::getRow(['code' => $data['category']]);
       $data['category_id'] = $category->id;
     }
 
-    if (isset($data['supplier'])) { // Compatibility.
+    if (isset($data['supplier'])) {
       $supplier = Supplier::getRow(['id' => $data['supplier']]);
       $data['supplier_id'] = $supplier->id;
     }
@@ -115,6 +122,13 @@ class Expense
     $data = setUpdatedBy($data);
 
     DB::table('expenses')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

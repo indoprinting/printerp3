@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{Attachment, Biller, Customer, DB, Locale, ProductTransfer, Sale, Supplier, User};
+use App\Models\{Attachment, Biller, Customer, DB, Locale, Product, ProductTransfer, Sale, Supplier, User};
 
 class Home extends BaseController
 {
@@ -229,6 +229,7 @@ class Home extends BaseController
     $mode = strtolower($mode);
     $results = [];
     $term = getGet('term');
+    $type = getGet('type');
 
     switch ($mode) {
       case 'customer':
@@ -237,6 +238,21 @@ class Home extends BaseController
 
         if ($term) {
           $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+        }
+
+        $results = $q->get();
+
+        break;
+      case 'product':
+        $q = Product::select("code id, CONCAT('(', code, ') ', name) text ")
+          ->limit(10);
+
+        if ($type) {
+          $q->where('type', $type);
+        }
+
+        if ($term) {
+          $q->like('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
         $results = $q->get();
