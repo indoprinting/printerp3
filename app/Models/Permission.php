@@ -29,7 +29,14 @@ class Permission
     }
 
     DB::table('permission')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -38,7 +45,14 @@ class Permission
   public static function delete(array $where)
   {
     DB::table('permission')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -75,6 +89,11 @@ class Permission
   {
     if (isset($data['actions'])) {
       if (is_array($data['actions'])) {
+        if ($id == 1 && array_search('All', $data['actions']) === FALSE) {
+          setLastError('ID 1 must have All permission.');
+          return FALSE;
+        }
+
         $data['actions'] = json_encode($data['actions']);
       } else {
         setLastError('Actions must be an array.');
@@ -83,6 +102,13 @@ class Permission
     }
 
     DB::table('permission')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

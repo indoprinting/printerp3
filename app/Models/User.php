@@ -35,7 +35,14 @@ class User
     $data = nulling($data, ['biller', 'warehouse']);
 
     DB::table('users')->insert($data);
-    return DB::insertID();
+    
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -57,7 +64,14 @@ class User
     }
 
     DB::table('users')->delete($where);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -130,7 +144,13 @@ class User
     $data = nulling($data, ['biller', 'warehouse']);
 
     DB::table('users')->update($data, ['id' => $id]);
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
     setLastError(DB::error()['message']);
-    return DB::affectedRows();
+
+    return false;
   }
 }

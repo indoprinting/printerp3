@@ -10,7 +10,13 @@ class Debug extends BaseController
 {
   public function debug()
   {
-    echo PaymentValidation::delete(['reference' => 'MUT-2023/01/0017']);
+    $a = 0;
+
+    if ($b = $a) {
+      echo 'b:' . $b . '<br>';
+    }
+
+    echo 'a:' . $a;
   }
 
   public function invoice()

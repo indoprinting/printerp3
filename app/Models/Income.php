@@ -11,10 +11,36 @@ class Income
    */
   public static function add(array $data)
   {
+    if (isset($data['bank'])) { // Compatibility.
+      $bank = Bank::getRow(['code' => $data['bank']]);
+      $data['bank_id'] = $bank->id;
+    }
+
+    if (isset($data['biller'])) { // Compatibility.
+      $biller = Biller::getRow(['code' => $data['biller']]);
+      $data['biller_id'] = $biller->id;
+    }
+
+    if (isset($data['category'])) { // Compatibility.
+      $category = IncomeCategory::getRow(['code' => $data['category']]);
+      $data['category_id'] = $category->id;
+    }
+
     $data = setCreatedBy($data);
+    $data['reference'] = OrderRef::getReference('income');
 
     DB::table('incomes')->insert($data);
-    return DB::insertID();
+    $insertID = DB::insertID();
+
+    if ($insertID) {
+      OrderRef::updateReference('income');
+
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return FALSE;
   }
 
   /**
@@ -23,7 +49,14 @@ class Income
   public static function delete(array $where)
   {
     DB::table('incomes')->delete($where);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -58,7 +91,31 @@ class Income
    */
   public static function update(int $id, array $data)
   {
+    if (isset($data['bank'])) {
+      $bank = Bank::getRow(['code' => $data['bank']]);
+      $data['bank_id'] = $bank->id;
+    }
+
+    if (isset($data['biller'])) {
+      $biller = Biller::getRow(['code' => $data['biller']]);
+      $data['biller_id'] = $biller->id;
+    }
+
+    if (isset($data['category'])) {
+      $category = IncomeCategory::getRow(['code' => $data['category']]);
+      $data['category_id'] = $category->id;
+    }
+
+    $data = setUpdatedBy($data);
+
     DB::table('incomes')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

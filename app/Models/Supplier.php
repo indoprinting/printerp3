@@ -12,7 +12,14 @@ class Supplier
   public static function add(array $data)
   {
     DB::table('suppliers')->insert($data);
-    return DB::insertID();
+    
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -21,7 +28,14 @@ class Supplier
   public static function delete(array $where)
   {
     DB::table('suppliers')->delete($where);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -57,6 +71,13 @@ class Supplier
   public static function update(int $id, array $data)
   {
     DB::table('suppliers')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

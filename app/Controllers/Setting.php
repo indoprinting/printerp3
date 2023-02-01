@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
-use App\Models\{Permission, User};
+use App\Models\{DB, Permission, User};
 
 class Setting extends BaseController
 {
@@ -61,6 +61,8 @@ class Setting extends BaseController
 
           if (strcasecmp($action, 'Add') === 0) {
             $badge = 'bg-gradient-success';
+          } else if (strcasecmp($action, 'All') === 0) {
+            $badge = 'bg-gradient-indigo';
           } else if (strcasecmp($action, 'Delete') === 0) {
             $badge = 'bg-gradient-danger';
           } else if (strcasecmp($action, 'Edit') === 0) {
@@ -108,13 +110,25 @@ class Setting extends BaseController
   {
     checkPermission('All');
 
-    if (requestMethod() == 'POST') {
-      $permissionData = [
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $data = [
         'name'    => getPost('name'),
         'actions' => getPost('action')
       ];
 
-      if (Permission::add($permissionData)) {
+      DB::transStart();
+
+      $insertID = Permission::add($data);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $permission = Permission::getRow(['id' => $insertID]);
+
+        addActivity("Permission {$permission->name} has been added.", [
+          'add' => $permission
+        ]);
+
         $this->response(201, ['message' => 'Permission has been added.']);
       }
 
@@ -126,39 +140,73 @@ class Setting extends BaseController
     $this->response(200, ['content' => view('Setting/Permission/add', $this->data)]);
   }
 
-  protected function permission_delete($permissionId = NULL)
+  protected function permission_delete($id = NULL)
   {
     checkPermission('All');
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (Permission::delete(['id' => $permissionId])) {
+      $permission = Permission::getRow(['id' => $id]);
+
+      if (!$permission) {
+        $this->response(404, ['message' => 'Permission is not found.']);
+      }
+
+      DB::transStart();
+
+      Permission::delete(['id' => $id]);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        addActivity("Permission {$permission->name} has been deleted.", [
+          'delete' => $permission
+        ]);
+
         $this->response(200, ['message' => 'Permission has been deleted.']);
       }
+
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
+
     $this->response(400, ['message' => 'Failed to delete permission.']);
   }
 
-  protected function permission_edit($permissionId = NULL)
+  protected function permission_edit($id = NULL)
   {
     checkPermission('All');
 
-    $permission = Permission::getRow(['id' => $permissionId]);
+    $permission = Permission::getRow(['id' => $id]);
 
-    if (requestMethod() == 'POST') {
-      $permissionData = [
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $data = [
         'name'    => getPost('name'),
         'actions' => getPost('action')
       ];
 
-      if (Permission::update((int)$permission->id, $permissionData)) {
+      DB::transStart();
+
+      $res = Permission::update((int)$id, $data);
+
+      DB::transComplete();
+
+      if (DB::transStatus() && $res) {
+        $newPermission = Permission::getRow(['id' => $id]);
+
+        addActivity("Permission {$permission->name} has been updated.", [
+          'edit' => [
+            'new' => $newPermission,
+            'old' => $permission
+          ]
+        ]);
+
         $this->response(200, ['message' => sprintf(lang('Msg.permissionEditOK'), $permission->name)]);
       }
-      $this->response(400, ['message' => sprintf(lang('Msg.permissionEditNO'), $permission->name)]);
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
-    $this->data['title'] = lang('App.editpermission');
     $this->data['permission'] = $permission;
+    $this->data['title']      = lang('App.editpermission');
 
     $this->response(200, ['content' => view('Setting/Permission/edit', $this->data)]);
   }

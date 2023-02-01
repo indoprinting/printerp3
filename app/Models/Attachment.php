@@ -18,9 +18,12 @@ class Attachment
 
     DB::table('attachment')->insert($data);
 
-    if (DB::affectedRows()) {
-      return DB::insertID();
+    if ($insertID = DB::insertID()) {
+      return $insertID;
     }
+
+    setLastError(DB::error()['message']);
+
     return FALSE;
   }
 
@@ -39,7 +42,14 @@ class Attachment
     }
 
     DB::table('attachment')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -78,6 +88,13 @@ class Attachment
   public static function update(int $id, array $data)
   {
     DB::table('attachment')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

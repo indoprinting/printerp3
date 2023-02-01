@@ -17,7 +17,14 @@ class Bank
     }
 
     DB::table('banks')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -64,7 +71,14 @@ class Bank
   public static function delete(array $where)
   {
     DB::table('banks')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -129,6 +143,13 @@ class Bank
     }
 
     DB::table('banks')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

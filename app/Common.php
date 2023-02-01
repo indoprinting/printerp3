@@ -19,6 +19,29 @@ use App\Models\{Customer, CustomerGroup, User};
  */
 
 /**
+ * Add new activity.
+ * @param string $data Activity data.
+ * @param array $json JSON data.
+ */
+function addActivity(string $data, array $json = [])
+{
+  $ip = \Config\Services::request()->getIPAddress();
+  $ua = \Config\Services::request()->getUserAgent();
+
+  $data = [
+    'data'        => $data,
+    'ip_address'  => $ip,
+    'user_agent'  => $ua
+  ];
+
+  if ($json) {
+    $data['json'] = json_encode($json);
+  }
+
+  return \App\Models\Activity::add($data);
+}
+
+/**
  * Check for permission and login status.
  * @param string $permission Permission to check. Ex. "User.View". If NULL it will check for login session.
  */
@@ -122,6 +145,20 @@ function formatCurrency($num)
 function formatNumber($num)
 {
   return number_format(filterDecimal($num), 0, ',', '.');
+}
+
+/**
+ * Get adjusted quantity.
+ * @return array Return adjusted object [ quantity, type ]
+ */
+function getAdjustedQty(float $oldQty, float $newQty)
+{
+  $adjusted = [
+    'quantity'  => ($oldQty > $newQty ? $oldQty - $newQty : $newQty - $oldQty),
+    'type'      => ($oldQty > $newQty ? 'sent' : 'received')
+  ];
+
+  return $adjusted;
 }
 
 /**
@@ -330,7 +367,7 @@ function renderAttachment(string $attachment = NULL)
     $res = '
       <a href="' . base_url('filemanager/view/' . $attachment) . '"
         data-toggle="modal" data-target="#ModalDefault2" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <i class="fad fa-file-download"></i>
+        <i class="fas fa-paperclip"></i>
       </a>';
   }
 
@@ -473,6 +510,7 @@ function setUpdatedBy($data = [])
   if (empty($data['updated_by']) && isLoggedIn()) {
     $data['updated_by'] = session('login')->user_id;
   }
+
   return $data;
 }
 

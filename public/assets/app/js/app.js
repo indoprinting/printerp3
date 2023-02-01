@@ -414,6 +414,10 @@ $(document).ready(function () {
     });
   });
 
+  $(document).on('click', '.table-row-delete', function () {
+    $(this).closest('tr').remove();
+  });
+
   $.extend(true, $.fn.DataTable.defaults, {
     drawCallback: function (settings) {
       initControls();

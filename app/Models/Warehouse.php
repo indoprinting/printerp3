@@ -13,7 +13,14 @@ class Warehouse
   public static function add(array $data)
   {
     DB::table('warehouse')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -23,7 +30,14 @@ class Warehouse
   public static function delete(array $clause)
   {
     DB::table('warehouse')->delete($clause);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -55,6 +69,13 @@ class Warehouse
   public static function update(int $id, array $data)
   {
     DB::table('warehouse')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

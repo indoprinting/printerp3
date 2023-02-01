@@ -12,7 +12,14 @@ class ProductPurchase
   public static function add(array $data)
   {
     DB::table('purchases')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -21,7 +28,14 @@ class ProductPurchase
   public static function delete(array $where)
   {
     DB::table('purchases')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -57,6 +71,13 @@ class ProductPurchase
   public static function update(int $id, array $data)
   {
     DB::table('purchases')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

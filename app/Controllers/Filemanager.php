@@ -18,7 +18,7 @@ class Filemanager extends BaseController
       $this->response(400, ['message' => 'Hashname required.']);
     }
 
-    $attachment = Attachment::select('*')->where('hashname', $hashname)->orWhere('id', $hashname)->getRow();
+    $attachment = Attachment::select('*')->where('hashname', $hashname)->getRow();
 
     if (!$attachment) {
       $this->response(404, ['message' => 'Attachment is not found.']);

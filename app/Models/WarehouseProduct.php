@@ -14,7 +14,14 @@ class WarehouseProduct
   public static function add(array $data)
   {
     DB::table('warehouses_products')->insert($data);
-    return DB::insertID();
+    
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   public static function decreaseQuantity(int $productId, int $warehouseId, float $quantity)
@@ -30,7 +37,14 @@ class WarehouseProduct
   public static function delete(array $clause)
   {
     DB::table('warehouses_products')->delete($clause);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -69,6 +83,13 @@ class WarehouseProduct
   public static function update(int $id, array $data)
   {
     DB::table('warehouses_products')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+    
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

@@ -35,7 +35,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="0">
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $amount ?>">
                 </div>
               </div>
               <div class="col-md-6">
@@ -109,7 +109,7 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-default" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
   <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
 </div>
 <script>
@@ -134,7 +134,7 @@
           $('#bankbalance').val(formatCurrency(data.data));
         },
         url: base_url + '/finance/bank/balance/' + this.value
-      })
+      });
     });
 
     $('#method').change(function() {
@@ -148,6 +148,9 @@
     if (!hasSkipValidation) {
       $('#skip_validation').iCheck('disable');
     }
+
+    $('#bank').val('<?= $bank ?>').trigger('change');
+    $('#biller').val('<?= $biller ?>').trigger('change');
 
     initModalForm({
       form: '#form',

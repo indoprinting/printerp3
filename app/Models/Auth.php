@@ -83,6 +83,8 @@ class Auth
           }
 
           session()->set('login', $row);
+          addActivity("User {$row->fullname} ({$row->username}) has been logged in.");
+
           return TRUE;
         }
       }
@@ -111,6 +113,11 @@ class Auth
   {
     if (session()->has('login')) {
       $userId = session('login')->user_id;
+      $fullname = session('login')->fullname;
+      $username = session('login')->username;
+
+      addActivity("User {$fullname} ({$username}) has been logged out.");
+
       session()->remove('login');
       setcookie('remember', '', time() + 1, '/');
       session_destroy();

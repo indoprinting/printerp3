@@ -5,12 +5,33 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
+use App\Models\{User, UserGroup};
 
 class Profile extends BaseController
 {
   public function index()
   {
     checkPermission();
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.profile'), 'slug' => 'profile', 'url' => '#']
+      ],
+      'content' => 'Profile/index',
+      'title' => lang('App.profile')
+    ];
+
+    $user = User::getRow(['id' => session('login')->user_id]);
+
+    $this->data['user'] = $user;
+
+    foreach (explode(',', $user->groups) as $group) {
+      $userGroups[] = UserGroup::getRow(['name' => $group]);
+    }
+
+    $this->data['userGroups'] = $userGroups;
+
+    return $this->buildPage($this->data);
   }
 
   public function getNotifications()

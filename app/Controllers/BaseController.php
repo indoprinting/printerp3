@@ -59,6 +59,11 @@ class BaseController extends Controller
 		// E.g.: $this->session = \Config\Services::session();
 
 		/**
+		 * Reset last error.
+		 */
+		setLastError();
+
+		/**
 		 * Resource Versioning
 		 */
 		$this->data['resver'] = (isEnv('development') ? bin2hex(random_bytes(4)) : '1.0.0');
@@ -87,7 +92,7 @@ class BaseController extends Controller
 
 	/**
 	 * Build new page.
-	 * @param array $data [ page, ... ]
+	 * @param array $data [ page['content'], page['url']
 	 */
 	protected function buildPage($data = [])
 	{

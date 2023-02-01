@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Libraries\{DataTables, FileUpload};
-use App\Models\{Biller, Warehouse};
+use App\Libraries\{DataTables};
+use App\Models\{Biller, DB, Warehouse};
 
 class Division extends BaseController
 {
   public function index()
   {
+    checkPermission();
   }
 
   public function getBillers()
@@ -117,8 +118,8 @@ class Division extends BaseController
   {
     checkPermission('Biller.Add');
 
-    if (requestMethod() == 'POST') {
-      $billerData = [
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $data = [
         'code'    => getPost('code'),
         'name'    => getPost('name'),
         'address' => getPost('address'),
@@ -131,7 +132,19 @@ class Division extends BaseController
         ])
       ];
 
-      if (Biller::add($billerData)) {
+      DB::transStart();
+
+      $insertID = Biller::add($data);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $biller = Biller::getRow(['id' => $insertID]);
+
+        addActivity("Biller ({$biller->code}) {$biller->code} has been added.", [
+          'add' => $biller
+        ]);
+
         $this->response(201, ['message' => 'Biller has been added.']);
       }
 
@@ -143,12 +156,22 @@ class Division extends BaseController
     $this->response(200, ['content' => view('Division/Biller/add', $this->data)]);
   }
 
-  protected function biller_delete($userGroupId = NULL)
+  protected function biller_delete($id = NULL)
   {
     checkPermission('Biller.Delete');
 
+    $biller = Biller::getRow(['id' => $id]);
+
+    if (!$biller) {
+      $this->response(404, ['message' => 'Biller is not found.']);
+    }
+
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (Biller::delete(['id' => $userGroupId])) {
+      if (Biller::delete(['id' => $id])) {
+        addActivity("Biller ({$biller->code}) {$biller->name} has been deleted.", [
+          'delete' => $biller
+        ]);
+
         $this->response(200, ['message' => 'Biller has been deleted.']);
       }
 
@@ -158,14 +181,18 @@ class Division extends BaseController
     $this->response(400, ['message' => 'Failed to delete biller.']);
   }
 
-  protected function biller_edit($billerId = NULL)
+  protected function biller_edit($id = NULL)
   {
     checkPermission('Biller.Edit');
 
-    $biller = Biller::getRow(['id' => $billerId]);
+    $biller = Biller::getRow(['id' => $id]);
 
-    if (requestMethod() == 'POST') {
-      $billerData = [
+    if (!$biller) {
+      $this->response(404, ['message' => 'Biller is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $data = [
         'code'    => getPost('code'),
         'name'    => getPost('name'),
         'address' => getPost('address'),
@@ -178,16 +205,31 @@ class Division extends BaseController
         ])
       ];
 
-      if (Biller::update((int)$biller->id, $billerData)) {
+      DB::transStart();
+
+      Biller::update((int)$id, $data);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $billerNew = Biller::getRow(['id' => $id]);
+
+        addActivity("Biller ({$biller->code}) {$biller->name} has been updated.", [
+          'edit' => [
+            'old' => $biller,
+            'new' => $billerNew
+          ]
+        ]);
+
         $this->response(200, ['message' => sprintf(lang('Msg.billerEditOK'), $biller->name)]);
       }
 
       $this->response(400, ['message' => sprintf(lang('Msg.billerEditNO'), $biller->name)]);
     }
 
-    $this->data['biller'] = $biller;
+    $this->data['biller']   = $biller;
     $this->data['billerJS'] = getJSON($biller->json);
-    $this->data['title']  = lang('App.editbiller');
+    $this->data['title']    = lang('App.editbiller');
 
     $this->response(200, ['content' => view('Division/Biller/edit', $this->data)]);
   }
@@ -221,7 +263,7 @@ class Division extends BaseController
   {
     checkPermission('Warehouse.Add');
 
-    if (requestMethod() == 'POST') {
+    if (requestMethod() == 'POST' && isAJAX()) {
       $maintenances = [];
 
       foreach (getPost('maintenance') as $main) {
@@ -232,14 +274,14 @@ class Division extends BaseController
         ];
       }
 
-      $warehouseData = [
-        'code'        => getPost('code'),
-        'name'        => getPost('name'),
-        'address'     => getPost('address'),
-        'phone'       => getPost('phone'),
-        'email'       => getPost('email'),
-        'active'      => (getPost('active') == 1 ? 1 : 0),
-        'json'        => json_encode([
+      $data = [
+        'code'    => getPost('code'),
+        'name'    => getPost('name'),
+        'address' => getPost('address'),
+        'phone'   => getPost('phone'),
+        'email'   => getPost('email'),
+        'active'  => (getPost('active') == 1 ? 1 : 0),
+        'json'    => json_encode([
           'cycle_transfer'  => intval(getPost('transfer_cycle')),
           'delivery_time'   => intval(getPost('delivery_time')),
           'lat'             => getPost('latitude'),
@@ -250,8 +292,20 @@ class Division extends BaseController
         ])
       ];
 
-      if (Warehouse::add($warehouseData)) {
-        $this->response(201, ['message' => sprintf(lang('Msg.warehouseAddOK'), $warehouseData['username'])]);
+      DB::transStart();
+
+      $insertID = Warehouse::add($data);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $warehouse = Warehouse::getRow(['id' => $insertID]);
+
+        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been added.", [
+          'add' => $warehouse
+        ]);
+
+        $this->response(201, ['message' => 'Warehouse has been added.']);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -262,32 +316,42 @@ class Division extends BaseController
     $this->response(200, ['content' => view('Division/Warehouse/add', $this->data)]);
   }
 
-  protected function warehouse_delete($warehouseId = NULL)
+  protected function warehouse_delete($id = NULL)
   {
     checkPermission('Warehouse.Delete');
 
-    if (requestMethod() != 'POST') {
-      $this->response(405, ['message' => 'Method is not allowed.']);
+    $warehouse = Warehouse::getRow(['id' => $id]);
+
+    if (!$warehouse) {
+      $this->response(404, ['message' => 'Warehouse is not found.']);
     }
 
-    if (Warehouse::delete(['id' => $warehouseId])) {
-      $this->response(200, ['message' => lang('Msg.warehouseDeleteOK')]);
+    if (requestMethod() == 'POST' && isAJAX()) {
+      if (Warehouse::delete(['id' => $id])) {
+        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been deleted.", [
+          'delete' => $warehouse
+        ]);
+
+        $this->response(200, ['message' => 'Warehouse has been deleted.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
-    $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    $this->response(400, ['message' => 'Failed to delete warehouse.']);
   }
 
-  protected function warehouse_edit($warehouseId = NULL)
+  protected function warehouse_edit($id = NULL)
   {
     checkPermission('Warehouse.Edit');
 
-    $warehouse = Warehouse::getRow(['id' => $warehouseId]);
+    $warehouse = Warehouse::getRow(['id' => $id]);
 
     if (!$warehouse) {
       $this->response(404, ['message' => 'Warehouse is not exists.']);
     }
 
-    if (requestMethod() == 'POST') {
+    if (requestMethod() == 'POST' && isAJAX()) {
       $maintenances = [];
 
       foreach (getPost('maintenance') as $main) {
@@ -298,7 +362,7 @@ class Division extends BaseController
         ];
       }
 
-      $warehouseData = [
+      $data = [
         'code'        => getPost('code'),
         'name'        => getPost('name'),
         'address'     => getPost('address'),
@@ -316,16 +380,31 @@ class Division extends BaseController
         ])
       ];
 
-      if (Warehouse::update((int)$warehouseId, $warehouseData)) {
+      DB::transStart();
+
+      Warehouse::update((int)$id, $data);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $newWarehouse = Warehouse::getRow(['id' => $id]);
+
+        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been updated.", [
+          'edit' => [
+            'old' => $warehouse,
+            'new' => $newWarehouse
+          ]
+        ]);
+
         $this->response(200, ['message' => sprintf(lang('Msg.warehouseEditOK'), $warehouse->name)]);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
-    $this->data['title'] = lang('App.editwarehouse');
-    $this->data['warehouse'] = $warehouse;
-    $this->data['warehouseJS'] = getJSON($warehouse->json);
+    $this->data['title']        = lang('App.editwarehouse');
+    $this->data['warehouse']    = $warehouse;
+    $this->data['warehouseJS']  = getJSON($warehouse->json);
 
     $this->response(200, ['content' => view('Division/Warehouse/edit', $this->data)]);
   }

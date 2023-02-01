@@ -129,7 +129,7 @@
             <img src="<?= base_url() ?>/attachment/<?= session('login')->avatar ?>" class="img-circle elevation-2" alt="User Image">
           </div>
           <div class="info">
-            <a href="#" class="d-block"><?= session('login')->fullname ?></a>
+            <a href="<?= base_url('profile') ?>" class="d-block" data-action="link"><?= session('login')->fullname ?></a>
           </div>
         </div>
 
@@ -316,18 +316,12 @@
             </li>
             <!-- Inventory -->
             <li class="nav-item">
-              <a href="#" class="nav-link">
+              <a href="#" class="nav-link" data-slug="inventory">
                 <i class="nav-icon fad fa-box-open-full"></i>
                 <p><?= lang('App.inventory') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-sliders"></i>
-                    <p><?= lang('App.adjustment') ?></p>
-                  </a>
-                </li>
                 <li class="nav-item">
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-cloud-arrow-down"></i>
@@ -356,6 +350,12 @@
                   <a href="#" class="nav-link">
                     <i class="nav-icon fad fa-box-up"></i>
                     <p><?= lang('App.product') ?></p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="<?= base_url('inventory/stockadjustment') ?>" class="nav-link" data-action="link" data-slug="stockadjustment">
+                    <i class="nav-icon fad fa-sliders"></i>
+                    <p><?= lang('App.stockadjustment') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
@@ -733,7 +733,7 @@
 
     }
   </script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDP-hGcct-nQS50RHHdXjwXgNxi71jRaU8&libraries=places&v=weekly&callback=initmap"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=<?= env('API_GMAPS') ?>&libraries=places&v=weekly&callback=initmap"></script>
   <!-- AdminLTE App -->
   <script src="<?= base_url() ?>/assets/dist/js/adminlte.min.js"></script>
   <!-- Custom -->

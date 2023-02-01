@@ -13,7 +13,14 @@ class Biller
   public static function add(array $data)
   {
     DB::table('biller')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -23,7 +30,14 @@ class Biller
   public static function delete(array $clause)
   {
     DB::table('biller')->delete($clause);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -63,6 +77,13 @@ class Biller
   public static function update(int $id, array $data)
   {
     DB::table('biller')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

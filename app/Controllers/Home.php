@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{Attachment, Biller, Customer, DB, Locale, ProductTransfer, Sale, Supplier, User};
+use App\Models\{Attachment, Biller, Customer, DB, Locale, Product, ProductTransfer, Sale, Supplier, User};
 
 class Home extends BaseController
 {
@@ -72,6 +72,12 @@ class Home extends BaseController
     $paids        = [];
     $balances     = [];
 
+    $res = cache('monthlySales');
+
+    if ($res) {
+      return $res;
+    }
+
     // 12 = 12 month ago, if 24 then take data from 24 month ago.
     for ($a = 12; $a >= 0; $a--) {
       $dateMonth = date('Y-m', strtotime('-' . $a . ' month', strtotime(date('Y-m-') . '01')));
@@ -93,7 +99,7 @@ class Home extends BaseController
       }
     }
 
-    return [
+    $res = [
       'labels' => $labels,
       'datasets' => [
         [
@@ -113,6 +119,10 @@ class Home extends BaseController
         ],
       ]
     ];
+
+    cache()->save('monthlySales', $res);
+
+    return $res;
   }
 
   protected function getTargetRevenue()
@@ -124,21 +134,29 @@ class Home extends BaseController
     $startDate  = date('Y-m-') . '01';
     $endDate    = date('Y-m-d');
 
+    $res = cache('targetRevenue');
+
+    if ($res) {
+      return $res;
+    }
+
     $billers = Biller::get(['active' => 1]);
 
     foreach ($billers as $biller) {
+      if (substr($biller->code, 0, 3) == 'IDS') continue; // Prevent Indostore.
+
       $billerJS = getJSON($biller->json);
 
       if (strcasecmp($biller->code, 'LUC') != 0) {
         $inv = Sale::select('SUM(grand_total) AS revenue, SUM(paid) AS paid')
-        ->where('biller', $biller->code)
-        ->where("date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
-        ->notLike('status', 'need_payment')
-        ->getRow();
+          ->where('biller', $biller->code)
+          ->where("date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
+          ->notLike('status', 'need_payment')
+          ->getRow();
       } else { // Lucretai
         $inv = ProductTransfer::select('SUM(grand_total) AS revenue, SUM(paid) AS paid')
-        ->where("date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
-        ->getRow();
+          ->where("date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
+          ->getRow();
       }
 
       $labels[]   = $biller->name;
@@ -147,7 +165,7 @@ class Home extends BaseController
       $paids[]    = $inv->paid;
     }
 
-    return [
+    $res = [
       'labels' => $labels,
       'datasets' => [
         [
@@ -167,6 +185,10 @@ class Home extends BaseController
         ],
       ]
     ];
+
+    cache()->save('targetRevenue', $res);
+
+    return $res;
   }
 
   public function lang($localeCode = 'id')
@@ -207,6 +229,7 @@ class Home extends BaseController
     $mode = strtolower($mode);
     $results = [];
     $term = getGet('term');
+    $type = getGet('type');
 
     switch ($mode) {
       case 'customer':
@@ -215,6 +238,21 @@ class Home extends BaseController
 
         if ($term) {
           $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+        }
+
+        $results = $q->get();
+
+        break;
+      case 'product':
+        $q = Product::select("code id, CONCAT('(', code, ') ', name) text ")
+          ->limit(10);
+
+        if ($type) {
+          $q->where('type', $type);
+        }
+
+        if ($term) {
+          $q->like('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
         $results = $q->get();

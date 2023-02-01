@@ -12,7 +12,14 @@ class Customer
   public static function add(array $data)
   {
     DB::table('customers')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -21,7 +28,14 @@ class Customer
   public static function delete(array $where)
   {
     DB::table('customers')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -57,6 +71,13 @@ class Customer
   public static function update(int $id, array $data)
   {
     DB::table('customers')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

@@ -667,7 +667,6 @@ class Humanresource extends BaseController
       ];
 
       if ($pass = getPost('password')) {
-        $this->response(500, ['message' => $pass]);
         $userData['password'] = $pass;
       }
 

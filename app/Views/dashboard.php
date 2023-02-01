@@ -29,16 +29,7 @@
     window.chartMonthlySales = new Chart('monthly-sales-chart', {
       type: 'bar',
       options: {
-        responsive: true,
-        scales: {
-          y: {
-            ticks: {
-              callback: function(value, index, ticks) {
-                return '$' + value;
-              }
-            }
-          }
-        }
+        responsive: true
       }
     });
 
@@ -68,6 +59,12 @@
     });
 
     let hChart = setInterval(async () => {
+      if ($('#monthly-sales-chart').length == 0) {
+        console.log('Auto update chart is disabled.');
+        clearInterval(hChart);
+        return false;
+      }
+
       fetch(base_url + '/chart/monthlySales', {
         method: 'GET'
       }).then(response => response.json()).then((response) => {

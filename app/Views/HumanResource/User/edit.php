@@ -63,7 +63,7 @@
             <div class="form-group">
               <label for="password"><?= lang('App.password') ?></label>
               <div class="input-group input-group-sm">
-                <input type="password" name="password" id="password" class="form-control form-control-border pass" placeholder="<?= lang('App.password') ?>">
+                <input type="password" name="password" id="password" class="form-control form-control-border pass" placeholder="<?= lang('App.password') ?>" autocomplete="new-password">
                 <div class="input-group-append">
                   <span class="input-group-text bg-gradient-warning">
                     <i class="fad fa-fw fa-eye-slash show-pass"></i>
@@ -104,7 +104,7 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-default" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
   <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
 </div>
 <script>

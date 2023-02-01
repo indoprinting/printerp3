@@ -12,7 +12,14 @@ class Locale
   public static function add(array $data)
   {
     DB::table('locale')->insert($data);
-    return DB::insertID();
+
+    if ($insertID = DB::insertID()) {
+      return $insertID;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -21,7 +28,14 @@ class Locale
   public static function delete(array $where)
   {
     DB::table('locale')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -57,6 +71,13 @@ class Locale
   public static function update(int $id, array $data)
   {
     DB::table('locale')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }
