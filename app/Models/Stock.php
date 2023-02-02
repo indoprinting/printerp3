@@ -15,43 +15,96 @@ class Stock
    */
   public static function add(array $data)
   {
-    $data = setCreatedBy($data);
-
     if (empty($data['quantity'])) {
       setLastError("Stock:add(): Quantity is empty.");
-      return FALSE;
+      return false;
     }
 
     if (empty($data['status'])) {
       setLastError("Stock::add(): Status is empty.");
-      return FALSE;
+      return false;
     }
 
-    $product  = Product::getRow(['id' => $data['product_id']]);
+    if (empty($data['product'])) {
+      setLastError('Stock::add() Product is empty.');
+      return false;
+    }
+
+    if (empty($data['warehouse'])) {
+      setLastError('Stock::add() Warehouse is empty.');
+      return false;
+    }
+
+    if (isset($data['adjustment'])) {
+      $inv = StockAdjustment::getRow(['reference' => $data['adjustment']]);
+
+      $data['adjustment_id'] = $inv->id;
+    } else if (isset($data['internal_use'])) {
+      $inv = InternalUse::getRow(['reference' => $data['internal_use']]);
+
+      $data['internal_use_id'] = $inv->id;
+    } else if (isset($data['product_mutation'])) {
+      $inv = ProductMutation::getRow(['reference' => $data['product_mutation']]);
+
+      $data['pm_id'] = $inv->id;
+    } else if (isset($data['purchase'])) {
+      $inv = ProductPurchase::getRow(['reference' => $data['purchase']]);
+
+      $data['purchase_id'] = $inv->id;
+    } else if (isset($data['sale'])) {
+      $inv = Sale::getRow(['reference' => $data['sale']]);
+
+      $data['sale_id'] = $inv->id;
+    } else if (isset($data['sale'])) {
+      $inv = Sale::getRow(['reference' => $data['sale']]);
+
+      $data['sale_id'] = $inv->id;
+    } else if (isset($data['transfer'])) {
+      $inv = ProductTransfer::getRow(['reference' => $data['transfer']]);
+
+      $data['transfer_id'] = $inv->id;
+    }
+
+    $product  = Product::getRow(['code' => $data['product']]);
+
     if ($product) {
-      $data['product_code']   = $product->code;
-      $data['product_name']   = $product->name;
-      $data['product_type']   = $product->type;
+      $data['product_id']   = $product->id;
+      $data['product_code'] = $product->code;
+      $data['product_name'] = $product->name;
+      $data['product_type'] = $product->type;
     } else {
-      setLastError("Stock::add(): Product '{$data['product_id']}' is not found.");
-      return FALSE;
+      setLastError("Stock::add(): Product '{$data['product']}' is not found.");
+      return false;
+    }
+
+    $category = ProductCategory::getRow(['id' => $product->category_id]);
+
+    if ($category) {
+      $data['category']       = $category->code;
+      $data['category_id']    = $category->id;
+      $data['category_code']  = $category->code;
+      $data['category_name']  = $category->name;
     }
 
     // Not all use unit like service.
     $unit = Unit::getRow(['id' => $product->unit]);
+
     if ($unit) {
-      $data['unit_id']        = $unit->id;
-      $data['unit_code']      = $unit->code;
-      $data['unit_name']      = $unit->name;
+      $data['unit']       = $unit->code;
+      $data['unit_id']    = $unit->id;
+      $data['unit_code']  = $unit->code;
+      $data['unit_name']  = $unit->name;
     }
 
-    $warehouse  = Warehouse::getRow(['id' => $data['warehouse_id']]);
+    $warehouse  = Warehouse::getRow(['code' => $data['warehouse']]);
+
     if ($warehouse) {
+      $data['warehouse_id']   = $warehouse->id;
       $data['warehouse_code'] = $warehouse->code;
       $data['warehouse_name'] = $warehouse->name;
     } else {
-      setLastError("Stock::add(): Warehouse '{$data['warehouse_id']}' is not found.");
-      return FALSE;
+      setLastError("Stock::add(): Warehouse '{$data['warehouse']}' is not found.");
+      return false;
     }
 
     if (isset($data['price'])) {
@@ -61,6 +114,8 @@ class Stock
     // Cost = Vendor price (Purchase). Price = Mark On Price (Transfer).
     if (!isset($data['cost']))  $data['cost']   = $product->cost;
     if (!isset($data['price'])) $data['price']  = $product->price;
+
+    $data = setCreatedBy($data);
 
     DB::table('stocks')->insert($data);
 
@@ -73,7 +128,7 @@ class Stock
       return $insertId;
     }
 
-    return FALSE;
+    return false;
   }
 
   /**
@@ -137,7 +192,7 @@ class Stock
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -152,9 +207,24 @@ class Stock
   /**
    * Select Stock.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('stocks')->select($columns, $escape);
+  }
+
+  /**
+   * Sync stocks.
+   */
+  public static function sync(int $productId, int $warehouseId)
+  {
+    $whp = WarehouseProduct::getRow(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
+
+    if (!$whp) return false;
+
+    return WarehouseProduct::update(
+      (int)$whp->id,
+      ['quantity' => self::totalQuantity($productId, $warehouseId)]
+    );
   }
 
   /**
@@ -195,6 +265,53 @@ class Stock
    */
   public static function update(int $id, array $data)
   {
+    if (isset($data['product_id']))
+      $product  = Product::getRow(['id' => $data['product_id']]);
+
+    if ($product) {
+      $data['product_code']   = $product->code;
+      $data['product_name']   = $product->name;
+      $data['product_type']   = $product->type;
+    } else {
+      setLastError("Stock::add(): Product '{$data['product_id']}' is not found.");
+      return false;
+    }
+
+    $category = ProductCategory::getRow(['id' => $product->category_id]);
+
+    if ($category) {
+      $data['category_id']    = $category->id;
+      $data['category_code']  = $category->code;
+      $data['category_name']  = $category->name;
+    }
+
+    // Not all use unit like service.
+    $unit = Unit::getRow(['id' => $product->unit]);
+
+    if ($unit) {
+      $data['unit_id']        = $unit->id;
+      $data['unit_code']      = $unit->code;
+      $data['unit_name']      = $unit->name;
+    }
+
+    if (isset($data['warehouse'])) {
+      $warehouse  = Warehouse::getRow(['id' => $data['warehouse_id']]);
+
+      if ($warehouse) {
+        $data['warehouse_code'] = $warehouse->code;
+        $data['warehouse_name'] = $warehouse->name;
+      } else {
+        setLastError("Stock::add(): Warehouse '{$data['warehouse_id']}' is not found.");
+        return false;
+      }
+    }
+
+    if (isset($data['price'])) {
+      $data['subtotal'] = filterDecimal($data['price']) * filterDecimal($data['quantity']);
+    }
+
+    $data = setUpdatedBy($data);
+
     DB::table('stocks')->update($data, ['id' => $id]);
 
     if ($affectedRows = DB::affectedRows()) {

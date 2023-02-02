@@ -136,13 +136,17 @@ class Division extends BaseController
 
       $insertID = Biller::add($data);
 
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
       DB::transComplete();
 
       if (DB::transStatus()) {
         $biller = Biller::getRow(['id' => $insertID]);
 
-        addActivity("Biller ({$biller->code}) {$biller->code} has been added.", [
-          'add' => $biller
+        addActivity("Add biller {$biller->code}.", [
+          'data' => $biller
         ]);
 
         $this->response(201, ['message' => 'Biller has been added.']);
@@ -167,9 +171,19 @@ class Division extends BaseController
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (Biller::delete(['id' => $id])) {
-        addActivity("Biller ({$biller->code}) {$biller->name} has been deleted.", [
-          'delete' => $biller
+      DB::transStart();
+
+      $res = Biller::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        addActivity("Delete biller {$biller->code}.", [
+          'data' => $biller
         ]);
 
         $this->response(200, ['message' => 'Biller has been deleted.']);
@@ -207,17 +221,21 @@ class Division extends BaseController
 
       DB::transStart();
 
-      Biller::update((int)$id, $data);
+      $res = Biller::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $billerNew = Biller::getRow(['id' => $id]);
 
-        addActivity("Biller ({$biller->code}) {$biller->name} has been updated.", [
-          'edit' => [
-            'old' => $biller,
-            'new' => $billerNew
+        addActivity("Edit biller {$biller->code}.", [
+          'data' => [
+            'after' => $billerNew,
+            'before' => $biller
           ]
         ]);
 
@@ -296,13 +314,17 @@ class Division extends BaseController
 
       $insertID = Warehouse::add($data);
 
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
       DB::transComplete();
 
       if (DB::transStatus()) {
         $warehouse = Warehouse::getRow(['id' => $insertID]);
 
-        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been added.", [
-          'add' => $warehouse
+        addActivity("Add warehouse {$warehouse->code}.", [
+          'data' => $warehouse
         ]);
 
         $this->response(201, ['message' => 'Warehouse has been added.']);
@@ -327,9 +349,19 @@ class Division extends BaseController
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (Warehouse::delete(['id' => $id])) {
-        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been deleted.", [
-          'delete' => $warehouse
+      DB::transStart();
+
+      $res = Warehouse::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        addActivity("Delete warehouse {$warehouse->code}.", [
+          'data' => $warehouse
         ]);
 
         $this->response(200, ['message' => 'Warehouse has been deleted.']);
@@ -382,17 +414,21 @@ class Division extends BaseController
 
       DB::transStart();
 
-      Warehouse::update((int)$id, $data);
+      $res = Warehouse::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $newWarehouse = Warehouse::getRow(['id' => $id]);
 
-        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been updated.", [
-          'edit' => [
-            'old' => $warehouse,
-            'new' => $newWarehouse
+        addActivity("Edit warehouse {$warehouse->code}.", [
+          'data' => [
+            'after'   => $newWarehouse,
+            'before'  => $warehouse
           ]
         ]);
 

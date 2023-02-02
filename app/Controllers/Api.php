@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{DB, PaymentValidation, Product, Sale, Voucher, Warehouse, WarehouseProduct};
+use App\Models\{DB, PaymentValidation, Product, Sale, Stock, Voucher, Warehouse, WarehouseProduct};
 
 class Api extends BaseController
 {
@@ -166,7 +166,7 @@ class Api extends BaseController
     }
 
     $code = getGet('code');
-    $wh = getGet('warehouse');
+    $wh   = getGet('warehouse');
 
     if (!$code) {
       $this->response(400, ['message' => 'Product code is required.']);
@@ -177,8 +177,6 @@ class Api extends BaseController
     if (!$product) {
       $this->response(404, ['message' => 'Product is not found.']);
     }
-
-    $whProduct = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_code' => $wh]);
 
     if ($product) {
       $data = [
@@ -193,6 +191,8 @@ class Api extends BaseController
         'quantity'      => floatval($product->quantity),
       ];
 
+      $whProduct = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_code' => $wh]);
+
       if ($whProduct) {
         $data['quantity'] = floatval($whProduct->quantity);
       }
@@ -205,12 +205,10 @@ class Api extends BaseController
 
   protected function product_add()
   {
-
   }
 
   protected function product_delete()
   {
-
   }
 
   protected function v1_voucher($mode = NULL)

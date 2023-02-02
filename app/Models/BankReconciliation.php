@@ -105,13 +105,13 @@ class BankReconciliation
       $totalBalance = 0;
 
       foreach ($banks as $bank) { // Collect balance.
-        if (strcmp($row->number, $bank->number) === 0) {
+        if (strcmp(strval($row->number), strval($bank->number)) === 0) {
           $totalBalance += $bank->amount;
         }
       }
 
       foreach ($res->data as $mb) {
-        if (strcmp($mb->account_no, $row->number) === 0) {
+        if (strcmp(strval($mb->account_no), strval($row->number)) === 0) {
           $mutasi_bank = $mb;
           break;
         }

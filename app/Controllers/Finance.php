@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Libraries\{DataTables, FileUpload};
+use App\Libraries\DataTables;
 use App\Models\{
   Attachment,
   Bank,
@@ -44,6 +44,17 @@ class Finance extends BaseController
                 data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('finance/bank/view/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('payment/view/bank/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalDefault"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
               </a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('finance/bank/delete/' . $data['id']) . '"
@@ -220,6 +231,12 @@ class Finance extends BaseController
                 <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
               <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('payment/view/mutation/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalDefault"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
+              </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('finance/mutation/delete/' . $data['id']) . '"
                 data-action="confirm">
                 <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
@@ -291,7 +308,12 @@ class Finance extends BaseController
         return '<div class="float-right">' . formatNumber($data['amount_mb']) . '</div>';
       })
       ->editColumn('amount_erp', function ($data) {
-        return '<div class="float-right">' . formatNumber($data['amount_erp']) . '</div>';
+        $url = base_url('payment/view/accountno/' . $data['account_no']);
+
+        return '<div class="float-right">' .
+          "<a href=\"{$url}\" data-toggle=\"modal\" data-target=\"#ModalDefault\" data-modal-class=\"modal-lg modal-dialog-centered modal-dialog-scrollable\">" .
+          formatNumber($data['amount_erp']) .
+          '</a></div>';
       })
       ->editColumn('balance', function ($data) {
         return '<div class="float-right">' . formatNumber($data['balance']) . '</div>';
@@ -324,6 +346,23 @@ class Finance extends BaseController
     return $this->buildPage($this->data);
   }
 
+  protected function bank_activate($id = NULL)
+  {
+    $bank = Bank::getRow(['id' => $id]);
+
+    if (!$bank) {
+      $this->response(404, ['message' => 'Bank is not found.']);
+    }
+
+    if ($bank->active) {
+      Bank::update((int)$id, ['active' => 0]);
+      $this->response(200, ['message' => 'Bank has been deactivated.']);
+    }
+
+    Bank::update((int)$id, ['active' => 1]);
+    $this->response(200, ['message' => 'Bank has been activated.']);
+  }
+
   protected function bank_add()
   {
     checkPermission('BankAccount.Add');
@@ -345,7 +384,7 @@ class Finance extends BaseController
       $insertID = Bank::add($data);
 
       if (!$insertID) {
-        $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+        $this->response(400, ['message' => getLastError()]);
       }
 
       DB::transComplete();
@@ -353,8 +392,8 @@ class Finance extends BaseController
       if (DB::transStatus()) {
         $bank = Bank::getRow(['id' => $insertID]);
 
-        addActivity("Bank ({$bank->code}) {$bank->name} has been added.", [
-          'add' => $bank
+        addActivity("Add bank {$bank->code}.", [
+          'data' => $bank
         ]);
 
         $this->response(201, ['message' => 'Bank has been added.']);
@@ -402,14 +441,23 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      Bank::delete(['id' => $bankId]);
-      Payment::delete(['bank_id' => $bankId]);
+      $res = Bank::delete(['id' => $bankId]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      $res = Payment::delete(['bank_id' => $bankId]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
-        addActivity("Bank ({$bank->code}) {$bank->name} has been deleted.", [
-          'delete'    => $bank,
+        addActivity("Delete bank {$bank->code}.", [
+          'data'      => $bank,
           'payments'  => $payments
         ]);
 
@@ -446,17 +494,21 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      Bank::update((int)$id, $data);
+      $res = Bank::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $bankNew = Bank::getRow(['id' => $id]);
 
-        addActivity("Bank ({$bank->code}) {$bank->name} has been updated.", [
-          'edit' => [
-            'new' => $bankNew,
-            'old' => $bank
+        addActivity("Edit bank {$bank->code}.", [
+          'data' => [
+            'after'   => $bankNew,
+            'before'  => $bank
           ]
         ]);
 
@@ -470,6 +522,22 @@ class Finance extends BaseController
     $this->data['title'] = lang('App.editbankaccount');
 
     $this->response(200, ['content' => view('Finance/Bank/edit', $this->data)]);
+  }
+
+  protected function bank_view($id = NULL)
+  {
+    checkPermission('BankAccount.View');
+
+    $bank = Bank::getRow(['id' => $id]);
+
+    if (!$bank) {
+      $this->response(404, ['message' => 'Bank Account is not found.']);
+    }
+
+    $this->data['bank']   = $bank;
+    $this->data['title']  = lang('App.viewbankaccount');
+
+    $this->response(200, ['content' => view('Finance/Bank/view', $this->data)]);
   }
 
   public function expense()
@@ -530,25 +598,27 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      $upload = new FileUpload();
-
-      if ($upload->has('attachment')) {
-        if ($upload->getSize('mb') > 2) {
-          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
-        }
-
-        $data['attachment'] = $upload->store();
-      }
+      $data = $this->useAttachment($data);
 
       $insertID = Expense::add($data);
+
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $expense = Expense::getRow(['id' => $insertID]);
+        $attachment = Attachment::getRow(['hashname' => $expense->attachment]);
 
-        addActivity("Expense {$expense->reference} has been added.", [
-          'add' => $expense
+        if ($attachment) {
+          $attachment->data = base64_encode($attachment->data);
+        }
+
+        addActivity("Add expense {$expense->reference}.", [
+          'data'        => $expense,
+          'attachment'  => $attachment
         ]);
 
         $this->response(201, ['message' => 'Expense has been added.']);
@@ -588,7 +658,11 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      Expense::update((int)$id, $data);
+      $res = Expense::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
@@ -596,14 +670,20 @@ class Finance extends BaseController
         $newExpense = Expense::getRow(['id' => $id]);
 
         if ($data['status'] == 'approved') {
-          addActivity("Expense {$expense->reference} has been approved.", [
-            'approve' => $newExpense
+          addActivity("Approve expense {$expense->reference}.", [
+            'data' => [
+              'after'   => $newExpense,
+              'before'  => $expense
+            ]
           ]);
 
           $this->response(200, ['message' => 'Expense has been approved.']);
         } else {
-          addActivity("Expense {$expense->reference} has been disapproved.", [
-            'disapprove' => $newExpense
+          addActivity("Disapprove expense {$expense->reference}.", [
+            'data' => [
+              'after'   => $newExpense,
+              'before'  => $expense
+            ]
           ]);
 
           $this->response(200, ['message' => 'Expense has been disapproved.']);
@@ -631,15 +711,24 @@ class Finance extends BaseController
 
       DB::transStart();
 
+      $res = Expense::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
       Attachment::delete(['hashname' => $expense->attachment]);
-      Expense::delete(['id' => $id]);
       Payment::delete(['expense_id' => $expense->id]);
 
       DB::transComplete();
 
       if (DB::transStatus()) {
-        addActivity("Expense {$expense->reference} has been deleted.", [
-          'delete'      => $expense,
+        if ($attachment) {
+          $attachment->data = base64_encode($attachment->data);
+        }
+
+        addActivity("Delete expense {$expense->reference}.", [
+          'data'        => $expense,
           'attachment'  => $attachment,
           'payment'     => $payment
         ]);
@@ -664,14 +753,16 @@ class Finance extends BaseController
     }
 
     if (requestMethod() == 'POST') {
+      $attachment = Attachment::getRow(['hashname' => $expense->attachment]);
+
       $data = [
-        'date' => dateTimeJS(getPost('date')),
-        'bank' => getPost('bank'),
-        'biller' => getPost('biller'),
-        'category' => getPost('category'),
-        'supplier' => getPost('supplier'),
-        'amount' => filterDecimal(getPost('amount')),
-        'note' => stripTags(getPost('note'))
+        'date'      => dateTimeJS(getPost('date')),
+        'bank'      => getPost('bank'),
+        'biller'    => getPost('biller'),
+        'category'  => getPost('category'),
+        'supplier'  => getPost('supplier'),
+        'amount'    => filterDecimal(getPost('amount')),
+        'note'      => stripTags(getPost('note'))
       ];
 
       if (empty($data['biller'])) {
@@ -692,17 +783,13 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      $upload = new FileUpload();
+      $data = $this->useAttachment($data, $expense->attachment);
 
-      if ($upload->has('attachment')) {
-        if ($upload->getSize('mb') > 2) {
-          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
-        }
+      $res = Expense::update((int)$id, $data);
 
-        $data['attachment'] = $upload->store(NULL, $expense->attachment);
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
       }
-
-      Expense::update((int)$id, $data);
 
       if ($payment = Payment::getRow(['expense_id' => $id])) {
         $paymentData = [
@@ -723,16 +810,21 @@ class Finance extends BaseController
 
       if (DB::transStatus()) {
         $newExpense = Expense::getRow(['id' => $id]);
+        $newAttachment = Expense::getRow(['hashname' => $newExpense->attachment]);
         $newPayment = Expense::getRow(['expense_id' => $id]);
 
-        addActivity("Expense {$expense->reference} has been updated.", [
-          'edit' => [
-            'new' => $newExpense,
-            'old' => $expense
+        addActivity("Edit expense {$expense->reference}.", [
+          'data' => [
+            'after'   => $newExpense,
+            'before'  => $expense
+          ],
+          'attachment' => [
+            'after'   => $newAttachment,
+            'before'  => $attachment
           ],
           'payment' => [
-            'new' => $newPayment,
-            'old' => $payment
+            'after'   => $newPayment,
+            'before'  => $payment
           ]
         ]);
 
@@ -821,17 +913,13 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      $upload = new FileUpload();
-
-      if ($upload->has('attachment')) {
-        if ($upload->getSize('mb') > 2) {
-          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
-        }
-
-        $data['attachment'] = $upload->store();
-      }
+      $data = $this->useAttachment($data);
 
       $insertID = Income::add($data);
+
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       if ($insertID) {
         $income = Income::getRow(['id' => $insertID]);
@@ -859,11 +947,17 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
+        $attachment = Attachment::getRow(['hashname' => $income->attachment]);
         $payment = Payment::getRow(['id' => $paymentID]);
 
-        addActivity("Income {$income->reference} has been added.", [
-          'add'     => $income,
-          'payment' => $payment
+        if ($attachment) {
+          $attachment->data = base64_encode($attachment->data);
+        }
+
+        addActivity("Add income {$income->reference}.", [
+          'data'        => $income,
+          'attachment'  => $attachment,
+          'payment'     => $payment
         ]);
 
         $this->response(201, ['message' => 'Income has been added.']);
@@ -892,24 +986,27 @@ class Finance extends BaseController
 
       DB::transStart();
 
+      $res = Income::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
       Attachment::delete(['hashname' => $income->attachment]);
-      Income::delete(['id' => $id]);
       Payment::delete(['income_id' => $income->id]);
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         if ($attachment) {
-          addActivity("Attachment {$attachment->hashname} has been deleted.", [
-            'delete' => $attachment
-          ]);
+          $attachment->data = base64_encode($attachment->data);
         }
 
-        if ($payment) {
-          addActivity("Payment {$payment->reference} has been deleted.", [
-            'delete' => $payment
-          ]);
-        }
+        addActivity("Delete income {$income->hashname}.", [
+          'data'        => $income,
+          'attachment'  => $attachment,
+          'payment'     => $payment
+        ]);
 
         $this->response(200, ['message' => 'Income has been deleted.']);
       }
@@ -924,13 +1021,15 @@ class Finance extends BaseController
   {
     checkPermission('Income.Edit');
 
-    $income = Income::getRow(['id' => $id]);
+    $income     = Income::getRow(['id' => $id]);
 
     if (!$income) {
       $this->response(404, ['message' => 'Income is not found.']);
     }
 
     if (requestMethod() == 'POST') {
+      $attachment = Attachment::getRow(['hashname' => $income->attachment]);
+
       $data = [
         'date'      => dateTimeJS(getPost('date')),
         'bank'      => getPost('bank'),
@@ -958,17 +1057,13 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      $upload = new FileUpload();
+      $data = $this->useAttachment($data, $income->attachment);
 
-      if ($upload->has('attachment')) {
-        if ($upload->getSize('mb') > 2) {
-          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
-        }
+      $res = Income::update((int)$id, $data);
 
-        $data['attachment'] = $upload->store(NULL, $income->attachment);
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
       }
-
-      Income::update((int)$id, $data);
 
       if ($payment = Payment::getRow(['income_id' => $id])) {
         $paymentData = [
@@ -988,19 +1083,23 @@ class Finance extends BaseController
 
       if (DB::transStatus()) {
         $newIncome  = Income::getRow(['id' => $id]);
-        $newPayment = Payment::getRow(['income_id' => $income->id]);
+        $newAttachment  = Attachment::getRow(['hashname' => $newIncome->attachment]);
+        $newPayment = Payment::getRow(['income_id' => $id]);
 
-        addActivity("Income {$income->reference} has been updated.", [
-          'new' => $newIncome,
-          'old' => $income
+        addActivity("Edit income {$income->reference}.", [
+          'data' => [
+            'after'   => $newIncome,
+            'before'  => $income
+          ],
+          'attachment' => [
+            'after'   => $newAttachment,
+            'before'  => $attachment,
+          ],
+          'payment' => [
+            'after'   => $newPayment,
+            'before'  => $payment
+          ]
         ]);
-
-        if ($newPayment) {
-          addActivity("Payment {$payment->reference} has been updated.", [
-            'new' => $newPayment,
-            'old' => $payment
-          ]);
-        }
 
         $this->response(201, ['message' => 'Income has been updated.']);
       }
@@ -1069,7 +1168,7 @@ class Finance extends BaseController
         'note' => stripTags(getPost('note'))
       ];
 
-      $skip_pv = getPost('skip_pv');
+      $skipPV = (getPost('skip_pv') == 1 ? true : false);
 
       if (empty($data['amount']) || $data['amount'] < 1) {
         $this->response(400, ['message' => 'Amount required.']);
@@ -1089,64 +1188,72 @@ class Finance extends BaseController
 
       DB::transStart();
 
-      $upload = new FileUpload();
-
-      if ($upload->has('attachment')) {
-        if ($upload->getSize('mb') > 2) {
-          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
-        }
-
-        $data['attachment'] = $upload->store();
-      }
+      $data = $this->useAttachment($data);
 
       $insertID = BankMutation::add($data);
 
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
       if ($mutation = BankMutation::getRow(['id' => $insertID])) {
-        if (!$skip_pv) {
-          PaymentValidation::add([
+        if (!$skipPV) {
+          $res = PaymentValidation::add([
             'mutation'    => $mutation->reference,
             'amount'      => $data['amount'],
             'biller'      => $data['biller'],
             'attachment'  => ($data['attachment'] ?? NULL)
           ]);
 
+          if (!$res) {
+            $this->response(400, ['message' => getLastError()]);
+          }
+
           BankMutation::update((int)$insertID, ['status' => 'waiting_transfer']);
         } else {
           $paymentOutID = Payment::add([
-            'mutation'  => $mutation->reference,
-            'bank'      => $data['bankfrom'],
-            'biller'    => $data['biller'],
-            'amount'    => $data['amount'],
-            'type'      => 'sent'
+            'mutation'    => $mutation->reference,
+            'bank'        => $data['bankfrom'],
+            'biller'      => $data['biller'],
+            'amount'      => $data['amount'],
+            'type'        => 'sent',
+            'attachment'  => ($data['attachment'] ?? NULL)
           ]);
 
           $paymentInID = Payment::add([
-            'mutation'  => $mutation->reference,
-            'bank'      => $data['bankto'],
-            'biller'    => $data['biller'],
-            'amount'    => $data['amount'],
-            'type'      => 'received'
+            'mutation'    => $mutation->reference,
+            'bank'        => $data['bankto'],
+            'biller'      => $data['biller'],
+            'amount'      => $data['amount'],
+            'type'        => 'received',
+            'attachment'  => ($data['attachment'] ?? NULL)
           ]);
+
+          if (!$paymentOutID || !$paymentInID) {
+            $this->response(400, ['message' => getLastError()]);
+          }
 
           BankMutation::update((int)$insertID, ['status' => 'paid']);
-
-          $paymentOut = Payment::getRow(['id' => $paymentOutID]);
-          $paymentIn = Payment::getRow(['id' => $paymentInID]);
-
-          addActivity("Bank mutation {$mutation->reference} add payment (MANUAL).", [
-            'received'  => $paymentIn,
-            'sent'      => $paymentOut
-          ]);
         }
       }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $mutation = BankMutation::getRow(['id' => $insertID]);
+        $mutation           = BankMutation::getRow(['id' => $insertID]);
+        $attachment         = Attachment::getRow(['hashname' => $mutation->attachment]);
+        $payments           = Payment::get(['mutation' => $mutation->reference]);
+        $paymentValidation  = PaymentValidation::getRow(['mutation_id' =>  $insertID]);
 
-        addActivity("Bank Mutation {$mutation->reference} has been added.", [
-          'add' => $mutation
+        if ($attachment) {
+          $attachment->data = base64_encode($attachment->data);
+        }
+
+        addActivity("Add bank mutation {$mutation->reference}.", [
+          'data'                => $mutation,
+          'attachment'          => $attachment,
+          'payment_validation'  => $paymentValidation,
+          'payment'             => $payments
         ]);
 
         $this->response(201, ['message' => 'Bank Mutation has been added.']);
@@ -1167,38 +1274,38 @@ class Finance extends BaseController
     if (requestMethod() == 'POST' && isAJAX()) {
       $mutation           = BankMutation::getRow(['id' => $mutationId]);
       $attachment         = Attachment::getRow(['hashname' => $mutation->attachment]);
+      $payments           = Payment::get(['mutation' => $mutation->reference]);
       $paymentValidation  = PaymentValidation::getRow(['mutation' => $mutation->reference]);
-      $payment            = Payment::getRow(['mutation' => $mutation->reference]);
 
       if (!$mutation) {
         $this->response(404, ['message' => 'Mutation is not found.']);
       }
 
       DB::transStart();
+
+      $res = BankMutation::delete(['id' => $mutation->id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
       Attachment::delete(['hashname' => $mutation->attachment]);
-      BankMutation::delete(['id' => $mutation->id]);
       PaymentValidation::delete(['mutation' => $mutation->reference]);
       Payment::delete(['mutation' => $mutation->reference]);
+
       DB::transComplete();
 
       if (DB::transStatus()) {
         if ($attachment) {
-          addActivity("Attachment {$attachment->hashname} has been deleted.", [
-            'delete' => $attachment
-          ]);
+          $attachment->data = base64_encode($attachment->data);
         }
 
-        if ($paymentValidation) {
-          addActivity("Payment Validation {$paymentValidation->reference} has been deleted.", [
-            'delete' => $paymentValidation
-          ]);
-        }
-
-        if ($payment) {
-          addActivity("Payment {$payment->reference} has been deleted.", [
-            'delete' => $payment
-          ]);
-        }
+        addActivity("Delete bank mutation {$mutation->reference}.", [
+          'data'                => $mutation,
+          'attachment'          => $attachment,
+          'payment_validation'  => $paymentValidation,
+          'payment'             => $payments
+        ]);
 
         $this->response(200, ['message' => 'Bank mutation has been deleted.']);
       }
@@ -1209,18 +1316,22 @@ class Finance extends BaseController
     $this->response(400, ['message' => 'Failed to delete bank mutation.']);
   }
 
-  protected function mutation_edit($mutationId = NULL)
+  protected function mutation_edit($id = NULL)
   {
     checkPermission('BankMutation.Edit');
 
-    $mutation = BankMutation::getRow(['id' => $mutationId]);
+    $mutation = BankMutation::getRow(['id' => $id]);
 
     if (!$mutation) {
       $this->response(404, ['message' => 'Bank Mutation is not found.']);
     }
 
     if (requestMethod() == 'POST') {
-      $mutationData = [
+      $attachment         = Attachment::getRow(['hashname' => $mutation->attachment]);
+      $paymentValidation  = PaymentValidation::getRow(['mutation' => $mutation->reference]);
+      $payments           = Payment::get(['mutation' => $mutation->reference]);
+
+      $data = [
         'date'      => dateTimeJS(getPost('date')),
         'amount'    => filterDecimal(getPost('amount')),
         'biller'    => getPost('biller'),
@@ -1229,52 +1340,96 @@ class Finance extends BaseController
         'note'      => stripTags(getPost('note'))
       ];
 
-      if (empty($mutationData['amount']) || $mutationData['amount'] < 1) {
+      $skipPV = (getPost('skip_pv') == 1 ? true : false);
+
+      if (empty($data['amount']) || $data['amount'] < 1) {
         $this->response(400, ['message' => 'Amount required.']);
       }
 
-      if (empty($mutationData['biller'])) {
+      if (empty($data['biller'])) {
         $this->response(400, ['message' => 'Biller required.']);
       }
 
-      if (empty($mutationData['bankfrom'])) {
+      if (empty($data['bankfrom'])) {
         $this->response(400, ['message' => 'Bank from required.']);
       }
 
-      if (empty($mutationData['bankto'])) {
+      if (empty($data['bankto'])) {
         $this->response(400, ['message' => 'Bank to required.']);
       }
 
       DB::transStart();
 
-      $upload = new FileUpload();
+      $data = $this->useAttachment($data, $mutation->attachment);
 
-      if ($upload->has('attachment')) {
-        if ($upload->getSize('mb') > 2) {
-          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+      // Automatic add new payment validation if amount changed.
+      if (floatval($mutation->amount) != floatval($data['amount']) && !$skipPV) {
+        // Delete old payment validation.
+        Payment::delete(['mutation_id' => $mutation->id]);
+
+        $res = PaymentValidation::add([
+          'mutation'    => $mutation->reference,
+          'amount'      => $data['amount'],
+          'biller'      => $data['biller'],
+          'attachment'  => ($data['attachment'] ?? NULL)
+        ]);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
         }
 
-        $mutationData['attachment'] = $upload->store(NULL, $mutation->attachment);
+        $data['status'] = 'waiting_transfer';
+      } if ($payments && $skipPV) {
+        foreach ($payments as $payment) {
+          Payment::update((int)$payment->id, [
+            'amount'      => $data['amount'],
+            'biller'      => $data['biller'],
+            'attachment'  => $mutation->attachment
+          ]);
+        }
       }
 
-      // We have to add new payment validation dan last payment (if any) if amount changed.
-      if ($mutation->amount != $mutationData['amount']) {
-        Payment::delete(['mutation_id' => $mutation->id]);
-        $mutationData['status'] = 'waiting_transfer';
+      $res = BankMutation::update((int)$id, $data);
 
-        PaymentValidation::add([
-          'mutation'    => $mutationData['reference'],
-          'amount'      => $mutationData['amount'],
-          'biller'      => $mutationData['biller'],
-          'attachment'  => ($mutationData['attachment'] ?? NULL)
-        ]);
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
       }
-
-      BankMutation::update((int)$mutationId, $mutationData);
 
       DB::transComplete();
 
       if (DB::transStatus()) {
+        $newMutation          = BankMutation::getRow(['id' => $id]);
+        $newAttachment        = Attachment::getRow(['hashname' => $mutation->attachment]);
+        $newPaymentValidation = PaymentValidation::getRow(['mutation' => $mutation->reference]);
+        $newPayments          = Payment::get(['mutation' => $mutation->reference]);
+
+        if ($attachment) {
+          $attachment->data = base64_encode($attachment->data);
+        }
+
+        if ($newAttachment) {
+          $newAttachment->data = base64_encode($newAttachment->data);
+        }
+
+        addActivity("Edit bank mutation {$mutation->reference}.", [
+          'data'  => [
+            'after'   => $newMutation,
+            'before'  => $mutation
+          ],
+          'attachment'  => [
+            'after'   => $newAttachment,
+            'before'  => $attachment,
+          ],
+          'payment_validation'  => [
+            'after'   => $newPaymentValidation,
+            'before'  => $paymentValidation,
+          ],
+          'payment' => [
+            'after'   => $newPayments,
+            'before'  => $payments
+          ]
+        ]);
+
         $this->response(200, ['message' => sprintf(lang('Msg.mutationEditOK'), $mutation->reference)]);
       }
 
@@ -1323,9 +1478,11 @@ class Finance extends BaseController
     if (BankReconciliation::sync()) {
       $newRecon = BankReconciliation::get();
 
-      addActivity('Bank Reconciliation has been synced.', [
-        'new' => $newRecon,
-        'old' => $recon
+      addActivity('Sync bank reconciliation.', [
+        'data' => [
+          'after'   => $newRecon,
+          'before'  => $recon
+        ]
       ]);
 
       $this->response(200, ['message' => 'Bank Reconciliation has been synced successfully.']);

@@ -347,7 +347,7 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
+                  <a href="<?= base_url('inventory/product') ?>" class="nav-link" data-action="link" data-slug="product">
                     <i class="nav-icon fad fa-box-up"></i>
                     <p><?= lang('App.product') ?></p>
                   </a>

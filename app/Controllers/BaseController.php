@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Libraries\FileUpload;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\CLIRequest;
 use CodeIgniter\HTTP\IncomingRequest;
@@ -122,5 +123,25 @@ class BaseController extends Controller
 		$data = array_merge(['code' => intval($code)], $data);
 		http_response_code($code);
 		sendJSON($data);
+	}
+
+	/**
+	 * Use attachment.
+	 * @param array $data Data.
+	 * @param string $attachment Attachment to replace (optional).
+	 */
+	protected function useAttachment(array $data, string $attachment = NULL)
+	{
+		$upload = new FileUpload();
+
+		if ($upload->has('attachment')) {
+			if ($upload->getSize('mb') > 2) {
+				$this->response(400, ['message' => lang('Msg.attachmentExceed')]);
+			}
+
+			$data['attachment'] = $upload->store(NULL, $attachment);
+		}
+
+		return $data;
 	}
 }

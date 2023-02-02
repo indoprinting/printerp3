@@ -202,10 +202,25 @@ function filterDecimal(str) {
   return parseFloat(str);
 }
 
+function filterNumber(str) {
+  if (str == null) str = 0;
+  if (str.toString().length == 0) str = 0;
+  if (typeof str == 'string') str = str.replaceAll(/([^0-9])/g, '');
+  if (isNaN(parseFloat(str))) str = 0;
+
+  return parseFloat(str);
+}
+
 function formatCurrency(str) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency', currency: 'IDR', currencyDisplay: 'narrowSymbol',
     maximumFractionDigits: 2, minimumFractionDigits: 0
+  }).format(filterDecimal(str));
+}
+
+function formatNumber(str) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 0
   }).format(filterDecimal(str));
 }
 

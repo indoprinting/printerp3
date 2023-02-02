@@ -4,14 +4,92 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Libraries\FileUpload;
-use App\Models\{BankMutation, DB, Expense, Income, Payment as PaymentModel, ProductPurchase, ProductTransfer, Sale};
+use App\Libraries\DataTables;
+use App\Models\{
+  Bank,
+  BankMutation,
+  DB,
+  Expense,
+  Income,
+  Payment as PaymentModel,
+  ProductPurchase,
+  ProductTransfer,
+  Sale
+};
 
 class Payment extends BaseController
 {
   public function index()
   {
     checkPermission();
+  }
+
+  public function getPayments()
+  {
+    checkPermission('Payment.View');
+
+    $accountNo  = getPost('account_no');
+    $bankId     = getPost('bank_id');
+    $expenseId  = getPost('expense_id');
+    $incomeId   = getPost('income_id');
+    $mutationId = getPost('mutation_id');
+    $saleId     = getPost('sale_id');
+
+    $startDate  = getPost('start_date');
+    $endDate    = getPost('end_date');
+
+    $dt = new DataTables('payments');
+    $dt->select("payments.id, payments.date, payments.reference,
+        (CASE
+          WHEN banks.number IS NULL THEN banks.name
+          WHEN banks.number IS NOT NULL THEN CONCAT(banks.name, ' (', banks.number, ')')
+        END) bank_name,
+        biller.name, payments.amount, payments.type, payments.attachment")
+      ->join('banks', 'banks.id = payments.bank_id', 'left')
+      ->join('biller', 'biller.id = payments.biller_id', 'left')
+      ->editColumn('amount', function ($data) {
+        return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
+      })
+      ->editColumn('attachment', function ($data) {
+        return renderAttachment($data['attachment']);
+      })
+      ->editColumn('type', function ($data) {
+        return renderStatus($data['type']);
+      });
+
+    if ($accountNo) {
+      $dt->where('banks.number', $accountNo);
+    }
+
+    if ($bankId) {
+      $dt->where('payments.bank_id', $bankId);
+    }
+
+    if ($expenseId) {
+      $dt->where('payments.expense_id', $expenseId);
+    }
+
+    if ($incomeId) {
+      $dt->where('payments.income_id', $incomeId);
+    }
+
+    if ($mutationId) {
+      $dt->where('payments.mutation_id', $mutationId);
+    }
+
+    if ($saleId) {
+      $dt->where('payments.sale_id', $saleId);
+    }
+
+    if ($startDate) {
+      $dt->where("payments.date >= '{$startDate} 00:00:00'");
+    }
+
+    if ($endDate) {
+      $dt->where("payments.date <= '{$endDate} 23:59:59'");
+    }
+
+    $dt->generate();
   }
 
   /**
@@ -120,17 +198,7 @@ class Payment extends BaseController
 
       DB::transStart();
 
-      $upload = new FileUpload();
-
-      if ($upload->has('attachment')) {
-        if ($upload->getSize('mb') > 2) {
-          $this->response(400, ['message' => lang('Msg.attachmentExceed')]);
-        }
-
-        $data['attachment'] = $upload->store();
-      } else if ($inv->attachment) {
-        $data['attachment'] = $inv->attachment;
-      }
+      $data = $this->useAttachment($data, $inv->attachment);
 
       if (!PaymentModel::add($data)) {
         DB::transComplete();
@@ -171,6 +239,16 @@ class Payment extends BaseController
     $data = [];
 
     switch ($mode) {
+      case 'accountno':
+        $bank = Bank::getRow(['number' => $id]);
+        $data['account_no'] = $id;
+        $this->data['modeLang'] = $bank->holder . ($bank->number ? " ($bank->number)" : '');
+        break;
+      case 'bank':
+        $bank = Bank::getRow(['id' => $id]);
+        $data['bank_id'] = $id;
+        $this->data['modeLang'] = $bank->name . ($bank->number ? " ($bank->number)" : '');
+        break;
       case 'expense':
         $data['expense_id'] = $id;
         $this->data['modeLang'] = lang('App.expense');
@@ -197,8 +275,8 @@ class Payment extends BaseController
         break;
     }
 
-    $this->data['payments'] = PaymentModel::get($data);
-    $this->data['title']    = lang('App.viewpayment');
+    $this->data['title']  = lang('App.viewpayment');
+    $this->data['params'] = $data;
 
     $this->response(200, ['content' => view('Payment/view', $this->data)]);
   }

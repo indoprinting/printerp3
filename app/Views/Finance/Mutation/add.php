@@ -105,6 +105,16 @@
                 </div>
               </div>
             </div>
+            <?php if (hasAccess('PaymentValidation.Skip')) : ?>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <input type="checkbox" id="skip_pv" name="skip_pv" value="1">
+                    <label for="skip_pv"><?= lang('App.skippaymentvalidation') ?></label>
+                  </div>
+                </div>
+              </div>
+            <?php endif; ?>
           </div>
         </div>
       </div>
