@@ -96,6 +96,9 @@ class Inventory extends BaseController
             </div>
           </div>';
       })
+      ->editColumn('mode', function ($data) {
+        return renderStatus($data['mode']);
+      })
       ->editColumn('attachment', function ($data) {
         return renderAttachment($data['attachment']);
       })

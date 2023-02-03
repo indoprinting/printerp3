@@ -382,16 +382,17 @@ function renderStatus(string $status)
   $st = strtolower($status);
 
   $danger = [
-    'bad', 'decrease', 'due', 'due_partial', 'expired', 'need_approval', 'need_payment', 'off', 'over_due',
-    'over_received', 'returned'
+    'bad', 'decrease', 'due', 'due_partial', 'expired', 'need_approval', 'need_payment', 'off',
+    'over_due', 'over_received', 'overwrite', 'returned', 'skipped'
   ];
   $info = [
-    'completed_partial', 'confirmed', 'delivered', 'excellent', 'finished', 'installed_partial', 'ordered',
-    'partial', 'preparing', 'received', 'received_partial'
+    'calling', 'completed_partial', 'confirmed', 'delivered', 'excellent', 'finished',
+    'installed_partial', 'ordered', 'partial', 'preparing', 'received', 'received_partial', 'serving'
   ];
-  $success = ['approved', 'completed', 'increase', 'good', 'installed', 'paid', 'sent', 'verified'];
+  $success = ['approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
+    'sent', 'served', 'verified'];
   $warning = [
-    'cancelled', 'checked', 'draft', 'packing', 'pending', 'slow', 'trouble',
+    'called', 'cancelled', 'checked', 'draft', 'packing', 'pending', 'slow', 'trouble', 'waiting',
     'waiting_production', 'waiting_transfer'
   ];
 

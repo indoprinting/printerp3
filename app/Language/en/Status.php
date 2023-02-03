@@ -3,6 +3,8 @@
 return [
   'approved'            => 'Approved',
   'bad'                 => 'Bad',
+  'called'              => 'Called',
+  'calling'             => 'Calling',
   'cancelled'           => 'Cancelled',
   'checked'             => 'Checked',
   'completed'           => 'Completed',
@@ -16,6 +18,7 @@ return [
   'excellent'           => 'Excellent',
   'expired'             => 'Expired',
   'finished'            => 'Finished',
+  'formula'             => 'Formula',
   'good'                => 'Good',
   'increase'            => 'Increase',
   'installed'           => 'Installed',
@@ -26,6 +29,7 @@ return [
   'ordered'             => 'Ordered',
   'over_due'            => 'Over Due',
   'over_received'       => 'Over Received',
+  'overwrite'           => 'Overwrite',
   'packing'             => 'Packing',
   'paid'                => 'Paid',
   'partial'             => 'Partial',
@@ -35,9 +39,13 @@ return [
   'received_partial'    => 'Received Partial',
   'returned'            => 'Returned',
   'sent'                => 'Sent',
+  'served'              => 'Served',
+  'serving'             => 'Serving',
+  'skipped'             => 'Skipped',
   'slow'                => 'Slow',
   'trouble'             => 'Trouble',
   'verified'            => 'Verified',
+  'waiting'             => 'Waiting',
   'waiting_production'  => 'Waiting Production',
   'waiting_transfer'    => 'Waiting Transfer'
 ];

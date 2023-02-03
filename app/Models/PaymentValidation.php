@@ -11,21 +11,27 @@ class PaymentValidation
    */
   public static function add(array $data)
   {
-    if (isset($data['sale'])) {
-      $sale = Sale::getRow(['reference' => $data['sale']]);
-      $data['reference']  = $sale->reference;
-      $data['sale_id']    = $sale->id; // Compatibility.
+    if (isset($data['expense'])) {
+      $expense = Expense::getRow(['reference' => $data['expense']]);
+      $data['reference']  = $expense->reference;
+      $data['expense_id'] = $expense->id;
     }
 
     if (isset($data['mutation'])) {
       $mutation = BankMutation::getRow(['reference' => $data['mutation']]);
       $data['reference']    = $mutation->reference;
-      $data['mutation_id']  = $mutation->id; // Compatibility.
+      $data['mutation_id']  = $mutation->id;
+    }
+
+    if (isset($data['sale'])) {
+      $sale = Sale::getRow(['reference' => $data['sale']]);
+      $data['reference']  = $sale->reference;
+      $data['sale_id']    = $sale->id;
     }
 
     if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id']  = $biller->id; // Compatibility.
+      $data['biller_id']  = $biller->id;
     }
 
     if (empty($data['status'])) {
@@ -224,7 +230,7 @@ class PaymentValidation
               die('Bank not defined');
             }
 
-            $pvData = [
+            $data = [
               'bank_id'           => $bank->id,
               'transaction_date'  => $dm->transaction_date,
               'description'       => $dm->description,
@@ -232,18 +238,18 @@ class PaymentValidation
             ];
 
             if (!empty($options['manual'])) {
-              $pvData = setCreatedBy($pvData);
-              $pvData['description'] = '(MANUAL) ' . $pvData['description'];
+              $data = setCreatedBy($data);
+              $data['description'] = '(MANUAL) ' . $data['description'];
             } else {
-              $pvData['verified_at'] = date('Y-m-d H:i:s');
+              $data['verified_at'] = date('Y-m-d H:i:s');
             }
 
-            if (self::update((int)$pv->id, $pvData)) {
+            if (self::update((int)$pv->id, $data)) {
               if ($pv->sale_id) { // If sale_id exists.
                 $sale = Sale::getRow(['id' => $pv->sale_id]);
 
                 $payment = [
-                  'reference_date'  => $sale->created_at,
+                  'reference_date'  => $sale->date,
                   'sale_id'         => $pv->sale_id,
                   'amount'          => $pv->amount,
                   'method'          => 'Transfer',
@@ -271,28 +277,30 @@ class PaymentValidation
 
                 $paymentFrom = [
                   'reference_date'  => $mutation->date,
-                  'mutation_id'     => $mutation->id,
-                  'bank_id'         => $mutation->from_bank_id,
+                  'mutation'        => $mutation->reference,
+                  'bank'            => $mutation->bankfrom,
                   'method'          => 'Transfer',
                   'amount'          => $mutation->amount + $pv->unique_code,
+                  'created_by'      => $mutation->created_by,
                   'type'            => 'sent',
                   'note'            => $mutation->note
                 ];
 
-                if (isset($options['attachment_id'])) $paymentFrom['attachment_id'] = $options['attachment_id'];
+                if (isset($options['attachment'])) $paymentFrom['attachment'] = $options['attachment'];
 
                 if (Payment::add($paymentFrom)) {
                   $paymentTo = [
-                    'mutation_id' => $mutation->id,
-                    'bank_id'     => $mutation->to_bank_id,
-                    'method'      => 'Transfer',
-                    'amount'      => $mutation->amount + $pv->unique_code,
-                    'created_by'  => $mutation->created_by,
-                    'type'        => 'received',
-                    'note'        => $mutation->note
+                    'reference_date'  => $mutation->date,
+                    'mutation'        => $mutation->reference,
+                    'bank'            => $mutation->bankto,
+                    'method'          => 'Transfer',
+                    'amount'          => $mutation->amount + $pv->unique_code,
+                    'created_by'      => $mutation->created_by,
+                    'type'            => 'received',
+                    'note'            => $mutation->note
                   ];
 
-                  if (isset($options['attachment_id'])) $paymentTo['attachment_id'] = $options['attachment_id'];
+                  if (isset($options['attachment'])) $paymentTo['attachment'] = $options['attachment'];
 
                   if (Payment::add($paymentTo)) {
                     BankMutation::update((int)$mutation->id, [

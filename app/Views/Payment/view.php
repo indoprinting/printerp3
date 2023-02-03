@@ -8,7 +8,7 @@
   <table id="ModalTable" class="table table-bordered table-hover">
     <thead>
       <tr>
-        <th class="col-sm-1">ID</th>
+        <th class="col-sm-1"></th>
         <th><?= lang('App.date') ?></th>
         <th><?= lang('App.reference') ?></th>
         <th><?= lang('App.bankaccount') ?></th>
@@ -20,7 +20,7 @@
     </thead>
     <tfoot>
       <tr>
-        <th>ID</th>
+        <th></th>
         <th><?= lang('App.date') ?></th>
         <th><?= lang('App.reference') ?></th>
         <th><?= lang('App.bankaccount') ?></th>

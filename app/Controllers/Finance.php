@@ -52,7 +52,7 @@ class Finance extends BaseController
               </a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('payment/view/bank/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalDefault"
+                data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
               </a>
@@ -119,7 +119,7 @@ class Finance extends BaseController
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.addpayment') . '
               </a>
               <a class="dropdown-item" href="' . base_url('payment/view/expense/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalDefault"
+                data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
               </a>
@@ -182,7 +182,7 @@ class Finance extends BaseController
               </a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('payment/view/income/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalDefault"
+                data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
               </a>
@@ -232,7 +232,7 @@ class Finance extends BaseController
               </a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('payment/view/mutation/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalDefault"
+                data-toggle="modal" data-target="#ModalStatic"
                 data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
               </a>

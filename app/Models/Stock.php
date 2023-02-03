@@ -15,8 +15,8 @@ class Stock
    */
   public static function add(array $data)
   {
-    if (empty($data['quantity'])) {
-      setLastError("Stock:add(): Quantity is empty.");
+    if (empty($data['quantity']) && $data['quantity'] != 0) {
+      setLastError("Stock:add(): Quantity is empty. Must be 0 or greater.");
       return false;
     }
 

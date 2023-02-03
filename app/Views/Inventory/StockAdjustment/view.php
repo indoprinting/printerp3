@@ -5,53 +5,81 @@
   </button>
 </div>
 <div class="modal-body">
-  <form id="form">
-    <?= csrf_field() ?>
-    <table class="table table-hover table-sm table-striped">
-      <tbody>
-        <tr>
-          <td><?= lang('App.id') ?></td>
-          <td><?= $adjustment->id ?></td>
-        </tr>
-        <tr>
-          <td><?= lang('App.date') ?></td>
-          <td><?= formatDate($adjustment->date) ?></td>
-        </tr>
-        <tr>
-          <td><?= lang('App.reference') ?></td>
-          <td><?= $adjustment->reference ?></td>
-        </tr>
-        <tr>
-          <td><?= lang('App.warehouse') ?></td>
-          <td><?= \App\Models\Warehouse::getRow(['code' => $adjustment->warehouse])->name ?></td>
-        </tr>
-        <tr>
-          <td><?= lang('App.note') ?></td>
-          <td><?= $adjustment->note ?></td>
-        </tr>
-        <tr>
-          <td><?= lang('App.createdat') ?></td>
-          <td><?= formatDate($adjustment->created_at) ?></td>
-        </tr>
-        <tr>
-          <td><?= lang('App.createdby') ?></td>
-          <td><?= \App\Models\User::getRow(['id' => $adjustment->created_by])->fullname ?></td>
-        </tr>
-        <?php if ($adjustment->updated_at) : ?>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table table-hover table-sm table-striped">
+        <tbody>
           <tr>
-            <td><?= lang('App.updatedat') ?></td>
-            <td><?= formatDate($adjustment->updated_at) ?></td>
+            <td><?= lang('App.id') ?></td>
+            <td><?= $adjustment->id ?></td>
           </tr>
-        <?php endif; ?>
-        <?php if ($adjustment->updated_by) : ?>
           <tr>
-            <td><?= lang('App.updatedby') ?></td>
+            <td><?= lang('App.date') ?></td>
+            <td><?= formatDate($adjustment->date) ?></td>
+          </tr>
+          <tr>
+            <td><?= lang('App.reference') ?></td>
+            <td><?= $adjustment->reference ?></td>
+          </tr>
+          <tr>
+            <td><?= lang('App.warehouse') ?></td>
+            <td><?= \App\Models\Warehouse::getRow(['code' => $adjustment->warehouse])->name ?></td>
+          </tr>
+          <tr>
+            <td><?= lang('App.note') ?></td>
+            <td><?= $adjustment->note ?></td>
+          </tr>
+          <tr>
+            <td><?= lang('App.createdat') ?></td>
+            <td><?= formatDate($adjustment->created_at) ?></td>
+          </tr>
+          <tr>
+            <td><?= lang('App.createdby') ?></td>
             <td><?= \App\Models\User::getRow(['id' => $adjustment->created_by])->fullname ?></td>
           </tr>
-        <?php endif; ?>
-      </tbody>
-    </table>
-  </form>
+          <?php if ($adjustment->updated_at) : ?>
+            <tr>
+              <td><?= lang('App.updatedat') ?></td>
+              <td><?= formatDate($adjustment->updated_at) ?></td>
+            </tr>
+          <?php endif; ?>
+          <?php if ($adjustment->updated_by) : ?>
+            <tr>
+              <td><?= lang('App.updatedby') ?></td>
+              <td><?= \App\Models\User::getRow(['id' => $adjustment->created_by])->fullname ?></td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table table-hover table-sm table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Adjustment Qty</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $items = \App\Models\Stock::get(['adjustment_id' => $adjustment->id]) ?>
+          <?php foreach ($items as $item) : ?>
+            <tr>
+              <td><?= $item->id ?></td>
+              <td><?= $item->product_name . " ($item->product_code)" ?></td>
+              <td><span class="float-right"><?= formatNumber($item->quantity) ?></span></td>
+              <td><span class="float-right"><?= formatNumber($item->adjustment_qty) ?></span></td>
+              <td><?= renderStatus($item->status) ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 <div class="modal-footer">
   <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
@@ -61,6 +89,5 @@
     initControls();
   })();
 
-  $(document).ready(function() {
-  });
+  $(document).ready(function() {});
 </script>

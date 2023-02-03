@@ -163,6 +163,7 @@ $(document).ready(function () {
             });
 
             if (typeof Table !== 'undefined') Table.draw(false);
+            if (typeof ModalTable !== 'undefined') ModalTable.draw(false);
           },
           url: url
         });

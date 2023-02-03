@@ -440,14 +440,14 @@
             </li>
             <!-- QMS -->
             <li class="nav-item">
-              <a href="#" class="nav-link">
+              <a href="#" class="nav-link" data-slug="qms">
                 <i class="nav-icon fad fa-users-class"></i>
                 <p>QMS <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
+                  <a href="<?= base_url('qms') ?>" class="nav-link" data-action="link" data-slug="queue">
                     <i class="nav-icon fad fa-list"></i>
                     <p><?= lang('App.queue') ?></p>
                   </a>

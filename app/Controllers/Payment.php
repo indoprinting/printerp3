@@ -12,6 +12,7 @@ use App\Models\{
   Expense,
   Income,
   Payment as PaymentModel,
+  PaymentValidation,
   ProductPurchase,
   ProductTransfer,
   Sale
@@ -41,12 +42,32 @@ class Payment extends BaseController
     $dt = new DataTables('payments');
     $dt->select("payments.id, payments.date, payments.reference,
         (CASE
-          WHEN banks.number IS NULL THEN banks.name
-          WHEN banks.number IS NOT NULL THEN CONCAT(banks.name, ' (', banks.number, ')')
+          WHEN banks.number IS null THEN banks.name
+          WHEN banks.number IS NOT null THEN CONCAT(banks.name, ' (', banks.number, ')')
         END) bank_name,
         biller.name, payments.amount, payments.type, payments.attachment")
       ->join('banks', 'banks.id = payments.bank_id', 'left')
       ->join('biller', 'biller.id = payments.biller_id', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-gear"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('payment/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic2"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('payment/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
       })
@@ -97,7 +118,7 @@ class Payment extends BaseController
    * @param null|string $mode Payment mode (expense, income, purchase, sale, transfer)
    * @param null|int $id Mode ID.
    */
-  public function add(string $mode = NULL, int $id = NULL)
+  public function add(string $mode = null, int $id = null)
   {
     if (!$mode) {
       $this->response(400, ['message' => 'Payment mode is empty']);
@@ -111,6 +132,8 @@ class Payment extends BaseController
 
     switch ($mode) {
       case 'expense':
+        checkPermission('Expense.Payment.Add');
+
         $inv = Expense::getRow(['id' => $id]);
         $modeLang = lang('App.expense');
         $data['expense']      = $inv->reference;
@@ -129,21 +152,21 @@ class Payment extends BaseController
         }
         break;
       case 'income':
-        $inv = Income::getRow(['id' => $id]);
-        $modeLang = lang('App.income');
-        $data['income']       = $inv->reference;
-        $data['income_id']    = $inv->id;
-        $data['type']         = 'received';
-        $this->data['amount'] = $inv->amount;
-        $this->data['biller'] = $inv->biller;
-        $this->data['bank']   = $inv->bank;
+        // $inv = Income::getRow(['id' => $id]);
+        // $modeLang = lang('App.income');
+        // $data['income']       = $inv->reference;
+        // $data['income_id']    = $inv->id;
+        // $data['type']         = 'received';
+        // $this->data['amount'] = $inv->amount;
+        // $this->data['biller'] = $inv->biller;
+        // $this->data['bank']   = $inv->bank;
         break;
-        // case 'mutation':
-        //   $inv = BankMutation::getRow(['id' => $id]);
-        //   $modeLang = lang('App.bankmutation');
-        //   $data['mutation']     = $inv->reference;
-        //   $data['mutation_id']  = $inv->id;
-        //   break;
+      case 'mutation':
+        // $inv = BankMutation::getRow(['id' => $id]);
+        // $modeLang = lang('App.bankmutation');
+        // $data['mutation']     = $inv->reference;
+        // $data['mutation_id']  = $inv->id;
+        break;
       case 'purchase':
         $inv = ProductPurchase::getRow(['id' => $id]);
         $modeLang = lang('App.productpurchase');
@@ -184,9 +207,12 @@ class Payment extends BaseController
       $data['reference_date'] = $inv->date;
       $data['bank']           = getPost('bank');
       $data['biller']         = getPost('biller');
-      $data['method']         = getPost('method') ?? 'Cash'; // Cash / Transfer
+      $data['method']         = getPost('method'); // Cash / EDC / Transfer
       $data['note']           = getPost('note');
       $data['type']           = 'sent';
+
+      // Used by Sale. Bank mutation has payment ui itself.
+      $skipValidation = (getPost('skip_validation') == 1);
 
       if (empty($data['method'])) {
         $this->response(400, ['message' => 'Please select payment method.']);
@@ -200,13 +226,33 @@ class Payment extends BaseController
 
       $data = $this->useAttachment($data, $inv->attachment);
 
-      if (!PaymentModel::add($data)) {
-        DB::transComplete();
-        $this->response(400, ['message' => getLastError()]);
-      }
+      $nonValidation = (isset($data['expense']) || isset($data['purchase']) || isset($data['transfer']));
 
-      if (isset($data['expense'])) {
-        Expense::update((int)$inv->id, ['payment_status' => 'paid']);
+      if ($skipValidation || $nonValidation) {
+        $res = PaymentModel::add($data);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
+
+        if (isset($data['expense'])) {
+          Expense::update((int)$inv->id, ['payment_status' => 'paid']);
+        }
+      } else { // Use payment validation. (Sale only)
+        $res = PaymentValidation::add([
+          'mutation'    => $inv->reference,
+          'amount'      => $data['amount'],
+          'biller'      => $data['biller'],
+          'attachment'  => ($data['attachment'] ?? NULL)
+        ]);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
+
+        if (isset($data['sale'])) {
+          Sale::sync(['id' => $data['sale_id']]);
+        }
       }
 
       DB::transComplete();
@@ -226,7 +272,81 @@ class Payment extends BaseController
     $this->response(200, ['content' => view('Payment/add', $this->data)]);
   }
 
-  public function view($mode = NULL, $id = NULL)
+  public function delete($id = null)
+  {
+    checkPermission('Payment.Delete');
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $payment = PaymentModel::getRow(['id' => $id]);
+
+      if (!$payment) {
+        $this->response(404, ['message' => 'Payment is not found.']);
+      }
+
+      DB::transStart();
+
+      $res = PaymentModel::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      if (!empty($payment->expense)) {
+        Expense::update((int)$payment->expense_id, ['payment_date' => null, 'payment_status' => 'pending']);
+      } else if (!empty($payment->income)) {
+      } else if (!empty($payment->mutation)) {
+      } else if (!empty($payment->purchase)) {
+      } else if (!empty($payment->sale)) {
+      } else if (!empty($payment->transfer)) {
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Payment has been deleted.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    $this->response(400, ['message' => 'Failed to delete payment.']);
+  }
+
+  public function edit($id = null)
+  {
+    checkPermission('Payment.Edit');
+
+    if (!$id) {
+      $this->response(400, ['message' => 'ID is empty']);
+    }
+
+    $payment = PaymentModel::getRow(['id' => $id]);
+
+    if (!$payment) {
+      $this->response(404, ['message' => 'Payment is not found.']);
+    }
+
+    if (!empty($payment->expense)) {
+      $this->response(400, ['message' => 'Edit from Expense']);
+    } else if (!empty($payment->income)) {
+      $this->response(400, ['message' => 'Edit from Income']);
+    } else if (!empty($payment->mutation)) {
+      $this->response(400, ['message' => 'Edit from Bank Mutation']);
+    } else if (!empty($payment->purchase)) {
+    } else if (!empty($payment->sale)) {
+    } else if (!empty($payment->transfer)) {
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+    }
+
+    $this->data['payment']  = $payment;
+    $this->data['title']    = lang('editpayment');
+
+    $this->response(200, ['content' => view('Payment/view', $this->data)]);
+  }
+
+  public function view($mode = null, $id = null)
   {
     if (!$mode) {
       $this->response(400, ['message' => 'Payment mode is empty']);
