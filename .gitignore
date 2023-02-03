@@ -126,3 +126,6 @@ nb-configuration.xml
 
 # Acme-Challenge
 /.well-known/
+
+# Custom
+composer.phar
