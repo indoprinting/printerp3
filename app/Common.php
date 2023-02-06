@@ -186,6 +186,40 @@ function getPost($name)
 }
 
 /**
+ * Get queue date time for customer who commit ticket registration.
+ * @param string $dateTime Initial datetime string.
+ * @return string return Working date for customer who commit ticket registration.
+ */
+function getQueueDateTime($dateTime)
+{
+  $dt = new DateTime($dateTime);
+  $hour   = $dt->format('H');
+  $day    = $dt->format('D');
+  $holiday = FALSE;
+  $h = 0;
+
+  if (strcasecmp($day, 'Sun') === 0 || strcasecmp($day, 'Sat') === 0) {
+    $holiday = TRUE;
+  }
+
+  if ($hour >= 23 || $hour < 7) {
+    $h = ($holiday ? 9 : 7);
+  }
+
+  // if ($hour >= 23 && $minute <= 59) { // Off time.
+  //   $h = (24 - $hour + 8);
+  // } elseif ($hour >= 0 && $hour < 7 && $minute <= 59) { // Next day.
+  //   $h = (7 - $hour);
+  // } else {
+  //   $h = 0;
+  // }
+
+  if ($h) $dt->add(new DateInterval("PT{$h}H")); // Period Time $h Hour
+
+  return $dt->format('Y-m-d H:i:s');
+}
+
+/**
  * A convenience method that grabs the raw input stream(send method in PUT, PATCH, DELETE) and
  * decodes the String into an array.
  */
@@ -389,8 +423,10 @@ function renderStatus(string $status)
     'calling', 'completed_partial', 'confirmed', 'delivered', 'excellent', 'finished',
     'installed_partial', 'ordered', 'partial', 'preparing', 'received', 'received_partial', 'serving'
   ];
-  $success = ['approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
-    'sent', 'served', 'verified'];
+  $success = [
+    'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
+    'sent', 'served', 'verified'
+  ];
   $warning = [
     'called', 'cancelled', 'checked', 'draft', 'packing', 'pending', 'slow', 'trouble', 'waiting',
     'waiting_production', 'waiting_transfer'

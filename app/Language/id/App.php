@@ -215,6 +215,7 @@ return [
   'qms'                   => 'QMS',
   'quantity'              => 'Kuantitas',
   'queue'                 => 'Antrian',
+  'recall'                => 'Panggil Ulang',
   'receivable'            => 'Piutang',
   'receive'               => 'Terima',
   'received'              => 'Diterima',

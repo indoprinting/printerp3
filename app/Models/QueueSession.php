@@ -31,22 +31,6 @@ class QueueSession
       return false;
     }
 
-    $customer = Customer::getRow(['phone' => $data['phone']]);
-
-    if (!$customer) {
-      $res = Customer::add([
-        'company'             => '',
-        'customer_group_id'   => 1,
-        'customer_group_name' => 'Reguler',
-        'name'                => $data['name'],
-        'phone'               => $data['phone']
-      ]);
-
-      if (!$res) {
-        return false;
-      }
-    }
-
     DB::table('queue_sessions')->insert($data);
 
     if ($insertID = DB::insertID()) {

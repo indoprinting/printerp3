@@ -216,6 +216,7 @@ return [
   'qms'                   => 'QMS',
   'quantity'              => 'Quantity',
   'queue'                 => 'Queue',
+  'recall'                => 'Recall',
   'receivable'            => 'Receivable',
   'receive'               => 'Receive',
   'received'              => 'Received',

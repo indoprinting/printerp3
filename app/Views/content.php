@@ -459,13 +459,13 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
+                  <a href="<?= base_url('qms/display') ?>" class="nav-link" target="_blank">
                     <i class="nav-icon fad fa-desktop"></i>
                     <p><?= lang('App.display') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
+                  <a href="<?= base_url('qms/registration') ?>" class="nav-link" target="_blank">
                     <i class="nav-icon fad fa-file-alt"></i>
                     <p><?= lang('App.registration') ?></p>
                   </a>
