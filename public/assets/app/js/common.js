@@ -1,8 +1,10 @@
 'use strict';
 
-toastr.options.preventDuplicates = true;
-toastr.options.progressBar = true;
-toastr.options.timeOut = 2000;
+if (typeof toastr !== 'undefined') {
+  toastr.options.preventDuplicates = true;
+  toastr.options.progressBar = true;
+  toastr.options.timeOut = 2000;
+}
 
 (function (w, d) {
   w.addEventListener('load', (e) => {
@@ -17,6 +19,13 @@ toastr.options.timeOut = 2000;
     }
   });
 })(this, document);
+
+function appendZero(number) { // Return as string, you can convert to number with parseInt().
+  if (number < 10) {
+    return '0' + number;
+  }
+  return number;
+}
 
 /**
  * Create google maps.
@@ -224,6 +233,25 @@ function formatNumber(str) {
   }).format(filterDecimal(str));
 }
 
+/**
+ * Get time difference.
+ * @param {string} timestr1 Time string at first time. Ex. 00:20:43
+ * @param {string} timestr2 Time string at last time. Ex. 00:31:22
+ * @return {string} Return Time string difference. Ex. 01:20:30
+ */
+function getTimeDifference(timestr1, timestr2) {
+  let time1 = timestr1.split(':');
+  let time2 = timestr2.split(':');
+  let time1sec = (parseInt(time1[0]) * 3600) + (parseInt(time1[1]) * 60) + parseInt(time1[2]);
+  let time2sec = (parseInt(time2[0]) * 3600) + (parseInt(time2[1]) * 60) + parseInt(time2[2]);
+  let diff = time2sec - time1sec;
+  let hours = Math.floor(diff / 3600);
+  let minutes = Math.floor((diff % 3600) / 60);
+  let seconds = Math.floor(diff % 60);
+
+  return `${appendZero(hours)}:${appendZero(minutes)}:${appendZero(seconds)}`;
+}
+
 function initControls() {
 
   if (isFunction('bsCustomFileInput.init')) bsCustomFileInput.init();
@@ -387,6 +415,10 @@ function isObject(data) {
   return (data instanceof Object && !Array.isArray(data));
 }
 
+function isObjectDifferent(obj1, obj2) {
+  return (JSON.stringify(obj1) === JSON.stringify(obj2) ? false : true);
+}
+
 function isString(data) {
   return (data instanceof String || typeof data == 'string');
 }
@@ -414,6 +446,16 @@ function reDrawDataTable(table = null) {
   if (isFunction(window?.Table?.draw)) window.Table.draw(false);
 }
 
+function separateChar(char) {
+  let buff = '';
+  if (char.length > 0) {
+    for (let a = 0; a < char.length; a++) {
+      buff = buff + char[a] + ', ';
+    }
+  }
+  return buff;
+}
+
 function showPass(show = false) {
   if (show) {
     $('.pass').prop('type', 'text');
@@ -422,6 +464,14 @@ function showPass(show = false) {
     $('.pass').prop('type', 'password');
     $('.fa-eye').addClass('fa-eye-slash').removeClass('fa-eye');
   }
+}
+
+/**
+ * Convert string to unix time miliseconds.
+ * @param {string} time Time string.
+ */
+function strtotime(time) {
+  return Date.parse(time);
 }
 
 function uc(str) {

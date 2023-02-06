@@ -728,7 +728,6 @@
   <script src="<?= base_url() ?>/assets/modules/select2/js/select2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/sweetalert2/sweetalert2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/toastr/toastr.min.js"></script>
-  <script src="<?= base_url('assets/qms/js/ridintek.js?v=') . $resver ?>"></script>
   <script>
     /**
      * Not Used. Required by google maps.

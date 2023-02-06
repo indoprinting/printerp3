@@ -119,13 +119,13 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
   <script src="<?= base_url('assets/qms/js/bootstrap.min.js'); ?>"></script>
   <script src="<?= base_url('assets/qms/js/bootstrap-table.min.js'); ?>"></script>
   <script src="<?= base_url('assets/qms/js/alertify.min.js'); ?>"></script>
-  <script src="<?= base_url('assets/qms/js/ridintek.js?v=') . $hash; ?>"></script>
   <script src="<?= base_url('assets/qms/js/tableExport.min.js'); ?>"></script>
-  <script>
-    "use strict";
+  <script src="<?= base_url('assets/app/js/common.js?v=') . $hash; ?>"></script>
+  <script type="module">
+    import {
+      QMS
+    } from '<?= base_url('assets/app/js/ridintek.js?v=') . $resver ?>';
 
-    window.QHttp = new QueueHttp();
-    window.QMS = new QueueManagementSystem();
     window._x = '<?= csrf_token() ?>';
     window._vx = '<?= csrf_hash() ?>';
     let active = <?= (!empty($active) ? $active : '0'); ?>;
@@ -160,7 +160,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
           setTimeout(() => {
             let utterance = new SpeechSynthesisUtterance();
             utterance.lang = 'id-ID';
-            utterance.text = `Nomor antrian ${call.queue_category_name}. ${separate_char(call.token)}. Dipersilakan ke CS ${call.counter}`;
+            utterance.text = `Nomor antrian ${call.queue_category_name}. ${separateChar(call.token)}. Dipersilakan ke CS ${call.counter}`;
             utterance.rate = .7;
             utterance.pitch = 1;
             utterance.volume = 1;
@@ -197,7 +197,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
 
           for (let a in queue_list) {
             let estCallDate = new Date(queue_list[a].est_call_date);
-            let call_date = append_zero(estCallDate.getHours()) + ':' + append_zero(estCallDate.getMinutes());
+            let call_date = appendZero(estCallDate.getHours()) + ':' + appendZero(estCallDate.getMinutes());
             waiting_table.bootstrapTable('append', [{
               time: call_date,
               ticket: queue_list[a].token,
@@ -217,7 +217,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
 
           for (let a in skip_list) {
             let estCallDate = new Date(skip_list[a].est_call_date);
-            let call_date = append_zero(estCallDate.getHours()) + ':' + append_zero(estCallDate.getMinutes());
+            let call_date = appendZero(estCallDate.getHours()) + ':' + appendZero(estCallDate.getMinutes());
             skip_table.bootstrapTable('append', [{
               time: call_date,
               ticket: skip_list[a].token,
@@ -260,11 +260,11 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
         let month = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL',
           'AGU', 'SEP', 'OKT', 'NOV', 'DES'
         ];
-        let day = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+        let day = ['AHAD', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
 
         $('#header_datetime').html(
-          `${day[d.getDay()]}, ${append_zero(d.getDate())}-${month[d.getMonth()]}-${d.getFullYear()}
-        ${append_zero(d.getHours())}:${append_zero(d.getMinutes())}:${append_zero(d.getSeconds())}`
+          `${day[d.getDay()]}, ${appendZero(d.getDate())}-${month[d.getMonth()]}-${d.getFullYear()}
+        ${appendZero(d.getHours())}:${appendZero(d.getMinutes())}:${appendZero(d.getSeconds())}`
         );
       }, 500);
 

@@ -10,15 +10,13 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="<?= base_url('assets/pwa/images/favicon.ico') ?>" />
   <link href="<?= base_url('assets/qms/fonts/fontawesome/css/all.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/jquery-ui.min.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/jquery-ui.structure.min.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/jquery-ui.theme.min.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/bootstrap.min.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/bootstrap-table.min.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/themes/semantic.min.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/alertify.min.css'); ?>" rel="stylesheet" />
+  <link href="<?= base_url('assets/modules/jquery-ui/jquery-ui.min.css'); ?>" rel="stylesheet" />
+  <link href="<?= base_url('assets/modules/jquery-ui/jquery-ui.structure.min.css'); ?>" rel="stylesheet" />
+  <link href="<?= base_url('assets/modules/jquery-ui/jquery-ui.theme.min.css'); ?>" rel="stylesheet" />
+  <link href="<?= base_url('assets/dist/css/adminlte.min.css'); ?>" rel="stylesheet" />
   <link href="<?= base_url('assets/modules/select2/css/select2.min.css'); ?>" rel="stylesheet" />
-  <link href="<?= base_url('assets/qms/css/ridintek.css?v=') . $hash; ?>" rel="stylesheet" />
+  <link href="<?= base_url('assets/modules/toastr/toastr.min.css'); ?>" rel="stylesheet" />
+  <link href="<?= base_url('assets/qms/css/ridintek.css?v=') . $resver; ?>" rel="stylesheet" />
   <script>
     let base_url = '<?= base_url() ?>';
   </script>
@@ -47,10 +45,6 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
   /* Hack select2 height */
   .select2-container .select2-selection--single {
     height: calc(1.5em + .75rem + 2px);
-  }
-
-  .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: calc(1.5em + .75rem + 2px);
   }
 
   .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -155,26 +149,29 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
       </div>
     </div>
   </div>
-  <script src="<?= base_url('assets/qms/js/jquery-3.4.1.min.js'); ?>"></script>
-  <script src="<?= base_url('assets/qms/js/jquery-ui.min.js'); ?>"></script>
-  <script src="<?= base_url('assets/qms/js/chart.min.js'); ?>"></script>
-  <script src="<?= base_url('assets/qms/js/bootstrap.min.js'); ?>"></script>
-  <script src="<?= base_url('assets/qms/js/bootstrap-table.min.js'); ?>"></script>
-  <script src="<?= base_url('assets/qms/js/alertify.min.js'); ?>"></script>
+  <script src="<?= base_url('assets/modules/jquery/jquery.min.js'); ?>"></script>
+  <script src="<?= base_url('assets/modules/jquery-ui/jquery-ui.min.js'); ?>"></script>
+  <script src="<?= base_url('assets/modules/bootstrap/js/bootstrap.min.js'); ?>"></script>
   <script src="<?= base_url('assets/modules/select2/js/select2.full.min.js'); ?>"></script>
-  <script src="<?= base_url('assets/qms/js/ridintek.js?v=') . $hash; ?>"></script>
-  <script src="<?= base_url('assets/qms/js/tableExport.min.js'); ?>"></script>
+  <script src="<?= base_url('assets/modules/toastr/toastr.min.js'); ?>"></script>
   <script>
-    "use strict";
+    $(document).on("select2:open", () => {
+      setTimeout(() => {
+        document.querySelector(".select2-container--open .select2-search__field").focus()
+      }, 10);
+    });
+  </script>
+  <script type="module">
+    import {
+      QueueHttp,
+      QueueNotify
+    } from '<?= base_url('assets/app/js/ridintek.js?v=') . $resver ?>';
 
-    let QNotify = new QueueNotify();
-
+    /**
+     * data.title
+     * data.body
+     */
     function show_modal(data) {
-      /**
-       * data.title
-       * data.body
-       */
-
       $('[data-content=modal-title]').html(data.title);
       $('[data-content=modal-body]').html(data.body);
 
@@ -187,12 +184,12 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
 
     async function add_queue_ticket(category_id) {
       if (!$('#phone').val()) {
-        QNotify.error('Mohon masukkan nomor handphone anda.')
+        QueueNotify.error('Mohon masukkan nomor handphone anda.')
         return false;
       }
 
       if (!$('#name').val()) {
-        QNotify.error('Mohon masukkan nama anda.');
+        QueueNotify.error('Mohon masukkan nama anda.');
         return false;
       }
 
@@ -207,7 +204,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
       };
 
       try {
-        let response = await QHttp.send('POST', '<?= base_url('qms/addQueueTicket') ?>', data);
+        let response = await QueueHttp.send('POST', '<?= base_url('qms/addQueueTicket') ?>', data);
         if (typeof response === 'object') {
           $('#loader').fadeOut();
 
@@ -216,7 +213,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
 
           let ticket = response.data;
 
-          QNotify.audio.success.play();
+          QueueNotify.audio.success.play();
 
           show_modal({
             title: `NO ANTRIAN ${ticket.queue_category_name.toUpperCase()} ${ticket.token}`,
@@ -233,7 +230,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
         $('#phone').val('').trigger('change');
         $('#name').val('');
 
-        QNotify.error(JSON.parse(e).message);
+        QueueNotify.error(JSON.parse(e).message);
       }
     }
 
@@ -246,7 +243,6 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
     });
 
     $(document).ready(function() {
-      window.QHttp = new QueueHttp();
       let toggleFrame = true;
 
       setInterval(() => {
