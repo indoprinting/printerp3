@@ -123,6 +123,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
   <script src="<?= base_url('assets/qms/js/tableExport.min.js'); ?>"></script>
   <script>
     "use strict";
+
     window.QHttp = new QueueHttp();
     window.QMS = new QueueManagementSystem();
     window._x = '<?= csrf_token() ?>';
@@ -139,9 +140,9 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
       try {
         let displayData = await QMS.getDisplayData(warehouse);
 
-        // console.log(displayData);
+        console.log(displayData);
 
-        if (displayData.data.call.data && !on_call) {
+        if (!displayData.data.call.error && !on_call) {
           let call = displayData.data.call.data;
 
           bell.play();
@@ -172,7 +173,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
           }, 10 * 1000);
         }
 
-        if (displayData.data.counter.data) {
+        if (!displayData.data.counter.error) {
           let counters = displayData.data.counter.data;
 
           counter_table.bootstrapTable('removeAll');
@@ -188,7 +189,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
           counter_table.bootstrapTable('removeAll');
         }
 
-        if (displayData.data.queue_list.data) {
+        if (!displayData.data.queue_list.error) {
           let queue_list = displayData.data.queue_list.data;
           let count = 1;
 
@@ -208,7 +209,7 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
           waiting_table.bootstrapTable('removeAll');
         }
 
-        if (displayData.data.skip_list.data) {
+        if (!displayData.data.skip_list.error) {
           let skip_list = displayData.data.skip_list.data;
           let count = 1;
 

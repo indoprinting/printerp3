@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
-use App\Models\{Customer, DB, QueueCategory, QueueTicket, Warehouse};
+use App\Models\{Customer, DB, QueueCategory, QueueSession, QueueTicket, User, Warehouse};
 
 class Qms extends BaseController
 {
@@ -107,6 +107,21 @@ class Qms extends BaseController
     $this->response(400, ['message' => 'Cannot create ticket.']);
   }
 
+  public function callQueue($warehouseCode)
+  {
+    $call_data = [
+      'user_id'   => session('login')->user_id,
+      'counter'   => session('login')->counter,
+      'warehouse' => $warehouseCode
+    ];
+
+    if ($response = QueueTicket::callQueue($call_data)) {
+      sendJSON(['error' => 0, 'data' => $response]);
+    }
+
+    sendJSON(['error' => 1, 'msg' => 'No queue list available.']);
+  }
+
   public function counter()
   {
     checkPermission('QMS.Counter');
@@ -160,6 +175,10 @@ class Qms extends BaseController
 
     $code = ($code ?? session('login')->warehouse);
 
+    if (!$code) { // Default
+      $code = 'LUC';
+    }
+
     $warehouse = Warehouse::getRow(['code' => $code]);
 
     if (!$warehouse) {
@@ -170,6 +189,38 @@ class Qms extends BaseController
     $this->data['warehouse']  = $warehouse;
 
     return view('QMS/display', $this->data);
+  }
+
+  /**
+   * Display will call this function if any ticket to be call.
+   */
+  public function displayResponse($ticketId = NULL)
+  {
+    if ($ticketId) {
+      if (QueueTicket::update((int)$ticketId, [
+        'status' => QueueTicket::STATUS_CALLED,
+        'status2' => QueueTicket::toStatus(QueueTicket::STATUS_CALLED)
+      ])) {
+        sendJSON(['error' => 0, 'msg' => 'Update success.']);
+      } else {
+        sendJSON(['error' => 1, 'msg' => 'Update failed.']);
+      }
+    }
+    sendJSON(['error' => 1, 'msg' => 'Ticket id is not specified.']);
+  }
+
+  public function endQueue()
+  {
+    $ticketId = getPost('ticket');
+
+    $queueData = [
+      'serve_time' => (getPOST('serve_time') ?? NULL)
+    ];
+
+    if (QueueTicket::endQueue($ticketId, $queueData)) {
+      sendJSON(['error' => 0, 'msg' => 'OK']);
+    }
+    sendJSON(['error' => 1, 'msg' => 'Cannot end queue ticket.']);
   }
 
   public function getCustomers()
@@ -194,7 +245,7 @@ class Qms extends BaseController
   public function getDisplayData($warehouseCode = NULL)
   {
     if ($warehouseCode) {
-      $display_data = [
+      $displayData = [
         'call'       => [],
         'counter'    => [],
         'queue_list' => [],
@@ -204,37 +255,37 @@ class Qms extends BaseController
       $call = QueueTicket::getTodayCallableQueueTicket($warehouseCode);
 
       if ($call) {
-        $display_data['call'] = ['error' => 0, 'data' => $call];
+        $displayData['call'] = ['error' => 0, 'data' => $call];
       } else {
-        $display_data['call'] = ['error' => 1, 'data' => NULL, 'msg' => 'No queue ticket to call.'];
+        $displayData['call'] = ['error' => 1, 'data' => [], 'msg' => 'No queue ticket to call.'];
       }
 
       $counters = QueueTicket::getTodayOnlineCounters($warehouseCode);
 
       if ($counters) {
         foreach ($counters as $counter) {
-          $queue_category = QueueCategory::getRow(['id' => $counter->queue_category_id]);
+          $queueCategory = QueueCategory::getRow(['id' => $counter->queue_category_id]);
 
-          $counter_list[] = [
+          $counterList[] = [
             'counter' => $counter->counter,
             'name' => explode(' ', $counter->fullname)[0],
             'token' => $counter->token,
-            'category_name' => (!empty($queue_category) ? $queue_category->name : NULL)
+            'category_name' => (!empty($queueCategory) ? $queueCategory->name : NULL)
           ];
         }
 
-        $display_data['counter'] = ['error' => 0, 'data' => $counter_list];
+        $displayData['counter'] = ['error' => 0, 'data' => $counterList];
       } else {
-        $display_data['counter'] = ['error' => 1, 'data' => [], 'msg' => 'No counter online.'];
+        $displayData['counter'] = ['error' => 1, 'data' => [], 'msg' => 'No counter online.'];
       }
 
-      $queue_lists = QueueTicket::getTodayQueueTicketList($warehouseCode);
+      $queueLists = QueueTicket::getTodayQueueTicketList($warehouseCode);
 
-      if ($queue_lists) {
-        foreach ($queue_lists as $ticket) {
+      if ($queueLists) {
+        foreach ($queueLists as $ticket) {
           $customer = Customer::getRow(['id' => $ticket->customer_id]);
 
-          $queue_list[] = [
+          $queueList[] = [
             'customer_id' => intval($customer->id),
             'customer_name' => $customer->name,
             'est_call_date' => $ticket->est_call_date,
@@ -246,18 +297,18 @@ class Qms extends BaseController
           ];
         }
 
-        $display_data['queue_list'] = ['error' => 0, 'data' => $queue_list];
+        $displayData['queue_list'] = ['error' => 0, 'data' => $queueList];
       } else {
-        $display_data['queue_list'] = ['error' => 1, 'data' => [], 'msg' => 'No queue ticket available.'];
+        $displayData['queue_list'] = ['error' => 1, 'data' => [], 'msg' => 'No queue ticket available.'];
       }
 
-      $skip_lists = QueueTicket::getTodaySkippedQueueList($warehouseCode);
+      $skipLists = QueueTicket::getTodaySkippedQueueList($warehouseCode);
 
-      if ($skip_lists) {
-        foreach ($skip_lists as $ticket) {
+      if ($skipLists) {
+        foreach ($skipLists as $ticket) {
           $customer = Customer::getRow(['id' => $ticket->customer_id]);
 
-          $skip_list[] = [
+          $skipList[] = [
             'customer_id' => intval($customer->id),
             'customer_name' => $customer->name,
             'est_call_date' => $ticket->est_call_date,
@@ -269,12 +320,12 @@ class Qms extends BaseController
           ];
         }
 
-        $display_data['skip_list'] = ['error' => 0, 'data' => $skip_list];
+        $displayData['skip_list'] = ['error' => 0, 'data' => $skipList];
       } else {
-        $display_data['skip_list'] = ['error' => 1, 'data' => [], 'msg' => 'No skipped ticket available.'];
+        $displayData['skip_list'] = ['error' => 1, 'data' => [], 'msg' => 'No skipped ticket available.'];
       }
 
-      $this->response(200, ['data' => $display_data]);
+      $this->response(200, ['data' => $displayData]);
     }
 
     $this->response(400, ['message' => 'Warehouse is not found.']);
@@ -286,6 +337,10 @@ class Qms extends BaseController
 
     $code = ($code ?? session('login')->warehouse);
 
+    if (!$code) { // Default
+      $code = 'LUC';
+    }
+
     $warehouse = Warehouse::getRow(['code' => $code]);
 
     if (!$warehouse) {
@@ -295,5 +350,79 @@ class Qms extends BaseController
     $this->data['warehouse'] = $warehouse;
 
     return view('QMS/registration', $this->data);
+  }
+
+  public function serveQueue()
+  {
+    $ticketId = getPost('ticket');
+
+    if (QueueTicket::serveQueue($ticketId)) {
+      sendJSON(['error' => 0, 'msg' => 'OK']);
+    }
+    sendJSON(['error' => 1, 'msg' => 'Cannot serving queue ticket.']);
+  }
+
+  public function setCounter()
+  {
+    $counter        = intval(getPOST('counter'));
+    $userId         = session('login')->user_id;
+    $warehouseCode  = (session('login')->warehouse ?? 'LUC');
+
+    $warehouse = Warehouse::getRow(['code' => $warehouseCode]);
+
+    if (!$warehouse) {
+      $this->response(404, ['message' => 'Warehouse is not found.']);
+    }
+
+    DB::transStart();
+
+    User::update((int)$userId, ['counter' => $counter]);
+
+    $onlineCounters = QueueTicket::getTodayOnlineCounters($warehouseCode);
+
+    if ($onlineCounters) {
+      foreach ($onlineCounters as $onlineCounter) {
+        if ($onlineCounter->counter == $counter && $onlineCounter->id != $userId) { // Make offline to another user.
+          // Set counter to offline.
+          User::update((int)$onlineCounter->id, ['counter' => 0, 'token' => NULL, 'queue_category_id' => 0]);
+        }
+      }
+    }
+
+    if ($counter > 0) {
+      // Prevent duplicate queue session.
+      if (!QueueSession::getTodayQueueSession((int)$userId)) {
+        $sessionData = [
+          'user_id'       => $userId,
+          'warehouse_id'  => $warehouse->id
+        ];
+
+        QueueSession::add($sessionData); // Start Queue session.
+      }
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $login = session('login');
+
+      $login->counter = $counter;
+
+      session()->set('login', $login);
+
+      $this->response(200, ['message' => 'Set counter to ' . $counter]);
+    }
+
+    $this->response(400, ['message' => 'Failed to set counter']);
+  }
+
+  public function skipQueue()
+  {
+    $ticketId = getPost('ticket');
+
+    if (QueueTicket::skipQueue((int)$ticketId)) {
+      sendJSON(['error' => 0, 'msg' => 'OK']);
+    }
+    sendJSON(['error' => 1, 'msg' => 'Cannot skip queue ticket.']);
   }
 }

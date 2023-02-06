@@ -43,9 +43,9 @@ function addActivity(string $data, array $json = [])
 
 /**
  * Check for permission and login status.
- * @param string $permission Permission to check. Ex. "User.View". If NULL it will check for login session.
+ * @param string $permission Permission to check. Ex. "User.View". If null it will check for login session.
  */
-function checkPermission(string $permission = NULL)
+function checkPermission(string $permission = null)
 {
   $request = \Config\Services::request();
   $ajax   = $request->isAJAX();
@@ -88,7 +88,7 @@ function checkPermission(string $permission = NULL)
  */
 function dateTimeJS(string $datetime)
 {
-  if (strlen($datetime) && strpos($datetime, 'T') !== FALSE) {
+  if (strlen($datetime) && strpos($datetime, 'T') !== false) {
     return str_replace('T', ' ', $datetime);
   }
 
@@ -107,7 +107,7 @@ function dbgprint()
   $args = func_get_args();
 
   foreach ($args as $arg) {
-    $str = print_r($arg, TRUE);
+    $str = print_r($arg, true);
     echo ('<pre>');
     echo ($str);
     echo ('</pre>');
@@ -195,11 +195,11 @@ function getQueueDateTime($dateTime)
   $dt = new DateTime($dateTime);
   $hour   = $dt->format('H');
   $day    = $dt->format('D');
-  $holiday = FALSE;
+  $holiday = false;
   $h = 0;
 
   if (strcasecmp($day, 'Sun') === 0 || strcasecmp($day, 'Sat') === 0) {
-    $holiday = TRUE;
+    $holiday = true;
   }
 
   if ($hour >= 23 || $hour < 7) {
@@ -232,9 +232,9 @@ function getRawInput()
  * Decode JSON string into object.
  *
  * @param mixed $json JSON string to decode into object or array.
- * @param bool $assoc Return as associative array if TRUE. Default FALSE.
+ * @param bool $assoc Return as associative array if true. Default false.
  */
-function getJSON($json, bool $assoc = FALSE)
+function getJSON($json, bool $assoc = false)
 {
   if ($json) {
     return (json_decode($json, $assoc) ?? ($assoc ? [] : (object)[]));
@@ -244,16 +244,16 @@ function getJSON($json, bool $assoc = FALSE)
 
 /**
  * Get last error message.
- * @return string|null Return error message. NULL or empty string if no error.
+ * @return string|null Return error message. null or empty string if no error.
  */
 function getLastError()
 {
-  return (session()->has('lastErrMsg') ? session('lastErrMsg') : NULL);
+  return (session()->has('lastErrMsg') ? session('lastErrMsg') : null);
 }
 
 /**
  * Check if current login session has permission access.
- * If session has permission 'All' then it's always return TRUE.
+ * If session has permission 'All' then it's always return true.
  *
  * @param array|string $permission Permission to check. Ex. 'User.Add'
  */
@@ -270,11 +270,11 @@ function hasAccess($permission)
 
     foreach ($roles as $role) {
       if (in_array('All', $perms) || in_array($role, $perms)) {
-        return TRUE;
+        return true;
       }
     }
   }
-  return FALSE;
+  return false;
 }
 
 /**
@@ -300,17 +300,17 @@ function isCLI()
 function isCompleted($status)
 {
   return ($status == 'completed' || $status == 'completed_partial' ||
-    $status == 'delivered' || $status == 'finished' ? TRUE : FALSE);
+    $status == 'delivered' || $status == 'finished' ? true : false);
 }
 
 /**
  * Check if due date has happened.
  * @param string $due_date Due date
- * @example 1 isDueDate('2020-01-20 20:40:11'); // Return FALSE if current time less then due date.
+ * @example 1 isDueDate('2020-01-20 20:40:11'); // Return false if current time less then due date.
  */
 function isDueDate($due_date)
 {
-  return (strtotime($due_date) > time() ? FALSE : TRUE);
+  return (strtotime($due_date) > time() ? false : true);
 }
 
 /**
@@ -326,7 +326,7 @@ function isEnv($environment)
  */
 function isLoggedIn()
 {
-  return (session()->has('login') ? TRUE : FALSE);
+  return (session()->has('login') ? true : false);
 }
 
 /**
@@ -338,15 +338,15 @@ function isSpecialCustomer($customerId)
   $customer = Customer::getRow(['id' => $customerId]);
 
   if (!$customer) {
-    return FALSE;
+    return false;
   }
 
   $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
-    return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? TRUE : FALSE);
+    return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? true : false);
   }
-  return FALSE;
+  return false;
 }
 
 /**
@@ -357,9 +357,9 @@ function isW2PUser($user_id)
   $user = User::getRow(['id' => $user_id]);
 
   if ($user) {
-    return (strcasecmp($user->username, 'W2P') === 0 ? TRUE : FALSE);
+    return (strcasecmp($user->username, 'W2P') === 0 ? true : false);
   }
-  return FALSE;
+  return false;
 }
 
 /**
@@ -372,9 +372,9 @@ function isWeb2Print($sale_id)
   if ($sale) {
     $saleJS = getJSON($sale->json_data);
 
-    return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0 ? TRUE : FALSE);
+    return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0 ? true : false);
   }
-  return FALSE;
+  return false;
 }
 
 /**
@@ -386,14 +386,14 @@ function nulling(array $data, array $keys)
 
   foreach ($keys as $key) {
     if (isset($data[$key]) && empty($data[$key])) {
-      $data[$key] = NULL;
+      $data[$key] = null;
     }
   }
 
   return $data;
 }
 
-function renderAttachment(string $attachment = NULL)
+function renderAttachment(string $attachment = null)
 {
   $res = '';
 
@@ -432,13 +432,13 @@ function renderStatus(string $status)
     'waiting_production', 'waiting_transfer'
   ];
 
-  if (array_search($st, $danger) !== FALSE) {
+  if (array_search($st, $danger) !== false) {
     $type = 'danger';
-  } elseif (array_search($st, $info) !== FALSE) {
+  } elseif (array_search($st, $info) !== false) {
     $type = 'info';
-  } elseif (array_search($st, $success) !== FALSE) {
+  } elseif (array_search($st, $success) !== false) {
     $type = 'success';
-  } elseif (array_search($st, $warning) !== FALSE) {
+  } elseif (array_search($st, $warning) !== false) {
     $type = 'warning';
   }
 
@@ -452,7 +452,7 @@ function renderStatus(string $status)
  */
 function requestMethod()
 {
-  return (!isCLI() ? $_SERVER['REQUEST_METHOD'] : NULL);
+  return (!isCLI() ? $_SERVER['REQUEST_METHOD'] : null);
 }
 
 /**
@@ -527,7 +527,7 @@ function setJSONColumn($data = [], $columns = [], $jsonData = [])
  * Set last error message.
  * @param string $message Error message.
  */
-function setLastError(string $message = NULL)
+function setLastError(string $message = null)
 {
   if ($message) {
     session()->set('lastErrMsg', $message);
@@ -589,8 +589,8 @@ class FileLogger
     return fclose($this->hFile);
   }
 
-  public function write($data, $length = NULL)
+  public function write($data, $length = null)
   {
-    return fputs($this->hFile, '[' . date('Y-m-d H:i:s') . '] ' . print_r($data, TRUE) . "\r\n", $length);
+    return fputs($this->hFile, '[' . date('Y-m-d H:i:s') . '] ' . print_r($data, true) . "\r\n", $length);
   }
 }

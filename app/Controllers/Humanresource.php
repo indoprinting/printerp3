@@ -589,7 +589,7 @@ class Humanresource extends BaseController
     checkPermission('User.Add');
 
     if (requestMethod() == 'POST') {
-      $userData = [
+      $data = [
         'active'    => getPost('active'),
         'biller'    => getPost('biller'),
         'company'   => getPost('division'),
@@ -602,7 +602,7 @@ class Humanresource extends BaseController
         'warehouse' => getPost('warehouse'),
       ];
 
-      // $this->response(400, ['message' => is_array($userData['groups'])]);
+      // $this->response(400, ['message' => is_array($data['groups'])]);
 
       $upload = new FileUpload();
 
@@ -611,13 +611,13 @@ class Humanresource extends BaseController
           $this->response(400, ['message' => lang('Msg.profileImgExceed')]);
         }
 
-        $userData['avatar'] = Attachment::getRow(['id' => $upload->storeRandom()])->hashname;
+        $data['avatar'] = Attachment::getRow(['id' => $upload->storeRandom()])->hashname;
       } else {
-        $userData['avatar'] = ($userData['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
+        $data['avatar'] = ($data['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
       }
 
-      if (User::add($userData)) {
-        $this->response(201, ['message' => sprintf(lang('Msg.userAddOK'), $userData['username'])]);
+      if (User::add($data)) {
+        $this->response(201, ['message' => sprintf(lang('Msg.userAddOK'), $data['username'])]);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);

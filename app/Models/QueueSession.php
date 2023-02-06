@@ -11,25 +11,20 @@ class QueueSession
    */
   public static function add(array $data)
   {
-    if (empty($data['name'])) {
-      setLastError('Customer name is empty.');
+    if (empty($data['user_id'])) {
+      setLastError('User id is empty.');
       return false;
     }
-
-    if (empty($data['phone'])) {
-      setLastError('Customer phone is empty.');
-      return false;
-    }
-
-    if (empty($data['queue_category_id'])) {
-      setLastError('Queue Category is empty.');
-      return false;
-    }
-
     if (empty($data['warehouse_id'])) {
-      setLastError('Warehouse is empty.');
+      setLastError('Warehouse id is empty.');
       return false;
     }
+
+    $data['date']             = date('Y-m-d H:i:s');
+    $data['over_wcall_time']  = ($data['over_wcall_time'] ?? '00:00:00');
+    $data['over_wserve_time'] = ($data['over_wserve_time'] ?? '00:00:00');
+    $data['over_rest_time']   = ($data['over_rest_time'] ?? '00:00:00');
+    $data['updated_at']       = date('Y-m-d H:i:s');
 
     DB::table('queue_sessions')->insert($data);
 
@@ -75,6 +70,14 @@ class QueueSession
       return $rows[0];
     }
     return NULL;
+  }
+
+  public static function getTodayQueueSession(int $userId)
+  {
+    return self::select('*')
+      ->like('date', date('Y-m-d'), 'right')
+      ->where('user_id', $userId)
+      ->getRow();
   }
 
   /**

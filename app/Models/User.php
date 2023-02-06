@@ -15,9 +15,33 @@ class User
 
     if (!empty($data['groups']) && is_array($data['groups'])) {
       $data['groups'] = implode(',', $data['groups']);
+
+      // Begin Backward Compatibilty
+      $userGroup = UserGroup::getRow(['name' => $data['groups'][0]]);
+
+      if ($userGroup) {
+        $data['group_id'] = $userGroup->id;
+      }
+      // End Backward Compatibilty
     } else {
       setLastError('Group is not set.');
       return FALSE;
+    }
+
+    if (isset($data['biller'])) {
+      $biller = Biller::getRow(['code' => $data['biller']]);
+
+      if ($biller) {
+        $data['biller_id'] = $biller->id;
+      }
+    }
+
+    if (isset($data['warehouse'])) {
+      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
+
+      if ($warehouse) {
+        $data['warehouse_id'] = $warehouse->id;
+      }
     }
 
     if (!empty($data['password'])) {
@@ -35,7 +59,7 @@ class User
     $data = nulling($data, ['biller', 'warehouse']);
 
     DB::table('users')->insert($data);
-    
+
     if ($insertID = DB::insertID()) {
       return $insertID;
     }
@@ -64,7 +88,7 @@ class User
     }
 
     DB::table('users')->delete($where);
-    
+
     if ($affectedRows = DB::affectedRows()) {
       return $affectedRows;
     }
@@ -123,9 +147,33 @@ class User
     if (isset($data['groups'])) {
       if (is_array($data['groups'])) {
         $data['groups'] = implode(',', $data['groups']);
+
+        // Begin Backward Compatibilty
+        $userGroup = UserGroup::getRow(['name' => $data['groups'][0]]);
+
+        if ($userGroup) {
+          $data['group_id'] = $userGroup->id;
+        }
+        // End Backward Compatibilty
       } else {
         setLastError('Groups column must be an array.');
         return FALSE;
+      }
+    }
+
+    if (isset($data['biller'])) { // Backward Compatibility
+      $biller = Biller::getRow(['code' => $data['biller']]);
+
+      if ($biller) {
+        $data['biller_id'] = $biller->id;
+      }
+    }
+
+    if (isset($data['warehouse'])) { // Backward Compatibility
+      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
+
+      if ($warehouse) {
+        $data['warehouse_id'] = $warehouse->id;
       }
     }
 
@@ -144,7 +192,7 @@ class User
     $data = nulling($data, ['biller', 'warehouse']);
 
     DB::table('users')->update($data, ['id' => $id]);
-    
+
     if ($affectedRows = DB::affectedRows()) {
       return $affectedRows;
     }

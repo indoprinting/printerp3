@@ -6,18 +6,18 @@
 // ENTRY POINT
 $(document).ready(function () {
   // 1# COUNTER TIMER
-  let timerOverResting   = new QueueTimer('#timer_over_rest');
-  let timerOverServing   = new QueueTimer('#timer_over_serve');
-  let timerOverWaitCall  = new QueueTimer('#timer_over_waitcall');
+  let timerOverResting = new QueueTimer('#timer_over_rest');
+  let timerOverServing = new QueueTimer('#timer_over_serve');
+  let timerOverWaitCall = new QueueTimer('#timer_over_waitcall');
   let timerOverWaitServe = new QueueTimer('#timer_over_waitserve');
-  let timerProgress      = new QueueTimer('#timer_progress');
-  let timerResting       = new QueueTimer('#timer_resting');
-  let timerServing       = new QueueTimer('#timer_serving');
+  let timerProgress = new QueueTimer('#timer_progress');
+  let timerResting = new QueueTimer('#timer_resting');
+  let timerServing = new QueueTimer('#timer_serving');
 
   // 2# CUSTOMER TIMER
   let timerCustTimeLimit = new QueueTimer('#timer_cust_time_limit');
-  let timerCustWaiting   = new QueueTimer('#timer_cust_waiting');
-  let timerCustServing   = new QueueTimer('#timer_cust_serving');
+  let timerCustWaiting = new QueueTimer('#timer_cust_waiting');
+  let timerCustServing = new QueueTimer('#timer_cust_serving');
   let timerCustOverServe = new QueueTimer('#timer_cust_over_serve');
 
   // 3# TIMEOUT TIMER
@@ -26,45 +26,42 @@ $(document).ready(function () {
 
   // REGISTER TO GLOBAL.
   // Since assign as object it will be set by reference not value.
-  window.timerOverResting      = timerOverResting;
-  window.timerOverServing      = timerOverServing;
-  window.timerOverWaitCall     = timerOverWaitCall;
-  window.timerOverWaitServe    = timerOverWaitServe;
-  window.timerProgress         = timerProgress;
-  window.timerResting          = timerResting;
-  window.timerServing          = timerServing;
-  window.timerCustTimeLimit    = timerCustTimeLimit;
-  window.timerCustWaiting      = timerCustWaiting;
-  window.timerCustServing      = timerCustServing;
-  window.timerCustOverServe    = timerCustOverServe;
-  window.timerWaitCallTimeout  = timerWaitCallTimeout 
+  window.timerOverResting = timerOverResting;
+  window.timerOverServing = timerOverServing;
+  window.timerOverWaitCall = timerOverWaitCall;
+  window.timerOverWaitServe = timerOverWaitServe;
+  window.timerProgress = timerProgress;
+  window.timerResting = timerResting;
+  window.timerServing = timerServing;
+  window.timerCustTimeLimit = timerCustTimeLimit;
+  window.timerCustWaiting = timerCustWaiting;
+  window.timerCustServing = timerCustServing;
+  window.timerCustOverServe = timerCustOverServe;
+  window.timerWaitCallTimeout = timerWaitCallTimeout
   window.timerWaitServeTimeout = timerWaitServeTimeout
 
   // General.
-  let QConfig    = new QueueConfig();
-  let QMS        = new QueueManagementSystem();
-  let QNotify    = new QueueNotify();
+  let QConfig = new QueueConfig();
+  let QMS = new QueueManagementSystem();
+  let QNotify = new QueueNotify();
   let PopupTimer = null;
   let hPopupTimer = null;
-  let show_timer = false;
-  let hSendReport = null;
-  let sendReport = false;
 
-  let stOverResting   = 'status_over_rest';
-  let stOverServing   = 'status_over_serve';
-  let stOverWaitCall  = 'status_over_waitcall';
+  let stOverResting = 'status_over_rest';
+  let stOverServing = 'status_over_serve';
+  let stOverWaitCall = 'status_over_waitcall';
   let stOverWaitServe = 'status_over_waitserve';
-  let stProgress      = 'status_progress';
-  let stResting       = 'status_resting';
-  let stServing       = 'status_serving';
+  let stProgress = 'status_progress';
+  let stResting = 'status_resting';
+  let stServing = 'status_serving';
 
-  let tmrOverResting   = 'timer_over_rest';
-  let tmrOverServing   = 'timer_over_serve';
-  let tmrOverWaitCall  = 'timer_over_waitcall';
+  let tmrOverResting = 'timer_over_rest';
+  let tmrOverServing = 'timer_over_serve';
+  let tmrOverWaitCall = 'timer_over_waitcall';
   let tmrOverWaitServe = 'timer_over_waitserve';
-  let tmrProgress      = 'timer_progress';
-  let tmrResting       = 'timer_resting';
-  let tmrServing       = 'timer_serving';
+  let tmrProgress = 'timer_progress';
+  let tmrResting = 'timer_resting';
+  let tmrServing = 'timer_serving';
 
   // TIMER LIMIT EVENT.
   timerResting.on('limit', () => {
@@ -204,12 +201,12 @@ $(document).ready(function () {
   if (QConfig.get(stResting) == 'start') timerResting.start();
   if (QConfig.get(stServing) == 'start') timerServing.start();
 
-  let stCustServing   = 'status_cust_serving';
+  let stCustServing = 'status_cust_serving';
   let stCustOverServe = 'status_cust_over_serve';
 
   let tmrCustTimeLimit = 'timer_cust_time_limit';
-  let tmrCustWaiting   = 'timer_cust_waiting';
-  let tmrCustServing   = 'timer_cust_serving';
+  let tmrCustWaiting = 'timer_cust_waiting';
+  let tmrCustServing = 'timer_cust_serving';
   let tmrCustOverServe = 'timer_cust_over_serve';
 
   timerCustServing.setMode(QueueTimer.COUNTERCLOCKWISE_MODE); // Countdown.
@@ -282,10 +279,10 @@ $(document).ready(function () {
   if (QConfig.get(stCustServing) == 'start') timerCustServing.start();
   if (QConfig.get(stCustOverServe) == 'start') timerCustOverServe.start();
 
-  let stWaitCallTimeout  = 'status_wait_call_timeout';
+  let stWaitCallTimeout = 'status_wait_call_timeout';
   let stWaitServeTimeout = 'status_wait_serve_timeout';
 
-  let tmrWaitCallTimeout  = 'timer_wait_call_timeout';
+  let tmrWaitCallTimeout = 'timer_wait_call_timeout';
   let tmrWaitServeTimeout = 'timer_wait_serve_timeout';
 
   // TIMER LIMIT REACHED EVENT.
@@ -348,14 +345,14 @@ $(document).ready(function () {
   if (QConfig.get(stWaitCallTimeout) == 'start') timerWaitCallTimeout.start();
   if (QConfig.get(stWaitServeTimeout) == 'start') timerWaitServeTimeout.start();
 
-  async function CounterMessage () {
+  async function CounterMessage() {
     // If counter online then...
     if (QConfig.get('counter_status') && QConfig.get('counter_status') != 'offline') {
-      let display_data = await QMS.getDisplayData(warehouse_id);
+      let displayData = await QMS.getDisplayData(window.warehouseCode);
 
-      if ( ! display_data.queue_list.error) {
+      if (displayData.data.queue_list.data.length) {
         if (QConfig.get('counter_status') == 'idle') {
-          if ( ! timerWaitCallTimeout.isRunning() && ! timerOverWaitCall.isRunning()) {
+          if (!timerWaitCallTimeout.isRunning() && !timerOverWaitCall.isRunning()) {
             QNotify.warning('Ada antrian pelanggan. Silakan untuk segera memanggil. Waktu 1 menit.');
             timerWaitCallTimeout.start();
           }
@@ -366,67 +363,56 @@ $(document).ready(function () {
       }
 
       if (QConfig.get('counter_status') == 'call') {
-        if ( ! timerWaitServeTimeout.isRunning() && ! timerOverWaitServe.isRunning()) {
+        if (!timerWaitServeTimeout.isRunning() && !timerOverWaitServe.isRunning()) {
           QNotify.warning('Silakan untuk segera melayani. Waktu 1 menit.');
           timerWaitServeTimeout.start();
         }
       }
 
-      if ( ! sendReport) { // Send counter report.
-        hSendReport = window.setInterval(() => {
-          QMS.sendReport({
-            over_wait_call_time: QConfig.get('timer_over_waitcall'),
-            over_wait_serve_time: QConfig.get('timer_over_waitserve'),
-            over_serve_time: QConfig.get('timer_over_serve'),
-            over_rest_time: QConfig.get('timer_over_rest')
-          }).then((data) => {
-            if (isObject(data) && data.error) {
-              //QNotify.warning('Report tidak dapat dikirim. <b>Mohon cek koneksi internet!</b>');
-            }
-          });
-        }, 30 * 1000); // 30 sec.
+      // if (!sendReport) { // Send counter report.
+      //   hSendReport = window.setInterval(() => {
+      //     QMS.sendReport({
+      //       over_wait_call_time: QConfig.get('timer_over_waitcall'),
+      //       over_wait_serve_time: QConfig.get('timer_over_waitserve'),
+      //       over_serve_time: QConfig.get('timer_over_serve'),
+      //       over_rest_time: QConfig.get('timer_over_rest')
+      //     }).then((data) => {
+      //       if (isObject(data) && data.error) {
+      //         //QNotify.warning('Report tidak dapat dikirim. <b>Mohon cek koneksi internet!</b>');
+      //       }
+      //     });
+      //   }, 30 * 1000); // 30 sec.
 
-        sendReport = true;
-      }
+      //   sendReport = true;
+      // }
 
-      if ( ! show_timer && QConfig.get('counter_status') != 'idle') {
+      if (window.show_timer && QConfig.get('counter_status') != 'idle') {
         PopupTimer = alertify.warning('');
-        PopupTimer.ondismiss = function() { return false; };
+        PopupTimer.ondismiss = function () { return false; };
 
         if (hPopupTimer) window.clearInterval(hPopupTimer);
 
         hPopupTimer = window.setInterval(() => {
           PopupTimer.setContent(
             `<div class="row no-print">
-              <div class="col-sm-8"><strong>Serving Time</strong></div>
-              <div class="col-sm-4">${QConfig.get(tmrCustServing)}</div>
+              <div class="col-sm-8" style="color:#000000"><strong>Serving Time</strong></div>
+              <div class="col-sm-4" style="color:#000000">${QConfig.get(tmrCustServing)}</div>
             </div>
             <div class="row no-print">
-              <div class="col-sm-8"><strong>Over-Serving Time</strong></div>
-              <div class="col-sm-4">${QConfig.get(tmrCustOverServe)}</div>
+              <div class="col-sm-8" style="color:#000000"><strong>Over-Serving Time</strong></div>
+              <div class="col-sm-4" style="color:#000000">${QConfig.get(tmrCustOverServe)}</div>
             </div>
             <div class="row no-print">
-              <div class="col-sm-12"><a href="${site.base_url}qms/counter">BACK TO COUNTER</a></div>
+              <div class="col-sm-12"><a href="${base_url}/qms/counter" data-action="link">BACK TO COUNTER</a></div>
             </div>`);
         }, 500);
 
-        show_timer = true;
+        window.show_timer = false;
       }
     } // if offline
 
     window.setTimeout(CounterMessage, 5000);
   }
-
-  typing('nopgplease', function () {
-    Notify.success('Cheat activated', 'top-left');
-    timerOverWaitCall.stop().reset();
-    timerOverWaitServe.stop().reset();
-    timerOverResting.stop().reset();
-    timerOverServing.stop().reset();
-    timerCustOverServe.stop().reset();
-    timerWaitCallTimeout.stop().reset();
-    timerWaitServeTimeout.stop().reset();
-  });
 
   window.setTimeout(CounterMessage, 5000);
 });

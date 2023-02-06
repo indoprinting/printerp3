@@ -162,9 +162,9 @@ class QueueManagementSystem {
     this.qhttp = new QueueHttp();
   }
 
-  async getDisplayData(warehouse_id) {
+  async getDisplayData(warehouseCode) {
     return new Promise((resolve, reject) => {
-      resolve(this.qhttp.send('GET', base_url + '/qms/getDisplayData/' + warehouse_id));
+      resolve(this.qhttp.send('GET', base_url + '/qms/getDisplayData/' + warehouseCode));
     });
   }
 
@@ -196,20 +196,20 @@ class QueueNotify {
   }
 
   error(msg, delay = 5) {
-    alertify.set('notifier', 'position', 'top-center');
-    alertify.error(msg, delay);
+    toastr.options.timeOut = delay * 1000;
+    toastr.error(msg);
     this.audio.error.play();
   }
 
   success(msg, delay = 5) {
-    alertify.set('notifier', 'position', 'top-center');
-    alertify.success(msg, delay);
+    toastr.options.timeOut = delay * 1000;
+    toastr.success(msg);
     this.audio.success.play();
   }
 
   warning(msg, delay = 5) {
-    alertify.set('notifier', 'position', 'top-center');
-    alertify.warning(msg, delay);
+    toastr.options.timeOut = delay * 1000;
+    toastr.warning(msg);
     this.audio.warning.play();
   }
 }
@@ -233,6 +233,10 @@ class QueueTimer {
 
     if (selector) {
       this._hElm = document.querySelector(selector);
+      
+      if (!this._hElm) {
+        console.warn('QueueTimer::constructor(): Element is not defined.');
+      }
     }
   }
 
@@ -402,7 +406,9 @@ class QueueTimer {
   }
 
   start() {
-    if (this._hTimer) return false; // If instance present, then ignore it.
+    if (this._hTimer) {
+      return false; // If instance present, then ignore it.
+    }
 
     // Callback Handler.
     for (let a in this._cb) {
@@ -411,7 +417,7 @@ class QueueTimer {
       }
     }
 
-    this._hTimer = window.setInterval(() => {
+    this._hTimer = setInterval(() => {
       if (this._mode == QueueTimer.CLOCKWISE_MODE) this._sec++;
 
       // Prevent minus decrement.
