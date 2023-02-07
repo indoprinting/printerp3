@@ -10,7 +10,29 @@ class Sale extends BaseController
 {
   public function index()
   {
-    checkPermission();
+    checkPermission('Sale.View');
+
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    checkPermission('Sale.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.sale'), 'slug' => 'sale', 'url' => '#'],
+        ['name' => lang('App.invoice'), 'slug' => 'invoice', 'url' => '#']
+      ],
+      'content' => 'Sale/index',
+      'title' => lang('App.invoice')
+    ];
+
+    return $this->buildPage($this->data);
   }
 
   public function getSales()
@@ -97,30 +119,5 @@ class Sale extends BaseController
     }
 
     $dt->generate();
-  }
-
-  public function invoice()
-  {
-    if ($args = func_get_args()) {
-      $method = __FUNCTION__ . '_' . $args[0];
-
-      if (method_exists($this, $method)) {
-        array_shift($args);
-        return call_user_func_array([$this, $method], $args);
-      }
-    }
-
-    checkPermission('Sale.View');
-
-    $this->data['page'] = [
-      'bc' => [
-        ['name' => lang('App.sale'), 'slug' => 'sale', 'url' => '#'],
-        ['name' => lang('App.invoice'), 'slug' => 'invoice', 'url' => '#']
-      ],
-      'content' => 'Sale/Invoice/index',
-      'title' => lang('App.invoice')
-    ];
-
-    return $this->buildPage($this->data);
   }
 }

@@ -131,6 +131,14 @@
           <div class="row">
             <div class="col-md-12">
               <div class="form-group">
+                <input type="checkbox" id="filter-receivable">
+                <label for="filter-receivable"><?= lang('App.receivable') ?></label>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
                 <label for="filter-startdate"><?= lang('App.startdate') ?></label>
                 <input type="date" id="filter-startdate" class="form-control">
               </div>
