@@ -26,6 +26,10 @@
             <td><?= \App\Models\Warehouse::getRow(['code' => $adjustment->warehouse])->name ?></td>
           </tr>
           <tr>
+            <td><?= lang('App.mode') ?></td>
+            <td><?= renderStatus($adjustment->mode) ?></td>
+          </tr>
+          <tr>
             <td><?= lang('App.note') ?></td>
             <td><?= $adjustment->note ?></td>
           </tr>
@@ -55,29 +59,36 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table class="table table-hover table-sm table-striped">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Quantity</th>
-            <th>Adjustment Qty</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php $items = \App\Models\Stock::get(['adjustment_id' => $adjustment->id]) ?>
-          <?php foreach ($items as $item) : ?>
-            <tr>
-              <td><?= $item->id ?></td>
-              <td><?= $item->product_name . " ($item->product_code)" ?></td>
-              <td><span class="float-right"><?= formatNumber($item->quantity) ?></span></td>
-              <td><span class="float-right"><?= formatNumber($item->adjustment_qty) ?></span></td>
-              <td><?= renderStatus($item->status) ?></td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+      <div class="card">
+        <div class="card-header bg-gradient-warning"><?= lang('App.item') ?></div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm table-striped">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Quantity</th>
+                  <th>Adjustment Qty</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php $items = \App\Models\Stock::get(['adjustment_id' => $adjustment->id]) ?>
+                <?php foreach ($items as $item) : ?>
+                  <tr>
+                    <td><?= $item->id ?></td>
+                    <td><?= "($item->product_code) " . $item->product_name ?></td>
+                    <td><span class="float-right"><?= formatNumber($item->quantity) ?></span></td>
+                    <td><span class="float-right"><?= formatNumber($item->adjustment_qty) ?></span></td>
+                    <td><?= renderStatus($item->status) ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

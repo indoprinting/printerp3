@@ -25,7 +25,7 @@ class User
       // End Backward Compatibilty
     } else {
       setLastError('Group is not set.');
-      return FALSE;
+      return false;
     }
 
     if (isset($data['biller'])) {
@@ -47,13 +47,13 @@ class User
     if (!empty($data['password'])) {
       if (strlen($data['password']) < 8) {
         setLastError('Password at least 8 characters');
-        return FALSE;
+        return false;
       }
 
       $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
     } else {
       setLastError('Password cannot be empty.');
-      return FALSE;
+      return false;
     }
 
     $data = nulling($data, ['biller', 'warehouse']);
@@ -77,7 +77,7 @@ class User
     if (isset($where['id'])) {
       if ($where['id'] == 1) {
         setLastError('Owner user restricted to delete.');
-        return FALSE;
+        return false;
       }
     }
 
@@ -120,7 +120,7 @@ class User
   /**
    * Select User.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('users')->select($columns, $escape);
   }
@@ -133,13 +133,13 @@ class User
     if ($id == 1) {
       if (isset($data['username']) && strcasecmp($data['username'], 'owner') !== 0) {
         setLastError('User owner cannot be changed.');
-        return FALSE;
+        return false;
       }
 
       if (isset($data['groups']) && is_array($data['groups'])) {
         if (!in_array('OWNER', array_map('strtoupper', $data['groups']))) {
           setLastError('User owner must has OWNER group.');
-          return FALSE;
+          return false;
         }
       }
     }
@@ -157,7 +157,7 @@ class User
         // End Backward Compatibilty
       } else {
         setLastError('Groups column must be an array.');
-        return FALSE;
+        return false;
       }
     }
 
@@ -166,6 +166,8 @@ class User
 
       if ($biller) {
         $data['biller_id'] = $biller->id;
+      } else {
+        $data['biller_id'] = null;
       }
     }
 
@@ -174,16 +176,18 @@ class User
 
       if ($warehouse) {
         $data['warehouse_id'] = $warehouse->id;
+      } else {
+        $data['warehouse_id'] = null;
       }
     }
 
     if (isset($data['password'])) {
       if (is_string($data['password']) && strlen($data['password']) < 8) {
         setLastError('Password at least 8 characters');
-        return FALSE;
+        return false;
       } else if (!is_string($data['password'])) {
         setLastError('Password must be a string.' . gettype($data['password']));
-        return FALSE;
+        return false;
       }
 
       $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);

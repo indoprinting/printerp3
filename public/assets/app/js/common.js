@@ -28,6 +28,14 @@ function appendZero(number) { // Return as string, you can convert to number wit
 }
 
 /**
+ * Control sidebar.
+ * @param {string} action Sidebar action (collapse, show, toggle).
+ */
+function controlSidebar(action = 'toggle') {
+  $('[data-widget="control-sidebar"]').ControlSidebar(action);
+}
+
+/**
  * Create google maps.
  * @param {Object} options { element: {map, searchBox, latitude = null, longitude = null}, lat, lon }
  */

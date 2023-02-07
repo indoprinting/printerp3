@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="<?= csrf_token() ?>" content="<?= csrf_hash() ?>">
   <title>PrintERP 3</title>
   <link rel="icon" href="<?= base_url(); ?>/favicon.ico">
   <!-- Font Awesome Icons -->
@@ -178,7 +179,7 @@
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a href="<?= base_url('debug/page') ?>" class="nav-link" data-action="link" data-slug="debug">
+                    <a href="<?= base_url('debug/page') ?>" class="nav-link" data-action="link" data-slug="page">
                       <i class="nav-icon fad fa-page"></i>
                       <p>Page</p>
                     </a>

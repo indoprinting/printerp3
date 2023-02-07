@@ -138,7 +138,12 @@
         success: (data) => {
           let sa = new StockAdjustment('#table-stockadjustment');
 
-          sa.addItem(data.data);
+          sa.addItem({
+            code: data.data.code,
+            name: data.data.name,
+            quantity: 0,
+            current_qty: data.data.quantity
+          });
 
           $(this).val('').trigger('change');
         },

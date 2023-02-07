@@ -144,7 +144,13 @@ function formatCurrency($num)
  */
 function formatNumber($num)
 {
-  return number_format(filterDecimal($num), 0);
+  $dec = 0;
+
+  if (strpos(strval(floatval($num)), '.') !== false) {
+    $dec = strlen(explode('.', strval($num))[1]);
+  }
+
+  return number_format(filterDecimal($num), $dec);
 }
 
 /**

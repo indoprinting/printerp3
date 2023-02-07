@@ -56,7 +56,8 @@ class Debug extends BaseController
   {
     $this->data['page'] = [
       'bc' => [
-        ['name' => lang('App.debug'), 'slug' => 'debug', 'url' => '#']
+        ['name' => lang('App.debug'), 'slug' => 'debug', 'url' => '#'],
+        ['name' => lang('App.page'), 'slug' => 'page', 'url' => '#']
       ],
       'content' => 'Debug/page',
       'title' => lang('App.debug')

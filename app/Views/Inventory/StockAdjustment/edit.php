@@ -34,7 +34,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="mode"><?= lang('App.mode') ?> *</label>
-                  <select class="select" name="mode" data-placeholder="<?= lang('App.mode') ?>" style="width:100%" placeholder="<?= lang('App.mode') ?>">
+                  <select id="mode" name="mode" class="select" data-placeholder="<?= lang('App.mode') ?>" style="width:100%" placeholder="<?= lang('App.mode') ?>">
                     <option value="overwrite"><?= lang('App.overwrite') ?></option>
                     <option value="formula"><?= lang('App.formula') ?></option>
                   </select>
@@ -147,7 +147,12 @@
           warehouse: warehouse
         },
         success: (data) => {
-          sa.addItem(data.data);
+          sa.addItem({
+            code: data.data.code,
+            name: data.data.name,
+            quantity: data.data.quantity,
+            current_qty: data.data.quantity
+          });
 
           $(this).val('').trigger('change');
         },

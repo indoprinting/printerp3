@@ -13,7 +13,7 @@
           <table id="Table" class="table table-bordered table-hover" style="width:100%;">
             <thead>
               <tr>
-                <th class="col-sm-1"></th>
+                <th></th>
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
                 <th><?= lang('App.number'); ?></th>
