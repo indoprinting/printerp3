@@ -14,13 +14,13 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="code"><?= lang('App.code') ?></label>
+                  <label for="code"><?= lang('App.code') ?> *</label>
                   <input id="code" name="code" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.code') ?>">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.name') ?></label>
+                  <label for="name"><?= lang('App.name') ?> *</label>
                   <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.name') ?>">
                 </div>
               </div>

@@ -14,13 +14,13 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="code"><?= lang('App.code') ?></label>
+                  <label for="code"><?= lang('App.code') ?> *</label>
                   <input id="code" name="code" class="form-control form-control-border form-control-sm" placeholder="Ex. BCARIYAN" value="<?= $bank->code ?>">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.name') ?></label>
+                  <label for="name"><?= lang('App.name') ?> *</label>
                   <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="Ex. BCA" value="<?= $bank->name ?>">
                 </div>
               </div>
@@ -52,7 +52,7 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="email"><?= lang('App.biller') ?></label>
+                  <label for="email"><?= lang('App.biller') ?> *</label>
                   <select class="select" id="biller" name="biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
                     <option value=""></option>
                     <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>

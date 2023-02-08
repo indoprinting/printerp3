@@ -379,6 +379,18 @@ class Finance extends BaseController
         'active'  => (getPost('active') == 1 ? 1 : 0)
       ];
 
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($data['biller'])) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
       DB::transStart();
 
       $insertID = Bank::add($data);
@@ -492,6 +504,18 @@ class Finance extends BaseController
         'active'  => (getPost('active') == 1 ? 1 : 0)
       ];
 
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($data['biller'])) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
       DB::transStart();
 
       $res = Bank::update((int)$id, $data);
@@ -571,13 +595,13 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST' && isAJAX()) {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
-        'bank'        => getPost('bank'),
-        'biller'      => getPost('biller'),
-        'category'    => getPost('category'),
-        'supplier'    => getPost('supplier'),
-        'amount'      => filterDecimal(getPost('amount')),
-        'note'        => stripTags(getPost('note'))
+        'date'      => dateTimeJS(getPost('date')),
+        'bank'      => getPost('bank'),
+        'biller'    => getPost('biller'),
+        'category'  => getPost('category'),
+        'supplier'  => getPost('supplier'),
+        'amount'    => filterDecimal(getPost('amount')),
+        'note'      => stripTags(getPost('note'))
       ];
 
       if (empty($data['biller'])) {
@@ -887,12 +911,12 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
-        'bank'        => getPost('bank'),
-        'biller'      => getPost('biller'),
-        'category'    => getPost('category'),
-        'amount'      => filterDecimal(getPost('amount')),
-        'note'        => stripTags(getPost('note'))
+        'date'      => dateTimeJS(getPost('date')),
+        'bank'      => getPost('bank'),
+        'biller'    => getPost('biller'),
+        'category'  => getPost('category'),
+        'amount'    => filterDecimal(getPost('amount')),
+        'note'      => stripTags(getPost('note'))
       ];
 
       if (empty($data['biller'])) {
@@ -1160,12 +1184,12 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date' => dateTimeJS(getPost('date')),
-        'amount' => filterDecimal(getPost('amount')),
-        'biller' => getPost('biller'),
-        'bankfrom' => getPost('bankfrom'),
-        'bankto' => getPost('bankto'),
-        'note' => stripTags(getPost('note'))
+        'date'      => dateTimeJS(getPost('date')),
+        'amount'    => filterDecimal(getPost('amount')),
+        'biller'    => getPost('biller'),
+        'bankfrom'  => getPost('bankfrom'),
+        'bankto'    => getPost('bankto'),
+        'note'      => stripTags(getPost('note'))
       ];
 
       $skipPV = (getPost('skip_pv') == 1 ? true : false);
@@ -1379,7 +1403,8 @@ class Finance extends BaseController
         }
 
         $data['status'] = 'waiting_transfer';
-      } if ($payments && $skipPV) {
+      }
+      if ($payments && $skipPV) {
         foreach ($payments as $payment) {
           Payment::update((int)$payment->id, [
             'amount'      => $data['amount'],
@@ -1469,6 +1494,8 @@ class Finance extends BaseController
 
   protected function reconciliation_sync()
   {
+    checkPermission('BankReconciliation.Sync');
+
     if (!Bank::sync()) {
       $this->response(400, ['message' => 'Sync Bank amount failed.']);
     }

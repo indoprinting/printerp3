@@ -41,6 +41,7 @@ class Sale extends BaseController
 
     $billers    = getPost('biller');
     $warehouses = getPost('warehouse');
+    $createdBy  = getPost('created_by');
     $receivable = (getPost('receivable') == 1 ? 1 : 0);
     $startDate  = (getPost('start_date') ?? date('Y-m-d', strtotime('-1 month')));
     $endDate    = (getPost('end_date') ?? date('Y-m-d'));
@@ -106,6 +107,16 @@ class Sale extends BaseController
         return renderStatus($data['payment_status']);
       });
 
+    if ($biller = session('login')->biller) {
+      $billers = [];
+      $billers[] = $biller;
+    }
+
+    if ($warehouse = session('login')->warehouse) {
+      $warehouses = [];
+      $warehouses[] = $warehouse;
+    }
+
     if ($billers) {
       $dt->whereIn('sales.biller', $billers);
     }
@@ -114,10 +125,21 @@ class Sale extends BaseController
       $dt->whereIn('sales.warehouse', $warehouses);
     }
 
+    if ($createdBy) {
+      $dt->whereIn('sales.created_by', $createdBy);
+    }
+
     if ($receivable) {
       $dt->where('balance >', 0)->where('customergroup.allow_production', 1);
     }
 
     $dt->generate();
+  }
+
+  public function add()
+  {
+    $this->data['title'] = lang('App.addsale');
+
+    $this->response(200, ['content' => view('Sale/add', $this->data)]);
   }
 }

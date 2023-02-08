@@ -131,7 +131,7 @@
           <div class="row">
             <div class="col-md-12">
               <div class="form-group">
-                <input type="checkbox" id="filter-receivable">
+                <input type="checkbox" id="filter-receivable" value="1">
                 <label for="filter-receivable"><?= lang('App.receivable') ?></label>
               </div>
             </div>
@@ -163,6 +163,25 @@
 </aside>
 <!-- /.control-sidebar -->
 
+<script type="module">
+  import {
+    TableFilter
+  } from '<?= base_url('assets/app/js/ridintek.js?v=') . $resver ?>';
+
+  let tableFilter = new TableFilter();
+
+  tableFilter.bind('apply', '.filter-apply');
+  tableFilter.bind('clear', '.filter-clear');
+
+  tableFilter.on('clear', () => {
+    $('#filter-biller').val([]).trigger('change');
+    $('#filter-warehouse').val([]).trigger('change');
+    $('#filter-createdby').val([]).trigger('change');
+    $('#filter-receivable').iCheck('uncheck');
+    $('#filter-startdate').val('');
+    $('#filter-enddate').val('');
+  });
+</script>
 <script>
   $(document).ready(function() {
     "use strict";
@@ -174,6 +193,8 @@
 
           let billers = $('#filter-biller').val();
           let warehouses = $('#filter-warehouse').val();
+          let createdBy = $('#filter-createdby').val();
+          let receivable = $('#filter-receivable');
           let startDate = $('#filter-startdate').val();
           let endDate = $('#filter-enddate').val();
 
@@ -183,6 +204,14 @@
 
           if (warehouses) {
             data.warehouse = warehouses;
+          }
+
+          if (createdBy) {
+            data.created_by = createdBy;
+          }
+
+          if (receivable.is(':checked')) {
+            data.receivable = receivable.val();
           }
 
           if (startDate) {

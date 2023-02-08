@@ -132,6 +132,14 @@ class Division extends BaseController
         ])
       ];
 
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
       DB::transStart();
 
       $insertID = Biller::add($data);
@@ -218,6 +226,14 @@ class Division extends BaseController
           'target' => filterDecimal(getPost('target'))
         ])
       ];
+
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
 
       DB::transStart();
 
@@ -309,6 +325,14 @@ class Division extends BaseController
           'visit_weeks'     => implode(',', (getPost('visit_weeks') ?? [])),
         ])
       ];
+
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
 
       DB::transStart();
 
@@ -411,6 +435,14 @@ class Division extends BaseController
           'visit_weeks'     => implode(',', (getPost('visit_weeks') ?? [])),
         ])
       ];
+
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
 
       DB::transStart();
 

@@ -122,6 +122,15 @@ table.dataTable tbody tr {
   font-size: 1.25rem;
 }
 
+.text-sm .custom-file-label {
+  height: calc(1.8125rem + 2px);
+  padding: .29rem .75rem;
+}
+
+.text-sm .custom-file-label::after {
+  padding: .29rem .75rem;
+}
+
 @media only screen and (min-width: 480px) {
   .bottom-navigation {
     display: none;

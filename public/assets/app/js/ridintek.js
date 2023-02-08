@@ -406,6 +406,49 @@ export class QueueTimer {
   }
 }
 
+export class Sale {
+  tbody = null;
+
+  constructor(table) {
+    this.tbody = $(table);
+  }
+
+  addItem(item, allowDuplicate = false) {
+
+    if (!allowDuplicate) {
+      let items = this.tbody.find('.item_name');
+
+      for (let i of items) {
+        if (item.code == i.value) {
+          toastr.error('Item has been added before.');
+          return false;
+        }
+      }
+    }
+
+    this.tbody.append(`
+      <tr>
+        <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
+        <td>(${item.code}) ${item.name}</td>
+        <td><input name="item[spec][]" class="form-control form-control-border form-control-sm" min="0" value="${item.spec}"></td>
+        <td>${item.price}</td>
+        <td><input type="number" name="item[width][]" class="form-control form-control-border form-control-sm" min="0" value="${item.width}"></td>
+        <td><input type="number" name="item[height][]" class="form-control form-control-border form-control-sm" min="0" value="${item.height}"></td>
+        <td>${item.width * item.height}</td>
+        <td><input type="number" name="item[subquantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.subquantity)}"></td>
+        <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
+        <td>${filterDecimal(item.subtotal)}</td>
+        <td>
+          <select name="item[operator][]" class="select-user" style="width:100%" data-placeholder="${lang.App.operator}">
+          </select>
+          <input type="datetime-local" name="item[due_date][]" class="form-control form-control-border form-control-sm">
+        </td>
+        <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
+      </tr>
+    `);
+  }
+}
+
 export class StockAdjustment {
   tbody = null;
 
@@ -430,10 +473,57 @@ export class StockAdjustment {
       <tr>
         <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
         <td>(${item.code}) ${item.name}</td>
-        <td><input type="number" name="item[quantity][]" class="form-control" min="0" value="${filterDecimal(item.quantity)}"></td>
+        <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
         <td>${filterDecimal(item.current_qty)}</td>
         <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);
+  }
+}
+
+export class TableFilter {
+  constructor() {
+    this._cb = [];
+  }
+
+  bind(action, selector) {
+    if (action == 'apply') {
+      $(document).on('click', selector, (ev) => {
+        for (let a in this._cb) {
+          if (this._cb[a].ev == 'apply' && typeof this._cb[a].cb == 'function') {
+            this._cb[a].cb.call(this, this);
+          }
+        }
+
+        if (typeof Table != 'undefined') {
+          Table.draw(false);
+        }
+
+        controlSidebar('collapse');
+      });
+    }
+
+    if (action == 'clear') {
+      $(document).on('click', selector, (ev) => {
+        for (let a in this._cb) {
+          if (this._cb[a].ev == 'clear' && typeof this._cb[a].cb == 'function') {
+            this._cb[a].cb.call(this, this);
+          }
+        }
+
+        if (typeof Table != 'undefined') {
+          Table.draw(false);
+        }
+
+        controlSidebar('collapse');
+      });
+    }
+  }
+
+  on(event, callback) {
+    this._cb.push({
+      ev: event,
+      cb: callback
+    });
   }
 }

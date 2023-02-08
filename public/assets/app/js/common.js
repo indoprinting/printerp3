@@ -282,6 +282,13 @@ function initControls() {
     $('.select-allow-clear').select2({ allowClear: true });
     $('.select-tags').select2({ tags: true });
     $('.select-allow-clear-tags').select2({ allowClear: true, tags: true });
+    $('.select-biller').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/biller'
+      }
+    });
     $('.select-customer').select2({
       allowClear: true,
       ajax: {
@@ -300,7 +307,7 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          params.type = 'standard';
+          params.type = ['standard'];
 
           return params;
         },
@@ -313,6 +320,20 @@ function initControls() {
       ajax: {
         delay: 1000,
         url: base_url + '/select2/supplier'
+      }
+    });
+    $('.select-user').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/user'
+      }
+    });
+    $('.select-warehouse').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/warehouse'
       }
     });
   }

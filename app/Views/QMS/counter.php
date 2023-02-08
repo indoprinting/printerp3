@@ -27,7 +27,7 @@
                       <button class="btn btn-lg btn-success" id="btn-serve"><i class="fa fa-play"></i> <span data-field="label">SERVE</span></button>
                       <button class="btn btn-lg btn-warning" id="btn-rest"><i class="fa fa-mug-hot"></i> <span data-field="label">REST</span></button>
                       <button class="btn btn-lg btn-default" id="btn-extend"><i class="fa fa-clock"></i> <span data-field="label">EXTEND TIME</span></button>
-                      <button class="btn btn-lg btn-primary" id="btn-addsale"><i class="fa fa-plus"></i> <span data-field="label">ADD SALE</span></button>
+                      <button class="btn btn-lg btn-primary" id="btn-addsale" data-remote="<?= base_url('sale/add') ?>" data-toggle="modal" data-target="#ModalStatic"><i class="fa fa-plus"></i> <span data-field="label">ADD SALE</span></button>
                     </div>
                     <div class="col-md-3">
                       <?php $counterOpts = [
@@ -811,11 +811,11 @@
       }, 10 * 1000); // Time out for 10 seconds.
     });
 
-    btnAddSale.click(function() {
-      location.href = base_url + 'sales/add?opt=noattachment';
+    // btnAddSale.click(function() {
+    //   location.href = base_url + '/sale/add';
 
-      $(this).prop('disabled', true);
-    });
+    //   $(this).prop('disabled', true);
+    // });
 
     cbCounter.change(function() { // Counter number change.
       let data = {};

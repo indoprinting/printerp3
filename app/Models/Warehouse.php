@@ -62,6 +62,14 @@ class Warehouse
   }
 
   /**
+   * Select Warehouse.
+   */
+  public static function select(string $columns, $escape = TRUE)
+  {
+    return DB::table('warehouse')->select($columns, $escape);
+  }
+
+  /**
    * Update warehouses.
    * @param int $id warehouses ID.
    * @param array $data [ name, code ]

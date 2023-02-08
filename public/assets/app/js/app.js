@@ -142,27 +142,6 @@ $(document).ready(function () {
     }
   });
 
-  $(document).on('click', '.filter-apply', () => {
-    if (typeof Table !== 'undefined') {
-      Table.draw(false);
-    }
-
-    controlSidebar('collapse');
-  });
-
-  $(document).on('click', '.filter-clear', () => {
-    $('#filter-biller').val([]).trigger('change');
-    $('#filter-warehouse').val([]).trigger('change');
-    $('#filter-startdate').val('');
-    $('#filter-enddate').val('');
-
-    if (typeof Table !== 'undefined') {
-      Table.draw(false);
-    }
-
-    controlSidebar('collapse');
-  });
-
   $(document).on('click', '[data-action="confirm"]', function (e) {
     e.preventDefault();
 
@@ -361,14 +340,14 @@ $(document).ready(function () {
   });
 
   $(document).on('click', '[data-toggle="modal"]', function (e) {
-    let href = this.href;
+    let url = this.href ?? this.dataset.remote;
 
-    if (href.substr(href.length - 1, 1) != '#') {
+    if (url.slice(url.length - 1, 1) != '#') {
       let modalClass = (this.dataset.modalClass ?? '');
       let target = this.dataset.target;
 
       if (target.length) {
-        document.querySelector(target).dataset.remote = href;
+        document.querySelector(target).dataset.remote = url;
         $(target).find('.modal-dialog').addClass(modalClass);
       }
     }

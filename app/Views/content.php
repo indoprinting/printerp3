@@ -541,12 +541,6 @@
                     <p><?= lang('App.invoice') ?></p>
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('sale?receivable=1') ?>" class="nav-link" data-action="link" data-slug="receivable">
-                    <i class="nav-icon fad fa-file-invoice"></i>
-                    <p><?= lang('App.receivable') ?></p>
-                  </a>
-                </li>
               </ul>
             </li>
             <!-- Setting -->
