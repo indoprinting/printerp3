@@ -429,20 +429,79 @@ export class Sale {
     this.tbody.append(`
       <tr>
         <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
-        <td>(${item.code}) ${item.name}</td>
-        <td><input name="item[spec][]" class="form-control form-control-border form-control-sm" min="0" value="${item.spec}"></td>
-        <td>${item.price}</td>
-        <td><input type="number" name="item[width][]" class="form-control form-control-border form-control-sm" min="0" value="${item.width}"></td>
-        <td><input type="number" name="item[height][]" class="form-control form-control-border form-control-sm" min="0" value="${item.height}"></td>
-        <td>${item.width * item.height}</td>
-        <td><input type="number" name="item[subquantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.subquantity)}"></td>
-        <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
-        <td>${filterDecimal(item.subtotal)}</td>
+        <td class="col-md-3">(${item.code}) ${item.name}</td>
         <td>
-          <select name="item[operator][]" class="select-user" style="width:100%" data-placeholder="${lang.App.operator}">
-          </select>
-          <input type="datetime-local" name="item[due_date][]" class="form-control form-control-border form-control-sm">
+          <div class="card card-dark card-tabs">
+            <div class="card-header bg-gradient-indigo p-0 pt-1">
+              <ul class="nav nav-tabs">
+                <li class="nav-item">
+                  <a href="#tab-spec-${item.code}" class="nav-link active" data-toggle="pill">${lang.App.spec}</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tab-price-${item.code}" class="nav-link" data-toggle="pill">${lang.App.price}</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tab-size-${item.code}" class="nav-link" data-toggle="pill">${lang.App.size}</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tab-opr-${item.code}" class="nav-link" data-toggle="pill">${lang.App.operator}</a>
+                </li>
+              </ul>
+            </div>
+            <div class="card-body">
+              <div class="tab-content">
+                <div class="tab-pane fade active show" id="tab-spec-${item.code}">
+                  <div class="form-group">
+                    <label>${lang.App.spec}</label>
+                    <input class="form-control form-control-border form-control-sm" placeholder="${lang.App.spec}" value="${item.spec}">
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-price-${item.code}">
+                  <div class="form-group">
+                    <label>${lang.App.price}</label>
+                    <input class="form-control form-control-border form-control-sm currency" value="${item.price}">
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-size-${item.code}">
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>${lang.App.width}</label>
+                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.width}" style="max-width:60px">
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>${lang.App.height}</label>
+                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.height}" style="max-width:60px">
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>${lang.App.area}</label>
+                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.area}" style="max-width:60px">
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>${lang.App.quantity}</label>
+                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.quantity}" style="max-width:60px">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-opr-${item.code}">
+                  <div class="form-group">
+                    <label>${lang.App.operator}</label>
+                    <select class="select-user" data-placeholder="${lang.App.operator}" style="width:100%">
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </td>
+        <td></td>
         <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);

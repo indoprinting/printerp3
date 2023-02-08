@@ -93,15 +93,8 @@
                     <thead>
                       <tr>
                         <th><?= lang('App.name') ?></th>
-                        <th><?= lang('App.spec') ?></th>
-                        <th><?= lang('App.price') ?></th>
-                        <th><?= lang('App.width') ?></th>
-                        <th><?= lang('App.height') ?></th>
-                        <th><?= lang('App.area') ?></th>
-                        <th><?= lang('App.quantity') ?></th>
-                        <th><?= lang('App.totalquantity') ?></th>
+                        <th><?= lang('App.option') ?></th>
                         <th><?= lang('App.subtotal') ?></th>
-                        <th><?= lang('App.operator') ?></th>
                         <th></th>
                       </tr>
                     </thead>
@@ -162,8 +155,9 @@
           sa.addItem({
             code: data.data.code,
             name: data.data.name,
+            area: 0,
             height: 0,
-            price: 0,
+            price: data.data.price,
             quantity: 0,
             spec: '',
             subquantity: 0,
