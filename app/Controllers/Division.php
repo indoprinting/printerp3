@@ -309,13 +309,14 @@ class Division extends BaseController
       }
 
       $data = [
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'address' => getPost('address'),
-        'phone'   => getPost('phone'),
-        'email'   => getPost('email'),
-        'active'  => (getPost('active') == 1 ? 1 : 0),
-        'json'    => json_encode([
+        'code'        => getPost('code'),
+        'name'        => getPost('name'),
+        'address'     => getPost('address'),
+        'phone'       => getPost('phone'),
+        'email'       => getPost('email'),
+        'pricegroup'  => getPost('pricegroup'),
+        'active'      => (getPost('active') == 1 ? 1 : 0),
+        'json'        => json_encode([
           'cycle_transfer'  => intval(getPost('transfer_cycle')),
           'delivery_time'   => intval(getPost('delivery_time')),
           'lat'             => getPost('latitude'),
@@ -424,6 +425,7 @@ class Division extends BaseController
         'address'     => getPost('address'),
         'phone'       => getPost('phone'),
         'email'       => getPost('email'),
+        'pricegroup'  => getPost('pricegroup'),
         'active'      => (getPost('active') == 1 ? 1 : 0),
         'json'        => json_encode([
           'cycle_transfer'  => intval(getPost('transfer_cycle')),

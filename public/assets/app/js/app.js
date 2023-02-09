@@ -142,6 +142,30 @@ $(document).ready(function () {
     }
   });
 
+  $(document).on('change', '.saleitem', function (e) {
+    let area = $(this).closest('tr').find('[name="item[area][]"]');
+    let price = $(this).closest('tr').find('[name="item[price][]"]');
+    let prices = $(this).closest('tr').find('[name="item[prices][]"]');
+    let ranges = $(this).closest('tr').find('[name="item[ranges][]"]');
+    let length = $(this).closest('tr').find('[name="item[length][]"]');
+    let width = $(this).closest('tr').find('[name="item[width][]"]');
+    let quantity = $(this).closest('tr').find('[name="item[quantity][]"]');
+    let subTotal = $(this).closest('tr').find('.saleitem-subtotal');
+
+    prices = JSON.parse(prices.val());
+    ranges = JSON.parse(ranges.val());
+
+    area.val(width.val() * length.val());
+
+    if (this.name != 'item[price][]') {
+      price.val(formatCurrency(getSalePrice(area.val() * quantity.val(), ranges, prices)));
+    }
+
+    subTotal.html(formatCurrency(length.val() * width.val() * quantity.val() * filterDecimal(price.val())));
+
+    calculateSale($(this).closest('table'));
+  });
+
   $(document).on('click', '[data-action="confirm"]', function (e) {
     e.preventDefault();
 

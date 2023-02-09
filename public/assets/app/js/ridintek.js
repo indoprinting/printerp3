@@ -410,11 +410,10 @@ export class Sale {
   tbody = null;
 
   constructor(table) {
-    this.tbody = $(table);
+    this.tbody = $(table).find('tbody');
   }
 
   addItem(item, allowDuplicate = false) {
-
     if (!allowDuplicate) {
       let items = this.tbody.find('.item_name');
 
@@ -426,85 +425,97 @@ export class Sale {
       }
     }
 
+    item.area = item.width * item.length;
+    item.price = getSalePrice(item.area * item.quantity, item.ranges, item.prices);
+    item.subtotal = item.area * item.price;
+
+    let readOnly = (item.category != 'DPI' ? ' readonly' : '');
+
     this.tbody.append(`
       <tr>
-        <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
-        <td class="col-md-3">(${item.code}) ${item.name}</td>
+        <td class="col-md-3">
+          <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
+          <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
+          <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
+          (${item.code}) ${item.name}
+        </td>
         <td>
           <div class="card card-dark card-tabs">
             <div class="card-header bg-gradient-indigo p-0 pt-1">
               <ul class="nav nav-tabs">
                 <li class="nav-item">
-                  <a href="#tab-spec-${item.code}" class="nav-link active" data-toggle="pill">${lang.App.spec}</a>
+                  <a href="#tab-size-${item.code}" class="nav-link active" data-toggle="pill">${lang.App.size}</a>
                 </li>
                 <li class="nav-item">
-                  <a href="#tab-price-${item.code}" class="nav-link" data-toggle="pill">${lang.App.price}</a>
-                </li>
-                <li class="nav-item">
-                  <a href="#tab-size-${item.code}" class="nav-link" data-toggle="pill">${lang.App.size}</a>
+                  <a href="#tab-spec-${item.code}" class="nav-link" data-toggle="pill">${lang.App.spec}</a>
                 </li>
                 <li class="nav-item">
                   <a href="#tab-opr-${item.code}" class="nav-link" data-toggle="pill">${lang.App.operator}</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tab-price-${item.code}" class="nav-link" data-toggle="pill">${lang.App.price}</a>
                 </li>
               </ul>
             </div>
             <div class="card-body">
               <div class="tab-content">
-                <div class="tab-pane fade active show" id="tab-spec-${item.code}">
-                  <div class="form-group">
-                    <label>${lang.App.spec}</label>
-                    <input class="form-control form-control-border form-control-sm" placeholder="${lang.App.spec}" value="${item.spec}">
-                  </div>
-                </div>
-                <div class="tab-pane fade" id="tab-price-${item.code}">
-                  <div class="form-group">
-                    <label>${lang.App.price}</label>
-                    <input class="form-control form-control-border form-control-sm currency" value="${item.price}">
-                  </div>
-                </div>
-                <div class="tab-pane fade" id="tab-size-${item.code}">
+                <div class="tab-pane fade active show" id="tab-size-${item.code}">
                   <div class="row">
                     <div class="col-md-3">
                       <div class="form-group">
                         <label>${lang.App.width}</label>
-                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.width}" style="max-width:60px">
+                        <input name="item[width][]" type="number" class="form-control form-control-border form-control-sm saleitem" min="0" value="${item.width}" style="max-width:60px" ${readOnly}>
                       </div>
                     </div>
                     <div class="col-md-3">
                       <div class="form-group">
-                        <label>${lang.App.height}</label>
-                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.height}" style="max-width:60px">
+                        <label>${lang.App.length}</label>
+                        <input name="item[length][]" type="number" class="form-control form-control-border form-control-sm saleitem" min="0" value="${item.length}" style="max-width:60px" ${readOnly}>
                       </div>
                     </div>
                     <div class="col-md-3">
                       <div class="form-group">
                         <label>${lang.App.area}</label>
-                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.area}" style="max-width:60px">
+                        <input name="item[area][]" type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.area}" style="max-width:60px" readonly>
                       </div>
                     </div>
                     <div class="col-md-3">
                       <div class="form-group">
                         <label>${lang.App.quantity}</label>
-                        <input type="number" class="form-control form-control-border form-control-sm" min="0" value="${item.quantity}" style="max-width:60px">
+                        <input name="item[quantity][]" type="number" class="form-control form-control-border form-control-sm saleitem" min="0" value="${item.quantity}" style="max-width:60px">
                       </div>
                     </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-spec-${item.code}">
+                  <div class="form-group">
+                    <label>${lang.App.spec}</label>
+                    <input name="item[spec][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.spec}" value="${item.spec}">
                   </div>
                 </div>
                 <div class="tab-pane fade" id="tab-opr-${item.code}">
                   <div class="form-group">
                     <label>${lang.App.operator}</label>
-                    <select class="select-user" data-placeholder="${lang.App.operator}" style="width:100%">
+                    <select name="item[operator][]" class="select-user" data-placeholder="${lang.App.operator}" style="width:100%">
                     </select>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-price-${item.code}">
+                  <div class="form-group">
+                    <label>${lang.App.price}</label>
+                    <input name="item[price][]" class="form-control form-control-border form-control-sm currency saleitem" value="${item.price}">
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </td>
-        <td></td>
+        <td class="saleitem-subtotal">${item.subtotal}</td>
         <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);
+
+    calculateSale(this.tbody.closest('table'));
   }
 }
 
@@ -512,7 +523,7 @@ export class StockAdjustment {
   tbody = null;
 
   constructor(table) {
-    this.tbody = $(table);
+    this.tbody = $(table).find('tbody');
   }
 
   addItem(item, allowDuplicate = false) {

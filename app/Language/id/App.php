@@ -168,6 +168,7 @@ return [
   'inventorybalance'      => 'Persediaan Inventaris',
   'invoice'               => 'Faktur',
   'item'                  => 'Barang',
+  'length'                => 'Panjang',
   'mutation'              => 'Mutasi',
   'male'                  => 'Laki-laki',
   'machineandequipment'   => 'Mesin and Peralatan',

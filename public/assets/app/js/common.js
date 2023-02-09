@@ -28,6 +28,26 @@ function appendZero(number) { // Return as string, you can convert to number wit
 }
 
 /**
+ * Calculate sale item by table sale.
+ * @param {} table 
+ */
+function calculateSale(table = null) {
+  if (!table) {
+    return false;
+  }
+
+  let amount = 0;
+  let subTotals = table.find('.saleitem-subtotal');
+  let grandTotal = table.find('.sale-grandtotal');
+
+  subTotals.each(function () {
+    amount += filterDecimal(this.innerHTML);
+  });
+
+  grandTotal.html(formatCurrency(amount));
+}
+
+/**
  * Control sidebar.
  * @param {string} action Sidebar action (collapse, show, toggle).
  */
@@ -241,6 +261,22 @@ function formatNumber(str) {
   }).format(filterDecimal(str));
 }
 
+function getSalePrice(quantity, ranges = [], prices = []) {
+  if (isEmpty(ranges) || isEmpty(prices)) {
+    console.warn('Ranges or prices are empty.');
+    console.warn(ranges, prices);
+    return false;
+  }
+
+  for (let a = ranges.length; a >= 0; a--) {
+    if (quantity >= ranges[a]) {
+      return prices[a + 1];
+    }
+  }
+
+  return prices[0];
+}
+
 /**
  * Get time difference.
  * @param {string} timestr1 Time string at first time. Ex. 00:20:43
@@ -261,11 +297,23 @@ function getTimeDifference(timestr1, timestr2) {
 }
 
 function initControls() {
-
   if (isFunction('bsCustomFileInput.init')) bsCustomFileInput.init();
 
   if (!isObject($.fn) || isEmpty($.fn.jquery)) {
     console.error('%cjQuery', 'font-weight:bold', ' is not installed');
+  }
+
+  if (isFunction('$.fn.overlayScrollbars')) {
+    $('body').overlayScrollbars({
+      scrollbars: {
+        autoHide: 'l'
+      }
+    });
+    $('.modal-body').css('min-height', '464px').overlayScrollbars({
+      scrollbars: {
+        autoHide: 'l'
+      }
+    });
   }
 
   if (isFunction('$.fn.iCheck')) {
@@ -348,17 +396,12 @@ function initControls() {
     });
   }
 
-  if (isFunction('$.fn.overlayScrollbars')) {
-    // $('.dataTables_scrollBody').overlayScrollbars({
-    //   sizeAutoCapable: true
-    // });
-    // $('.modal-body').overlayScrollbars({
-    //   sizeAutoCapable: true
-    // });
-  }
-
   if (isFunction('formatCurrency')) {
-    $('.currency').val(formatCurrency($('.currency').val()));
+    let currency = $('.currency');
+
+    currency.each(function () {
+      this.value = formatCurrency(this.value);
+    });
   }
 }
 

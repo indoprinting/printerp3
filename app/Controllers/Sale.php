@@ -140,6 +140,10 @@ class Sale extends BaseController
   {
     $this->data['title'] = lang('App.addsale');
 
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $this->response(400, ['message' => 'Not implemented']);
+    }
+
     $this->response(200, ['content' => view('Sale/add', $this->data)]);
   }
 }

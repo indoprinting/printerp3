@@ -169,6 +169,7 @@ return [
   'inventorybalance'      => 'Inventory Balance',
   'invoice'               => 'Invoice',
   'item'                  => 'Item',
+  'length'                => 'Length',
   'mutation'              => 'Mutation',
   'male'                  => 'Male',
   'machineandequipment'   => 'Machine and Equipment',

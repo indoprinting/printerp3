@@ -54,6 +54,12 @@
               </div>
               <div class="col-md-4">
                 <div class="form-group">
+                  <label for="duedate"><?= lang('App.duedate') ?></label>
+                  <input type="datetime-local" id="duedate" name="duedate" class="form-control form-control-border form-control-sm">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
                     <input type="file" id="attachment" name="attachment" class="custom-file-input">
@@ -89,16 +95,23 @@
               </div>
               <div class="col-md-12">
                 <div class="table-responsive">
-                  <table id="table-sale" class="table">
+                  <table id="table-sale" class="table table-bordered table-hover table-sm">
                     <thead>
                       <tr>
                         <th><?= lang('App.name') ?></th>
                         <th><?= lang('App.option') ?></th>
                         <th><?= lang('App.subtotal') ?></th>
-                        <th></th>
+                        <th><i class="fad fa-trash"></i></th>
                       </tr>
                     </thead>
                     <tbody></tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="2"><span class="float-right"><?= lang('App.grandtotal') ?></span></td>
+                        <td class="sale-grandtotal"></td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
@@ -113,14 +126,15 @@
   <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
   <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
 </div>
+<script>
+  (function() {
+    initControls();
+  })();
+</script>
 <script type="module">
   import {
     Sale
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
-
-  (function() {
-    initControls();
-  })();
 
   $(document).ready(function() {
     let editor = new Quill('#editor', {
@@ -131,10 +145,21 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i:s', strtotime('+7 day'))) ?>');
+
     $('#product').change(function() {
       if (!this.value) return false;
 
+      let customerId = $('#customer').val();
       let warehouse = $('#warehouse').val();
+
+      if (!customerId) {
+        toastr.error('Customer is required.');
+
+        $(this).val('').trigger('change');
+
+        return false;
+      }
 
       if (!warehouse) {
         toastr.error('Warehouse is required.');
@@ -147,6 +172,7 @@
       $.ajax({
         data: {
           code: this.value,
+          customer: customerId,
           warehouse: warehouse
         },
         success: (data) => {
@@ -155,14 +181,14 @@
           sa.addItem({
             code: data.data.code,
             name: data.data.name,
-            area: 0,
-            height: 0,
+            category: data.data.category,
+            width: 1,
+            length: 1,
             price: data.data.price,
-            quantity: 0,
+            prices: data.data.prices,
+            quantity: 1,
             spec: '',
-            subquantity: 0,
-            subtotal: 0,
-            width: 0
+            ranges: data.data.ranges
           });
 
           initControls();
