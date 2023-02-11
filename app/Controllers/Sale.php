@@ -138,11 +138,13 @@ class Sale extends BaseController
 
   public function add()
   {
-    $this->data['title'] = lang('App.addsale');
-
+    checkPermission('Sale.Add');
+    
     if (requestMethod() == 'POST' && isAJAX()) {
       $this->response(400, ['message' => 'Not implemented']);
     }
+
+    $this->data['title'] = lang('App.addsale');
 
     $this->response(200, ['content' => view('Sale/add', $this->data)]);
   }

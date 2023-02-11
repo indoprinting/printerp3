@@ -54,7 +54,8 @@ function checkPermission(string $permission = null)
     if ($permission) {
       if ($ajax) {
         if (!hasAccess($permission)) {
-          sendJSON(['err' => 1, 'text' => lang('Msg.notAuthorized'), 'title' => lang('Msg.accessDenied')]);
+          http_response_code(401);
+          sendJSON(['code' => 401, 'message' => lang('Msg.notAuthorized'), 'title' => lang('Msg.accessDenied')]);
         }
       }
 
@@ -65,7 +66,8 @@ function checkPermission(string $permission = null)
     }
   } else {
     if ($ajax) {
-      sendJSON(['err' => 2, 'text' => lang('Msg.notLoggedIn'), 'title' => lang('Msg.accessDenied')]);
+      http_response_code(401);
+      sendJSON(['code' => 401, 'message' => lang('Msg.notLoggedIn'), 'title' => lang('Msg.accessDenied')]);
     } else {
       $data = [
         'resver' => '1.0'

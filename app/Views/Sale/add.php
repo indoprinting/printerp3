@@ -89,7 +89,7 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="form-group">
-                  <select id="product" class="select-product" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
+                  <select id="product" class="select-product-sale" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -184,12 +184,12 @@
             category: data.data.category,
             width: 1,
             length: 1,
-            price: data.data.price,
-            prices: data.data.prices,
             quantity: 1,
             spec: '',
+            type: data.data.type,
+            prices: data.data.prices,
             ranges: data.data.ranges
-          });
+          }, true);
 
           initControls();
 

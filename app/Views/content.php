@@ -29,10 +29,11 @@
   <link rel="stylesheet" href="<?= base_url() ?>/assets/app/css/common.css?v=<?= $resver ?>">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/app/css/loader.css?v=<?= $resver ?>">
   <script>
+    const lang = JSON.parse(atob('<?= $lang64 ?>'));
     const <?= csrf_token() ?> = '<?= csrf_hash() ?>';
     const base_url = '<?= base_url(); ?>';
     const langId = '<?= session('login')->lang ?>';
-    const lang = JSON.parse(atob('<?= $lang64 ?>'));
+    const permissions = JSON.parse(atob('<?= $permission64 ?>'));
     window.Table = null;
     window.show_timer = true;
   </script>

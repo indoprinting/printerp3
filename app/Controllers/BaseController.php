@@ -81,13 +81,16 @@ class BaseController extends Controller
 			Services::language(session('login')->lang);
 
 			$lang = [
-				'App' => include(APPPATH . 'Language/' . session('login')->lang . '/App.php'),
-				'Msg' => include(APPPATH . 'Language/' . session('login')->lang . '/Msg.php')
+				'App' 		=> include(APPPATH . 'Language/' . session('login')->lang . '/App.php'),
+				'Msg' 		=> include(APPPATH . 'Language/' . session('login')->lang . '/Msg.php'),
+				'Status' 	=> include(APPPATH . 'Language/' . session('login')->lang . '/Status.php')
 			];
 
 			// lang64 used by javascript only.
 			$this->data['lang64'] = base64_encode(json_encode($lang));
 			unset($lang);
+
+			$this->data['permission64'] = base64_encode(json_encode(session('login')->permissions));
 		}
 	}
 

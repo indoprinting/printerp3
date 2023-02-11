@@ -116,6 +116,7 @@ return [
   'editexpense'           => 'Ubah Pengeluaran',
   'editincome'            => 'Ubah Pemasukkan',
   'editpermission'        => 'Ubah Izin',
+  'editprice'             => 'Ubah Harga',
   'editsale'              => 'Ubah Penjualan',
   'editstockadjustment'   => 'Ubah Penyesuaian Stok',
   'edituser'              => 'Ubah Pengguna',

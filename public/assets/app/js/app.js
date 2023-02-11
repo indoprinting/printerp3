@@ -68,11 +68,13 @@
 
     $.ajax({
       error: (xhr) => {
-        if (isObject(xhr.responseJSON) && xhr.status == 401) {
+        console.log(xhr);
+        if (isObject(xhr.responseJSON)) {
           toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
-          location.reload();
-        } else if (isObject(xhr.responseJSON)) {
-          toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
+
+          if (xhr.status) {
+            location.reload();
+          }
         } else {
           toastr.error(xhr.statusText, xhr.status);
         }
@@ -88,7 +90,7 @@
 
             initControls();
           } else {
-            toastr.error(data.text, data.title);
+            toastr.error(data.message, data.title);
             if (data.code == 401) location.reload();
           }
         } else {
@@ -149,8 +151,31 @@ $(document).ready(function () {
     let ranges = $(this).closest('tr').find('[name="item[ranges][]"]');
     let length = $(this).closest('tr').find('[name="item[length][]"]');
     let width = $(this).closest('tr').find('[name="item[width][]"]');
+    let type = $(this).closest('tr').find('[name="item[type][]"]');
     let quantity = $(this).closest('tr').find('[name="item[quantity][]"]');
     let subTotal = $(this).closest('tr').find('.saleitem-subtotal');
+
+    if (quantity.val() < 0) {
+      quantity.val(0);
+
+      SweetAlert.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Quantity cannot be less than zero.'
+      });
+    }
+
+    if (type.val() == 'service' && quantity.val().indexOf('.') >= 0) {
+      quantity.val(1);
+
+      SweetAlert.fire({
+        icon: 'error',
+        title: 'Ketahuan deh!',
+        text: 'Hayoo mau ngapain? Tak laporin loh!'
+      });
+
+      return false;
+    }
 
     prices = JSON.parse(prices.val());
     ranges = JSON.parse(ranges.val());
@@ -423,6 +448,10 @@ $(document).ready(function () {
           Swal.fire({ icon: 'error', text: xhr.responseJSON.message, title: xhr.status }).then((result) => {
             $(this).modal('hide');
           });
+
+          if (xhr.status == 401) {
+            location.reload();
+          }
         } else {
           Swal.fire({ icon: 'error', text: xhr.statusText, title: xhr.status }).then((result) => {
             $(this).modal('hide');
@@ -453,6 +482,13 @@ $(document).ready(function () {
   $(document).on('click', '.table-row-delete', function () {
     $(this).closest('tr').remove();
   });
+
+  $(document).on('click', '.sale-row-delete', function () {
+    let row = $(this);
+    $(this).closest('tr').remove();
+    calculateSale(row.closest('table'));
+  });
+
 
   $.extend(true, $.fn.DataTable.defaults, {
     drawCallback: function (settings) {

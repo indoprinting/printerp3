@@ -116,6 +116,7 @@ return [
   'editexpense'           => 'Edit Expense',
   'editincome'            => 'Edit Income',
   'editpermission'        => 'Edit Permission',
+  'editprice'             => 'Edit Price',
   'editsale'              => 'Edit Sale',
   'editstockadjustment'   => 'Edit Stock Adjustment',
   'editsupplier'          => 'Edit Supplier',

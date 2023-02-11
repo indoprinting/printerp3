@@ -430,12 +430,14 @@ export class Sale {
     item.subtotal = item.area * item.price;
 
     let readOnly = (item.category != 'DPI' ? ' readonly' : '');
+    let priceReadOnly = (hasAccess('Sale.EditPrice') ? '' : ' readonly');
 
     this.tbody.append(`
       <tr>
         <td class="col-md-3">
           <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
           <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
+          <input type="hidden" name="item[type][]" value="${item.type}">
           <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
           (${item.code}) ${item.name}
         </td>
@@ -503,15 +505,15 @@ export class Sale {
                 <div class="tab-pane fade" id="tab-price-${item.code}">
                   <div class="form-group">
                     <label>${lang.App.price}</label>
-                    <input name="item[price][]" class="form-control form-control-border form-control-sm currency saleitem" value="${item.price}">
+                    <input name="item[price][]" class="form-control form-control-border form-control-sm currency saleitem" value="${item.price}" ${priceReadOnly}>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </td>
-        <td class="saleitem-subtotal">${item.subtotal}</td>
-        <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
+        <td class="saleitem-subtotal">${formatCurrency(item.subtotal)}</td>
+        <td><a href="#" class="table-row-delete sale-row"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);
 

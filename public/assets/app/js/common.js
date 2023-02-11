@@ -262,10 +262,16 @@ function formatNumber(str) {
 }
 
 function getSalePrice(quantity, ranges = [], prices = []) {
-  if (isEmpty(ranges) || isEmpty(prices)) {
-    console.warn('Ranges or prices are empty.');
-    console.warn(ranges, prices);
+  if (isEmpty(prices)) {
+    console.error('Ranges are empty.');
+    console.error(ranges);
     return false;
+  }
+
+  if (isEmpty(ranges)) {
+    console.warn('Ranges are empty. Use default price.');
+    console.warn(ranges);
+    return prices[0];
   }
 
   for (let a = ranges.length; a >= 0; a--) {
@@ -294,6 +300,32 @@ function getTimeDifference(timestr1, timestr2) {
   let seconds = Math.floor(diff % 60);
 
   return `${appendZero(hours)}:${appendZero(minutes)}:${appendZero(seconds)}`;
+}
+
+function hasAccess(access) {
+  if (typeof permissions == 'undefined' || !isArray(permissions)) {
+    console.error('Const permissions is not defined.');
+  }
+
+  if (permissions.indexOf('All') >= 0) {
+    return true;
+  }
+
+  if (isArray(access)) {
+    access.forEach((value) => {
+      if (permissions.indexOf(value) >= 0) {
+        return true;
+      }
+    });
+  }
+
+  if (isString(access)) {
+    if (permissions.indexOf(access) >= 0) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function initControls() {
@@ -347,6 +379,18 @@ function initControls() {
     $('.select-product').select2({
       allowClear: true,
       ajax: {
+        delay: 1000,
+        url: base_url + '/select2/product'
+      }
+    });
+    $('.select-product-sale').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          params.type = ['combo', 'service'];
+
+          return params;
+        },
         delay: 1000,
         url: base_url + '/select2/product'
       }
