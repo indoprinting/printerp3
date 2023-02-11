@@ -517,7 +517,7 @@ export class Sale {
       </tr>
     `);
 
-    calculateSale(this.tbody.closest('table'));
+    calculateSale();
   }
 }
 

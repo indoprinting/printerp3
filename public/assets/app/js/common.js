@@ -31,7 +31,9 @@ function appendZero(number) { // Return as string, you can convert to number wit
  * Calculate sale item by table sale.
  * @param {} table 
  */
-function calculateSale(table = null) {
+function calculateSale() {
+  let table = $('#table-sale');
+
   if (!table) {
     return false;
   }
