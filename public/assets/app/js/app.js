@@ -165,6 +165,9 @@ $(document).ready(function () {
       });
     }
 
+    console.log(type.val());
+    console.log(quantity.val().indexOf('.'));
+
     if (type.val() == 'service' && quantity.val().indexOf('.') >= 0) {
       quantity.val(1);
 
@@ -484,13 +487,6 @@ $(document).ready(function () {
 
     calculateSale();
   });
-
-  $(document).on('click', '.sale-row-delete', function () {
-    let row = $(this);
-    $(this).closest('tr').remove();
-    calculateSale(row.closest('table'));
-  });
-
 
   $.extend(true, $.fn.DataTable.defaults, {
     drawCallback: function (settings) {
