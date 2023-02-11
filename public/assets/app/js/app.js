@@ -163,7 +163,7 @@ $(document).ready(function () {
 
     subTotal.html(formatCurrency(length.val() * width.val() * quantity.val() * filterDecimal(price.val())));
 
-    calculateSale($(this).closest('table'));
+    calculateSale();
   });
 
   $(document).on('click', '[data-action="confirm"]', function (e) {
@@ -452,6 +452,8 @@ $(document).ready(function () {
 
   $(document).on('click', '.table-row-delete', function () {
     $(this).closest('tr').remove();
+
+    calculateSale();
   });
 
   $.extend(true, $.fn.DataTable.defaults, {

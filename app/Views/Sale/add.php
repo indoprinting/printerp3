@@ -108,7 +108,7 @@
                     <tfoot>
                       <tr>
                         <td colspan="2"><span class="float-right"><?= lang('App.grandtotal') ?></span></td>
-                        <td class="sale-grandtotal"></td>
+                        <td class="sale-grandtotal">Rp 0</td>
                         <td></td>
                       </tr>
                     </tfoot>
