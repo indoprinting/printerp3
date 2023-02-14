@@ -390,6 +390,14 @@ function initControls() {
         data: (params) => {
           params.type = ['combo', 'service'];
 
+          if (typeof useRawMaterial !== 'undefined') {
+            if (useRawMaterial) {
+              params.type.push('standard');
+            } else if (params.type.indexOf('standard') > 0) {
+              params.type.pop();
+            }
+          }
+
           return params;
         },
         delay: 1000,

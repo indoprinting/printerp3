@@ -67,6 +67,12 @@
                   </div>
                 </div>
               </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <input type="checkbox" id="rawmaterial" name="rawmaterial">
+                  <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
+                </div>
+              </div>
             </div>
             <div class="row">
               <div class="col-md-12">
@@ -139,6 +145,15 @@
   $(document).ready(function() {
     let editor = new Quill('#editor', {
       theme: 'snow'
+    });
+
+    $('#rawmaterial').on('change', function () {
+      console.log(this.checked);
+      if (this.checked) {
+        window.useRawMaterial = true;
+      } else {
+        window.useRawMaterial = false;
+      }
     });
 
     editor.on('text-change', (delta, oldDelta, source) => {

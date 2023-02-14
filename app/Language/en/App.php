@@ -232,6 +232,7 @@ return [
   'qms'                   => 'QMS',
   'quantity'              => 'Quantity',
   'queue'                 => 'Queue',
+  'rawmaterial'           => 'RAW Material',
   'recall'                => 'Recall',
   'receivable'            => 'Receivable',
   'receive'               => 'Receive',

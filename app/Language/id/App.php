@@ -231,6 +231,7 @@ return [
   'qms'                   => 'QMS',
   'quantity'              => 'Kuantitas',
   'queue'                 => 'Antrian',
+  'rawmaterial'           => 'Bahan Mentah',
   'recall'                => 'Panggil Ulang',
   'receivable'            => 'Piutang',
   'receive'               => 'Terima',

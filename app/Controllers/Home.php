@@ -276,16 +276,16 @@ class Home extends BaseController
         $q = Product::select("code id, CONCAT('(', code, ') ', name) text ")
           ->limit(10);
 
+        if ($term) {
+          $q->like('code', $term, 'both')->orLike('name', $term, 'both');
+        }
+
         if ($types) {
           if (!is_array($types)) {
             $types = [$types];
           }
 
           $q->whereIn('type', $types);
-        }
-
-        if ($term) {
-          $q->like('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
         $results = $q->get();
