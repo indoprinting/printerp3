@@ -11,6 +11,37 @@ class SaleItem
    */
   public static function add(array $data)
   {
+    if (isset($data['sale'])) {
+      $sale = Sale::getRow(['reference' => $data['sale']]);
+
+      if (!$sale) {
+        setLastError("Sale {$data['sale']} is not found.");
+        return false;
+      }
+
+      $data['sale_id'] = $sale->id;
+    } else {
+      setLastError("Sale is not set.");
+      return false;
+    }
+
+    if (isset($data['product'])) {
+      $product = Product::getRow(['code' => $data['product']]);
+
+      if (!$product) {
+        setLastError("Product {$data['product']} is not found.");
+        return false;
+      }
+
+      $data['product_id'] = $product->id;
+      $data['product_code'] = $product->code;
+      $data['product_name'] = $product->name;
+      $data['product_type'] = $product->type;
+    } else {
+      setLastError("Product is not set.");
+      return false;
+    }
+
     DB::table('sale_items')->insert($data);
 
     if ($insertID = DB::insertID()) {

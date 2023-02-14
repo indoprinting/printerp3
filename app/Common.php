@@ -134,6 +134,14 @@ function filterDecimal($num)
 }
 
 /**
+ * Filter string into string number.
+ */
+function filterNumber($num)
+{
+  return preg_replace('/([^0-9])/', '', strval($num));
+}
+
+/**
  * Convert number into formatted currency.
  */
 function formatCurrency($num)

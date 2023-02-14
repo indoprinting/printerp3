@@ -25,18 +25,16 @@ class Sale
   /**
    * Add sale payment.
    * @param int $saleId Sale ID.
-   * @param array $data [ *amount, *bank_id, attachment ]
+   * @param array $data [ *amount, *bank, attachment ]
    */
   public static function addPayment(int $saleId, array $data)
   {
     $sale = self::getRow(['id' => $saleId]);
 
     Payment::add([
-      'reference'       => $sale->reference,
-      'reference_date'  => $sale->created_at,
-      'bank_id'         => $data['bank_id'],
-      'biller_id'       => $sale->biller_id,
-      'sale_id'         => $sale->id,
+      'sale'            => $sale->reference,
+      'bank'            => $data['bank'],
+      'biller'          => $sale->biller,
       'amount'          => $data['amount'],
       'type'            => 'received',
       'attachment'      => ($data['attachment'] ?? NULL)

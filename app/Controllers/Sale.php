@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
+use App\Models\DB;
+use App\Models\Sale as SaleModel;
+use App\Models\SaleItem;
 
 class Sale extends BaseController
 {
@@ -139,9 +142,85 @@ class Sale extends BaseController
   public function add()
   {
     checkPermission('Sale.Add');
-    
+
     if (requestMethod() == 'POST' && isAJAX()) {
-      $this->response(400, ['message' => 'Not implemented']);
+      $date       = dateTimeJS(getPost('date'));
+      $biller     = getPost('biller');
+      $warehouse  = getPost('warehouse');
+      $cashier    = getPost('cashier');
+      $customer   = getPost('customer');
+      $dueDate    = getPost('duedate');
+      $note       = getPost('note');
+      $items      = getPost('item');
+      $itemData   = [];
+
+      if (empty($items) || !is_array($items)) {
+        $this->response(400, ['message' => 'Item is empty or not valid.']);
+      }
+
+      $data = [
+        'date'      => $date,
+        'biller'    => $biller,
+        'warehouse' => $warehouse,
+        'cashier'   => $cashier,
+        'customer'  => $customer,
+        'due_date'  => $dueDate,
+        'note'      => $note,
+        'json'      => json_encode([
+          'approved'    => 0,
+          'cashier_by'  => $cashier,
+          'payment_due_date'  => '',
+          'source'      => 'PrintERP'
+        ])
+      ];
+
+      DB::transStart();
+
+      $insertId = SaleModel::add($data);
+
+      if (!$insertId) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      $sale = SaleModel::getRow(['id' => $insertId]);
+
+      for ($a = 0; $a < count($items['code']); $a++) {
+        $area = floatval($items['width'][$a]) * floatval($items['length'][$a]);
+        $quantity = floatval($items['quantity'][$a]) * $area;
+
+        $itemData[] = [
+          'sale'      => $sale->reference,
+          'product'   => $items['code'][$a],
+          'price'     => filterDecimal($items['price'][$a]),
+          'length'    => $items['length'][$a],
+          'quantity'  => $quantity,
+          'spec'      => $items['spec'][$a],
+          'width'     => $items['width'][$a],
+          'json'      => json_encode([
+            'l'             => floatval($items['length'][$a]),
+            'w'             => floatval($items['width'][$a]),
+            'area'          => floatval($items['length'][$a]) * floatval($items['width'][$a]),
+            'spec'          => $items['spec'][$a],
+            'sqty'          => floatval($items['quantity'][$a]),
+            'status'        => 'need_payment',
+            'due_date'      => $dueDate,
+            'operator_id'   => floatval($items['operator'][$a]),
+            'completed_at'  => ''
+          ])
+        ];
+      }
+
+      if (!SaleItem::add($itemData)) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Sale has been added.']);
+      }
+
+      $this->response(400, ['message' => 'Failed to add sale.']);
     }
 
     $this->data['title'] = lang('App.addsale');

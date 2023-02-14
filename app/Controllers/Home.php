@@ -245,13 +245,12 @@ class Home extends BaseController
 
     switch ($mode) {
       case 'biller':
-        $q = Biller::select("code id, name text ")
+        $q = Biller::select("code id, name text")
           ->where('active', 1)
           ->limit(10);
 
         if ($term) {
-          $q->like('code', $term, 'both')
-            ->orLike('name', $term, 'both');
+          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
         if ($biller = session('login')->biller) {
@@ -262,19 +261,24 @@ class Home extends BaseController
 
         break;
       case 'customer':
-        $q = Customer::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
+        $q = Customer::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
           ->limit(10);
 
         if ($term) {
-          $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+          $q->where('id', $term)->orLike('name', $term, 'both')
+            ->orLike('company', $term, 'both')->orLike('phone', $term, 'none');
         }
 
         $results = $q->get();
 
         break;
       case 'product':
-        $q = Product::select("code id, CONCAT('(', code, ') ', name) text ")
+        $q = Product::select("code id, CONCAT('(', code, ') ', name) text")
           ->limit(10);
+
+        if ($term) {
+          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
+        }
 
         if ($types) {
           if (!is_array($types)) {
@@ -282,10 +286,6 @@ class Home extends BaseController
           }
 
           $q->whereIn('type', $types);
-        }
-
-        if ($term) {
-          $q->like('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
         $results = $q->get();
@@ -296,18 +296,19 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+          $q->where('id', $term)->orLike('name', $term, 'both')->orLike('company', $term, 'both');
         }
 
         $results = $q->get();
 
         break;
       case 'user':
-        $q = User::select("id, fullname text ")
+        $q = User::select("id, fullname text")
           ->limit(10);
 
         if ($term) {
           $q->like('fullname', $term, 'both')
+            ->where('active', 1)
             ->orLike('username', $term, 'both')
             ->orWhere('phone', $term);
         }
@@ -321,8 +322,7 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->like('code', $term, 'both')
-            ->orLike('name', $term, 'both');
+          $q->where('id', $term)->like('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
         if ($warehouse = session('login')->warehouse) {

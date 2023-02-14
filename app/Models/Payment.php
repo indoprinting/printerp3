@@ -13,38 +13,44 @@ class Payment
   {
     if (isset($data['expense'])) {
       $inv = Expense::getRow(['reference' => $data['expense']]);
-      $data['expense_id'] = $inv->id;
-      $data['reference']  = $inv->reference;
+      $data['expense_id']     = $inv->id;
+      $data['reference']      = $inv->reference;
+      $data['reference_date'] = $inv->date;
     }
 
     if (isset($data['income'])) {
       $inv = Income::getRow(['reference' => $data['income']]);
       $data['income_id']  = $inv->id;
       $data['reference']  = $inv->reference;
+      $data['reference_date'] = $inv->date;
     }
 
     if (isset($data['mutation'])) {
       $inv = BankMutation::getRow(['reference' => $data['mutation']]);
       $data['mutation_id']  = $inv->id;
       $data['reference']    = $inv->reference;
+      $data['reference_date'] = $inv->date;
     }
 
     if (isset($data['purchase'])) {
       $inv = ProductPurchase::getRow(['reference' => $data['purchase']]);
-      $data['purchase_id']  = $inv->id;
-      $data['reference']    = $inv->reference;
+      $data['purchase_id']    = $inv->id;
+      $data['reference']      = $inv->reference;
+      $data['reference_date'] = $inv->date;
     }
 
     if (isset($data['sale'])) {
       $inv = Sale::getRow(['reference' => $data['sale']]);
-      $data['sale_id']    = $inv->id;
-      $data['reference']  = $inv->reference;
+      $data['sale_id']        = $inv->id;
+      $data['reference']      = $inv->reference;
+      $data['reference_date'] = $inv->date;
     }
 
     if (isset($data['transfer'])) {
       $inv = ProductTransfer::getRow(['reference' => $data['transfer']]);
-      $data['transfer_id']  = $inv->id;
-      $data['reference']    = $inv->reference;
+      $data['transfer_id']    = $inv->id;
+      $data['reference']      = $inv->reference;
+      $data['reference_date'] = $inv->date;
     }
 
     if (isset($data['bank'])) {

@@ -390,6 +390,14 @@ function initControls() {
         data: (params) => {
           params.type = ['combo', 'service'];
 
+          if (typeof saleUseRawMaterial !== 'undefined') {
+            if (saleUseRawMaterial) {
+              params.type.push('standard');
+            } else if (params.type.indexOf('standard') > 0) {
+              params.type.pop();
+            }
+          }
+
           return params;
         },
         delay: 1000,
@@ -498,6 +506,10 @@ function initModalForm(opt = {}) {
             title: 'Success'
           });
 
+          if ($('#customer').length) {
+            preSelect2('customer', '#customer', $('#phone').val());
+          }
+
           reDrawDataTable();
 
           $(window.modal[window.modal.length - 1]).modal('hide');
@@ -546,12 +558,22 @@ function lc(str) {
 
 /**
  * Pre-Select2
- * @param {*} $elm 
- * @param {object} $id param ID
- * @param {string} $type API type
+ * @param {string} mode Mode (biller, customer, product supplier, warehouse).
+ * @param {*} elm Element to change.
+ * @param {*} id Id of mode.
  */
-function preSelect2($elm, $id, $type) {
+function preSelect2(mode, elm, id) {
+  $.ajax({
+    error: (xhr) => {
+      toastr.error(xhr.responseJSON.message, xhr.status);
+    },
+    success: (data) => {
+      let opt = new Option(data.results[0].text, data.results[0].id, true, true);
 
+      $(elm).html('').append(opt).trigger('change');
+    },
+    url: base_url + `/select2/${mode}?term=${id}`
+  });
 }
 
 /**

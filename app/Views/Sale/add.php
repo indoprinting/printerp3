@@ -47,9 +47,14 @@
               <div class="col-md-4">
                 <div class="form-group">
                   <label for="customer"><?= lang('App.customer') ?> *</label>
-                  <select id="customer" name="customer" class="select-customer" data-placeholder="<?= lang('App.customer') ?>" style="width:100%" placeholder="<?= lang('App.customer') ?>">
-                    <option value=""></option>
-                  </select>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <a href="<?= base_url('humanresource/customer/add') ?>" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#ModalDefault"><i class="fad fa-user-plus"></i></a>
+                    </div>
+                    <select id="customer" name="customer" class="select-customer" data-placeholder="<?= lang('App.customer') ?>" style="width:100%" placeholder="<?= lang('App.customer') ?>">
+                      <option value=""></option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div class="col-md-4">
@@ -65,6 +70,12 @@
                     <input type="file" id="attachment" name="attachment" class="custom-file-input">
                     <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
                   </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <input type="checkbox" id="rawmaterial" name="rawmaterial">
+                  <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
                 </div>
               </div>
             </div>
@@ -139,6 +150,16 @@
   $(document).ready(function() {
     let editor = new Quill('#editor', {
       theme: 'snow'
+    });
+
+    window.saleUseRawMaterial = false;
+
+    $('#rawmaterial').on('change', function() {
+      if (this.checked) {
+        saleUseRawMaterial = true;
+      } else {
+        saleUseRawMaterial = false;
+      }
     });
 
     editor.on('text-change', (delta, oldDelta, source) => {
