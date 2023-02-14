@@ -161,8 +161,8 @@ class Api extends BaseController
 
     $response = file_get_contents('php://input');
 
-    if (PaymentValidation::validate($response)) { // Segala pengecekan dan validasi data di sini.
-      $this->response(200, ['message' => 'Validated']);
+    if ($total = PaymentValidation::validate($response)) { // Segala pengecekan dan validasi data di sini.
+      $this->response(200, ['message' => 'Validated', 'data' => ['validated' => $total]]);
     } else {
       $this->response(406, ['message' => 'Not Validated']);
     }

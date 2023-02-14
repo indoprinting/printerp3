@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
+use App\Models\Attachment;
+use App\Models\DB;
+use App\Models\Payment;
+use App\Models\Sale as Invoice;
+use App\Models\SaleItem;
 
 class Sale extends BaseController
 {
@@ -139,13 +144,136 @@ class Sale extends BaseController
   public function add()
   {
     checkPermission('Sale.Add');
-    
+
     if (requestMethod() == 'POST' && isAJAX()) {
-      $this->response(400, ['message' => 'Not implemented']);
+      $date       = dateTimeJS(getPost('date'));
+      $biller     = getPost('biller');
+      $warehouse  = getPost('warehouse');
+      $cashier    = getPost('cashier');
+      $customer   = getPost('customer');
+      $dueDate    = dateTimeJS(getPost('duedate'));
+      $note       = getPost('note');
+      $approve    = (getPost('approve') == 1 ? 1 : 0);
+      $rawItems   = getPost('item');
+
+      if (empty($biller)) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
+      if (empty($warehouse)) {
+        $this->response(400, ['message' => 'Warehouse is required.']);
+      }
+
+      if (empty($customer)) {
+        $this->response(400, ['message' => 'Customer is required.']);
+      }
+
+      if (empty($cashier)) {
+        $this->response(400, ['message' => 'Cashier is required.']);
+      }
+
+      if (empty($rawItems) || !is_array($rawItems)) {
+        $this->response(400, ['message' => 'Item is empty or not valid.']);
+      }
+
+      // Convert rawItems to items
+      $items = [];
+
+      for ($a = 0; $a < count($rawItems['code']); $a++) {
+        if (empty($rawItems['operator'][$a])) {
+          $this->response(400, ['message' => "Operator is empty for {$rawItems['code'][$a]}. Please set operator!"]);
+        }
+
+        $items[] = [
+          'code'      => $rawItems['code'][$a],
+          'width'     => $rawItems['width'][$a],
+          'length'    => $rawItems['length'][$a],
+          'price'     => filterDecimal($rawItems['price'][$a]),
+          'quantity'  => $rawItems['quantity'][$a],
+          'operator'  => $rawItems['operator'][$a],
+        ];
+      }
+
+      unset($rawItems);
+
+      $data = [
+        'date'      => $date,
+        'biller'    => $biller,
+        'warehouse' => $warehouse,
+        'cashier'   => $cashier,
+        'customer'  => $customer,
+        'due_date'  => $dueDate,
+        'note'      => $note,
+        'source'    => 'PrintERP',
+        'approved'  => $approve,
+      ];
+
+      $data = $this->useAttachment($data);
+
+      DB::transStart();
+
+      $insertId = Invoice::add($data, $items);
+
+      if (!$insertId) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Invoice has been added.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addsale');
 
     $this->response(200, ['content' => view('Sale/add', $this->data)]);
+  }
+
+  public function delete($id = null)
+  {
+    checkPermission('Sale.Delete');
+
+    $sale = Invoice::getRow(['id' => $id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      DB::transStart();
+
+      Invoice::delete(['id' => $id]);
+      SaleItem::delete(['sale_id' => $id]);
+      Attachment::delete(['hashname' => $sale->attachment]);
+      Payment::delete(['sale_id' => $id]);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Invoice has been deleted.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    $this->response(400, ['message' => 'Failed to delete invoice.']);
+  }
+
+  public function print($id = null)
+  {
+    checkPermission('Sale.View');
+
+    $sale = Invoice::getRow(['id' => $id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    $this->data['sale'] = $sale;
+
+    return view('Sale/Print', $this->data);
   }
 }

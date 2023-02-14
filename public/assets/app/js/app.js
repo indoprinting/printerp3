@@ -68,7 +68,6 @@
 
     $.ajax({
       error: (xhr) => {
-        console.log(xhr);
         if (isObject(xhr.responseJSON)) {
           toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
 
@@ -164,9 +163,6 @@ $(document).ready(function () {
         text: 'Quantity cannot be less than zero.'
       });
     }
-
-    console.log(type.val());
-    console.log(quantity.val().indexOf('.'));
 
     if (type.val() == 'service' && quantity.val().indexOf('.') >= 0) {
       quantity.val(1);

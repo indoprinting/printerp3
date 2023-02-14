@@ -11,6 +11,37 @@ class SaleItem
    */
   public static function add(array $data)
   {
+    if (isset($data['sale'])) {
+      $sale = Sale::getRow(['reference' => $data['sale']]);
+
+      if (!$sale) {
+        setLastError("Sale {$data['sale']} is not found.");
+        return false;
+      }
+
+      $data['sale_id'] = $sale->id;
+    } else {
+      setLastError("Sale is not set.");
+      return false;
+    }
+
+    if (isset($data['product'])) {
+      $product = Product::getRow(['code' => $data['product']]);
+
+      if (!$product) {
+        setLastError("Product {$data['product']} is not found.");
+        return false;
+      }
+
+      $data['product_id'] = $product->id;
+      $data['product_code'] = $product->code;
+      $data['product_name'] = $product->name;
+      $data['product_type'] = $product->type;
+    } else {
+      setLastError("Product is not set.");
+      return false;
+    }
+
     DB::table('sale_items')->insert($data);
 
     if ($insertID = DB::insertID()) {
@@ -41,16 +72,16 @@ class SaleItem
 
       if (empty($data['quantity'])) {
         setLastError("SaleItem::complete(): Quantity is missing?");
-        return FALSE;
+        return false;
       }
 
       // Get operator data.
       $operator = User::getRow(['id' => $data['created_by']]);
 
-      if (empty($saleItemJS->due_date)) { // Check if sale item has due date. If empty then restricted.
-        setLastError("Item {$saleItem->product_code} doesn't have due date.");
-        return FALSE;
-      }
+      // if (empty($saleItemJS->due_date)) { // Check if sale item has due date. If empty then restricted.
+      //   setLastError("Item {$saleItem->product_code} doesn't have due date.");
+      //   return FALSE;
+      // }
 
       if (($completedQty + $saleItem->finished_qty) < $saleItem->quantity) { // If completed partial.
         $status = 'completed_partial';
@@ -59,7 +90,7 @@ class SaleItem
       } else {
         setLastError("SaleItem::complete(): Something wrong! Maybe you complete more quantity than requested. " .
           "Completed: {$completedQty}, Finished: {$saleItem->finished_qty}, Quantity: {$saleItem->quantity}");
-        return FALSE;
+        return false;
       }
 
       // Set Completed date and Operator who completed it.
@@ -92,7 +123,7 @@ class SaleItem
 
               if (!$rawItem) {
                 setLastError("SaleItem::complete(): RAW item is not found.");
-                continue;
+                return false;
               }
 
               $finalCompletedQty = filterDecimal($comboItem->quantity) * filterDecimal($completedQty);
@@ -100,21 +131,19 @@ class SaleItem
               if ($rawItem->type == 'standard') { // COMBOITEM. Decrement. POSTMN, POCT15, FFC280
                 if ($rawItem->id == $klikpod->id) {
                   setLastError("CRITICAL: KLIKPOD KNOWN AS COMBO STANDARD TYPE MUST NOT BE DECREASED!");
-                  return FALSE;
+                  return false;
                 }
 
                 Stock::decrease([
-                  'sale_id'       => $sale->id,
-                  'saleitem_id'   => $saleItem->id,
-                  'product_id'    => $rawItem->id,
-                  'price'         => $saleItem->price,
-                  'quantity'      => $finalCompletedQty,
-                  'warehouse_id'  => $sale->warehouse_id, // Must sale->warehouse_id, NOT saleItem->warehouse_id
-                  'created_at'    => $data['created_at'],
-                  'created_by'    => $operator->id
+                  'sale'        => $sale->reference,
+                  'saleitem_id' => $saleItem->id,
+                  'product'     => $rawItem->code,
+                  'price'       => $saleItem->price,
+                  'quantity'    => $finalCompletedQty,
+                  'warehouse'   => $sale->warehouse,
+                  'created_at'  => $data['created_at'],
+                  'created_by'  => $operator->id
                 ]);
-
-                addEvent("Completed Sale [{$sale->id}: {$sale->reference}], {$saleItem->product_code}: {$finalCompletedQty}");
               } else if ($rawItem->type == 'service') { // COMBOITEM. Increment. KLIKPOD
                 // Since no decimal point for KLIKPOD/KLIKPODBW, we must round it up without precision.
                 switch ($rawItem->code) {
@@ -125,17 +154,15 @@ class SaleItem
                 }
 
                 Stock::increase([
-                  'sale_id'       => $sale->id,
-                  'saleitem_id'   => $saleItem->id,
-                  'product_id'    => $rawItem->id,
-                  'price'         => $saleItem->price,
-                  'quantity'      => $finalCompletedQty,
-                  'warehouse_id'  => $saleItem->warehouse_id,
-                  'created_at'    => $data['created_at'],
-                  'created_by'    => $operator->id
+                  'sale'        => $sale->reference,
+                  'saleitem_id' => $saleItem->id,
+                  'product'     => $rawItem->code,
+                  'price'       => $saleItem->price,
+                  'quantity'    => $finalCompletedQty,
+                  'warehouse'   => $sale->warehouse,
+                  'created_at'  => $data['created_at'],
+                  'created_by'  => $operator->id
                 ]);
-
-                addEvent("Completed Sale [{$sale->id}: {$sale->reference}]; {$saleItem->product_code}: {$finalCompletedQty}");
               }
             }
           }
@@ -149,35 +176,31 @@ class SaleItem
           }
 
           Stock::increase([
-            'sale_id'       => $sale->id,
-            'saleitem_id'   => $saleItem->id,
-            'product_id'    => $saleItem->product_id,
-            'price'         => $saleItem->price,
-            'quantity'      => $completedQty,
-            'warehouse_id'  => $saleItem->warehouse_id,
-            'created_at'    => $data['created_at'],
-            'created_by'    => $operator->id
+            'sale'        => $sale->reference,
+            'saleitem_id' => $saleItem->id,
+            'product'     => $saleItem->product,
+            'price'       => $saleItem->price,
+            'quantity'    => $completedQty,
+            'warehouse'   => $sale->warehouse,
+            'created_at'  => $data['created_at'],
+            'created_by'  => $operator->id
           ]);
-
-          addEvent("Completed Sale [{$sale->id}: {$sale->reference}]; {$saleItem->product_code}: {$completedQty}");
         } else if ($saleItem->product_type == 'standard') { // SALEITEM. Decrement. FFC280, POCT15
           if ($saleItem->product_code == 'KLIKPOD') {
-            dbglog('error', 'CRITICAL: KLIKPOD KNOWN AS STANDARD TYPE MUST NOT BE DECREASED!');
+            setLastError('CRITICAL: KLIKPOD KNOWN AS STANDARD TYPE MUST NOT BE DECREASED!');
             return FALSE;
           }
 
           Stock::decrease([
-            'sale_id'       => $sale->id,
-            'saleitem_id'   => $saleItem->id,
-            'product_id'    => $saleItem->product_id,
-            'price'         => $saleItem->price,
-            'quantity'      => $completedQty,
-            'warehouse_id'  => $saleItem->warehouse_id,
-            'created_at'    => $data['created_at'],
-            'created_by'    => $operator->id
+            'sale_id'     => $sale->id,
+            'saleitem_id' => $saleItem->id,
+            'product'     => $saleItem->product,
+            'price'       => $saleItem->price,
+            'quantity'    => $completedQty,
+            'warehouse'   => $sale->warehouse,
+            'created_at'  => $data['created_at'],
+            'created_by'  => $operator->id
           ]);
-
-          addEvent("Completed Sale [{$sale->id}: {$sale->reference}]; {$saleItem->product_code}: {$completedQty}");
         }
 
         // Sync sale after operator complete the item.

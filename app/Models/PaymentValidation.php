@@ -249,13 +249,11 @@ class PaymentValidation
                 $sale = Sale::getRow(['id' => $pv->sale_id]);
 
                 $payment = [
-                  'reference_date'  => $sale->date,
-                  'sale_id'         => $pv->sale_id,
-                  'amount'          => $pv->amount,
-                  'method'          => 'Transfer',
-                  'bank_id'         => $bank->id,
-                  'created_by'      => $pv->created_by,
-                  'type'            => 'received'
+                  'sale'        => $sale->reference,
+                  'amount'      => $pv->amount,
+                  'method'      => 'Transfer',
+                  'bank'        => $bank->code,
+                  'created_by'  => $pv->created_by,
                 ];
 
                 if (isset($options['attachment'])) $payment['attachment'] = $options['attachment'];

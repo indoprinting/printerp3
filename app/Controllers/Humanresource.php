@@ -291,13 +291,30 @@ class Humanresource extends BaseController
     checkPermission('Customer.Add');
 
     if (requestMethod() == 'POST') {
+      $name   = getPost('name');
+      $phone  = filterNumber(getPost('phone'));
+
+      if (empty($name)) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($phone)) {
+        $this->response(400, ['message' => 'Phone number is required.']);
+      }
+
+      $customer = Customer::getRow(['phone' => $phone]);
+
+      if ($customer) {
+        $this->response(400, ['message' => "Customer phone {$phone} is already present."]);
+      }
+
       $customerData = [
         'customer_group_id' => getPost('group'),
         'price_group_id'    => getPost('pricegroup'),
-        'name'              => getPost('name'),
+        'name'              => $name,
         'company'           => getPost('company'),
         'email'             => getPost('email'),
-        'phone'             => getPost('phone'),
+        'phone'             => $phone,
         'address'           => getPost('address'),
         'city'              => getPost('city'),
         'json'              => json_encode([])

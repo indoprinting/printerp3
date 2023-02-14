@@ -32,7 +32,7 @@ class Finance extends BaseController
     $dt
       ->select("banks.id AS id, banks.code, banks.name, banks.number,
       banks.holder, banks.type, banks.amount, biller.name AS biller_name, banks.bic, banks.active")
-      ->join('biller', 'biller.id = banks.biller_id', 'left')
+      ->join('biller', 'biller.code = banks.biller', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -72,8 +72,13 @@ class Finance extends BaseController
       })
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
-      })
-      ->generate();
+      });
+
+    if ($biller = session('login')->biller) {
+      $dt->where('banks.biller', $biller);
+    }
+
+    $dt->generate();
   }
 
   public function getExpenses()
@@ -142,8 +147,13 @@ class Finance extends BaseController
       })
       ->editColumn('attachment', function ($data) {
         return renderAttachment($data['attachment']);
-      })
-      ->generate();
+      });
+
+    if ($biller = session('login')->biller) {
+      $dt->where('expense.biller', $biller);
+    }
+
+    $dt->generate();
   }
 
   public function getIncomes()
@@ -199,8 +209,13 @@ class Finance extends BaseController
       })
       ->editColumn('attachment', function ($data) {
         return renderAttachment($data['attachment']);
-      })
-      ->generate();
+      });
+
+    if ($biller = session('login')->biller) {
+      $dt->where('incomes.biller', $biller);
+    }
+
+    $dt->generate();
   }
 
   public function getMutations()
@@ -252,8 +267,13 @@ class Finance extends BaseController
       })
       ->editColumn('attachment', function ($data) {
         return renderAttachment($data['attachment']);
-      })
-      ->generate();
+      });
+
+    if ($biller = session('login')->biller) {
+      $dt->where('bank_mutations.biller', $biller);
+    }
+
+    $dt->generate();
   }
 
   public function getPaymentValidations()
@@ -292,8 +312,13 @@ class Finance extends BaseController
       })
       ->editColumn('attachment', function ($data) {
         return renderAttachment($data['attachment']);
-      })
-      ->generate();
+      });
+
+    if ($biller = session('login')->biller) {
+      $dt->where('payment_validations.biller', $biller);
+    }
+
+    $dt->generate();
   }
 
   public function getReconciliations()
