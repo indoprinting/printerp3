@@ -7,8 +7,6 @@
   <meta name="<?= csrf_token() ?>" content="<?= csrf_hash() ?>">
   <title>PrintERP 3</title>
   <link rel="icon" href="<?= base_url(); ?>/favicon.ico">
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/fontawesome/css/all.min.css">
   <!-- Third party -->
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/alertifyjs/css/alertify.min.css">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/datatables/datatables.min.css">
@@ -279,45 +277,57 @@
               </li>
             <?php endif; ?>
             <!-- Human Resource -->
-            <li class="nav-item">
-              <a href="#" class="nav-link" data-slug="humanresource">
-                <i class="nav-icon fad fa-users-cog" style="color:#4040ff"></i>
-                <p><?= lang('App.humanresource') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/customer') ?>" class="nav-link" data-action="link" data-slug="customer">
-                    <i class="nav-icon fad fa-user-tie-hair" style="color:#80ffff"></i>
-                    <p><?= lang('App.customer') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/customergroup') ?>" class="nav-link" data-action="link" data-slug="customergroup">
-                    <i class="nav-icon fad fa-users" style="color:#40ff80"></i>
-                    <p><?= lang('App.customergroup') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/user') ?>" class="nav-link" data-action="link" data-slug="user">
-                    <i class="nav-icon fad fa-user" style="color:#ff8040"></i>
-                    <p><?= lang('App.user') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/usergroup') ?>" class="nav-link" data-action="link" data-slug="usergroup">
-                    <i class="nav-icon fad fa-users" style="color:#8080ff"></i>
-                    <p><?= lang('App.usergroup') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/supplier') ?>" class="nav-link" data-action="link" data-slug="supplier">
-                    <i class="nav-icon fad fa-user-tie-hair" style="color:#ffff80"></i>
-                    <p><?= lang('App.supplier') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess(['Customer.View', 'CustomerGroup.View', 'User.View', 'UserGroup.View', 'Supplier.View'])) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link" data-slug="humanresource">
+                  <i class="nav-icon fad fa-users-cog" style="color:#4040ff"></i>
+                  <p><?= lang('App.humanresource') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('Customer.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/customer') ?>" class="nav-link" data-action="link" data-slug="customer">
+                        <i class="nav-icon fad fa-user-tie-hair" style="color:#80ffff"></i>
+                        <p><?= lang('App.customer') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('CustomerGroup.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/customergroup') ?>" class="nav-link" data-action="link" data-slug="customergroup">
+                        <i class="nav-icon fad fa-users" style="color:#40ff80"></i>
+                        <p><?= lang('App.customergroup') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('User.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/user') ?>" class="nav-link" data-action="link" data-slug="user">
+                        <i class="nav-icon fad fa-user" style="color:#ff8040"></i>
+                        <p><?= lang('App.user') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('UserGroup.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/usergroup') ?>" class="nav-link" data-action="link" data-slug="usergroup">
+                        <i class="nav-icon fad fa-users" style="color:#8080ff"></i>
+                        <p><?= lang('App.usergroup') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Supplier.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/supplier') ?>" class="nav-link" data-action="link" data-slug="supplier">
+                        <i class="nav-icon fad fa-user-tie-hair" style="color:#ffff80"></i>
+                        <p><?= lang('App.supplier') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- Inventory -->
             <li class="nav-item">
               <a href="#" class="nav-link" data-slug="inventory">
@@ -531,14 +541,14 @@
             <!-- Sales -->
             <li class="nav-item">
               <a href="#" class="nav-link" data-slug="sale">
-                <i class="nav-icon fad fa-cash-register"></i>
+                <i class="nav-icon fad fa-cash-register" style="color:#40ffff"></i>
                 <p><?= lang('App.sale') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
                   <a href="<?= base_url('sale') ?>" class="nav-link" data-action="link" data-slug="invoice">
-                    <i class="nav-icon fad fa-file-invoice"></i>
+                    <i class="nav-icon fad fa-file-invoice" style="color:#ff8040"></i>
                     <p><?= lang('App.invoice') ?></p>
                   </a>
                 </li>

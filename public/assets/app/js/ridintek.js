@@ -499,6 +499,7 @@ export class Sale {
                   <div class="form-group">
                     <label>${lang.App.operator}</label>
                     <select name="item[operator][]" class="select-user" data-placeholder="${lang.App.operator}" style="width:100%">
+                      <option value=""></option>
                     </select>
                   </div>
                 </div>
@@ -512,7 +513,7 @@ export class Sale {
             </div>
           </div>
         </td>
-        <td class="saleitem-subtotal">${formatCurrency(item.subtotal)}</td>
+        <td><span class="float-right saleitem-subtotal">${formatCurrency(item.subtotal)}</span></td>
         <td><a href="#" class="table-row-delete sale-row"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);

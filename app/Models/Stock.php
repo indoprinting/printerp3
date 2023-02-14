@@ -68,6 +68,7 @@ class Stock
     $product  = Product::getRow(['code' => $data['product']]);
 
     if ($product) {
+      $data['product']      = $product->code;
       $data['product_id']   = $product->id;
       $data['product_code'] = $product->code;
       $data['product_name'] = $product->name;
@@ -99,6 +100,7 @@ class Stock
     $warehouse  = Warehouse::getRow(['code' => $data['warehouse']]);
 
     if ($warehouse) {
+      $data['warehouse']      = $warehouse->code;
       $data['warehouse_id']   = $warehouse->id;
       $data['warehouse_code'] = $warehouse->code;
       $data['warehouse_name'] = $warehouse->name;

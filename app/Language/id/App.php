@@ -210,6 +210,7 @@ return [
   'positionname'          => 'Nama Jabatan',
   'price'                 => 'Harga',
   'pricegroup'            => 'Grup Harga',
+  'print'                 => 'Cetak',
   'privilege'             => 'Hak Istimewa',
   'procurement'           => 'Pengadaan',
   'product'               => 'Produk',

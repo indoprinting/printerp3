@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
+use App\Models\Attachment;
 use App\Models\DB;
-use App\Models\Sale as SaleModel;
+use App\Models\Payment;
+use App\Models\Sale as Invoice;
 use App\Models\SaleItem;
 
 class Sale extends BaseController
@@ -149,14 +151,50 @@ class Sale extends BaseController
       $warehouse  = getPost('warehouse');
       $cashier    = getPost('cashier');
       $customer   = getPost('customer');
-      $dueDate    = getPost('duedate');
+      $dueDate    = dateTimeJS(getPost('duedate'));
       $note       = getPost('note');
-      $items      = getPost('item');
-      $itemData   = [];
+      $approve    = (getPost('approve') == 1 ? 1 : 0);
+      $rawItems   = getPost('item');
 
-      if (empty($items) || !is_array($items)) {
+      if (empty($biller)) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
+      if (empty($warehouse)) {
+        $this->response(400, ['message' => 'Warehouse is required.']);
+      }
+
+      if (empty($customer)) {
+        $this->response(400, ['message' => 'Customer is required.']);
+      }
+
+      if (empty($cashier)) {
+        $this->response(400, ['message' => 'Cashier is required.']);
+      }
+
+      if (empty($rawItems) || !is_array($rawItems)) {
         $this->response(400, ['message' => 'Item is empty or not valid.']);
       }
+
+      // Convert rawItems to items
+      $items = [];
+
+      for ($a = 0; $a < count($rawItems['code']); $a++) {
+        if (empty($rawItems['operator'][$a])) {
+          $this->response(400, ['message' => "Operator is empty for {$rawItems['code'][$a]}. Please set operator!"]);
+        }
+
+        $items[] = [
+          'code'      => $rawItems['code'][$a],
+          'width'     => $rawItems['width'][$a],
+          'length'    => $rawItems['length'][$a],
+          'price'     => filterDecimal($rawItems['price'][$a]),
+          'quantity'  => $rawItems['quantity'][$a],
+          'operator'  => $rawItems['operator'][$a],
+        ];
+      }
+
+      unset($rawItems);
 
       $data = [
         'date'      => $date,
@@ -166,65 +204,76 @@ class Sale extends BaseController
         'customer'  => $customer,
         'due_date'  => $dueDate,
         'note'      => $note,
-        'json'      => json_encode([
-          'approved'    => 0,
-          'cashier_by'  => $cashier,
-          'payment_due_date'  => '',
-          'source'      => 'PrintERP'
-        ])
+        'source'    => 'PrintERP',
+        'approved'  => $approve,
       ];
+
+      $data = $this->useAttachment($data);
 
       DB::transStart();
 
-      $insertId = SaleModel::add($data);
+      $insertId = Invoice::add($data, $items);
 
       if (!$insertId) {
-        $this->response(400, ['message' => getLastError()]);
-      }
-
-      $sale = SaleModel::getRow(['id' => $insertId]);
-
-      for ($a = 0; $a < count($items['code']); $a++) {
-        $area = floatval($items['width'][$a]) * floatval($items['length'][$a]);
-        $quantity = floatval($items['quantity'][$a]) * $area;
-
-        $itemData[] = [
-          'sale'      => $sale->reference,
-          'product'   => $items['code'][$a],
-          'price'     => filterDecimal($items['price'][$a]),
-          'length'    => $items['length'][$a],
-          'quantity'  => $quantity,
-          'spec'      => $items['spec'][$a],
-          'width'     => $items['width'][$a],
-          'json'      => json_encode([
-            'l'             => floatval($items['length'][$a]),
-            'w'             => floatval($items['width'][$a]),
-            'area'          => floatval($items['length'][$a]) * floatval($items['width'][$a]),
-            'spec'          => $items['spec'][$a],
-            'sqty'          => floatval($items['quantity'][$a]),
-            'status'        => 'need_payment',
-            'due_date'      => $dueDate,
-            'operator_id'   => floatval($items['operator'][$a]),
-            'completed_at'  => ''
-          ])
-        ];
-      }
-
-      if (!SaleItem::add($itemData)) {
         $this->response(400, ['message' => getLastError()]);
       }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(201, ['message' => 'Sale has been added.']);
+        $this->response(201, ['message' => 'Invoice has been added.']);
       }
 
-      $this->response(400, ['message' => 'Failed to add sale.']);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addsale');
 
     $this->response(200, ['content' => view('Sale/add', $this->data)]);
+  }
+
+  public function delete($id = null)
+  {
+    checkPermission('Sale.Delete');
+
+    $sale = Invoice::getRow(['id' => $id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      DB::transStart();
+
+      Invoice::delete(['id' => $id]);
+      SaleItem::delete(['sale_id' => $id]);
+      Attachment::delete(['hashname' => $sale->attachment]);
+      Payment::delete(['sale_id' => $id]);
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Invoice has been deleted.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    $this->response(400, ['message' => 'Failed to delete invoice.']);
+  }
+
+  public function print($id = null)
+  {
+    checkPermission('Sale.View');
+
+    $sale = Invoice::getRow(['id' => $id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    $this->data['sale'] = $sale;
+
+    return view('Sale/Print', $this->data);
   }
 }

@@ -48,9 +48,11 @@
                 <div class="form-group">
                   <label for="customer"><?= lang('App.customer') ?> *</label>
                   <div class="input-group">
-                    <div class="input-group-prepend">
-                      <a href="<?= base_url('humanresource/customer/add') ?>" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#ModalDefault"><i class="fad fa-user-plus"></i></a>
-                    </div>
+                    <?php if (hasAccess('Customer.Add')) : ?>
+                      <div class="input-group-prepend">
+                        <a href="<?= base_url('humanresource/customer/add') ?>" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#ModalDefault"><i class="fad fa-user-plus"></i></a>
+                      </div>
+                    <?php endif; ?>
                     <select id="customer" name="customer" class="select-customer" data-placeholder="<?= lang('App.customer') ?>" style="width:100%" placeholder="<?= lang('App.customer') ?>">
                       <option value=""></option>
                     </select>
@@ -72,12 +74,22 @@
                   </div>
                 </div>
               </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <input type="checkbox" id="rawmaterial" name="rawmaterial">
-                  <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
+              <?php if (hasAccess(['Sale.Approve', 'Sale.RawMaterial'])) : ?>
+                <div class="col-md-4">
+                  <?php if (hasAccess('Sale.RawMaterial')) : ?>
+                    <div class="form-group">
+                      <input type="checkbox" id="rawmaterial" name="rawmaterial">
+                      <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
+                    </div>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Sale.Approve')) : ?>
+                    <div class="form-group">
+                      <input type="checkbox" id="approve" name="approve" value="1">
+                      <label for="approve"><?= lang('App.approve') ?></label>
+                    </div>
+                  <?php endif; ?>
                 </div>
-              </div>
+              <?php endif; ?>
             </div>
             <div class="row">
               <div class="col-md-12">
@@ -119,7 +131,7 @@
                     <tfoot>
                       <tr>
                         <td colspan="2"><span class="float-right"><?= lang('App.grandtotal') ?></span></td>
-                        <td class="sale-grandtotal">Rp 0</td>
+                        <td><span class="float-right sale-grandtotal">Rp 0</span></td>
                         <td></td>
                       </tr>
                     </tfoot>

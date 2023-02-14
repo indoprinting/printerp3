@@ -9,9 +9,17 @@
     <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-12">
-        <div class="form-group">
-          <label for="name"><?= lang('App.groupname') ?></label>
-          <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.groupname') ?>" value="<?= $customerGroup->name ?>">
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="name"><?= lang('App.groupname') ?></label>
+                  <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.groupname') ?>" value="<?= $customerGroup->name ?>">
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

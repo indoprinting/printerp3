@@ -342,7 +342,8 @@ function initControls() {
         autoHide: 'l'
       }
     });
-    $('.modal-body').css('min-height', '464px').overlayScrollbars({
+
+    $('.modal-body').css('min-height', '400px').overlayScrollbars({
       scrollbars: {
         autoHide: 'l'
       }
@@ -506,7 +507,8 @@ function initModalForm(opt = {}) {
             title: 'Success'
           });
 
-          if ($('#customer').length) {
+          // Pre-select customer after add from add customer button.
+          if ($('#customer').length && $('#phone').length) {
             preSelect2('customer', '#customer', $('#phone').val());
           }
 

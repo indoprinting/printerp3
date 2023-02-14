@@ -211,6 +211,7 @@ return [
   'positionname'          => 'Position Name',
   'price'                 => 'Price',
   'pricegroup'            => 'Price Group',
+  'print'                 => 'Print',
   'privilege'             => 'Privilege',
   'procurement'           => 'Procurement',
   'product'               => 'Product',

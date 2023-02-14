@@ -116,6 +116,132 @@ function dbgprint()
   }
 }
 
+function dispatchW2PSale($saleId = null)
+{
+  $curl = curl_init('https://admin.indoprinting.co.id/api/v1/printerp-sales');
+  $key = 'g4Jlk3cILfITrbN74kwFHD1p9R3v15lmuLU_l3N9k4psUd4hD3rltAL03';
+  $res = '';
+
+  if ($sale = \App\Models\Sale::getRow(['id' => $saleId])) {
+    $saleJS = getJSON($sale->json_data);
+
+    if ($saleJS->source != 'W2P') {
+      setLastError('Sale ID is not from Web2Print.');
+      return false;
+    }
+
+    $saleItems = \App\Models\SaleItem::get(['sale_id' => $sale->id]);
+    $pic = \App\Models\User::getRow(['id' => $sale->created_by]);
+
+    if ($sale && $saleItems) {
+      $customer = \App\Models\Customer::getRow(['id' => $sale->customer_id]);
+      $payments = \App\Models\Payment::get(['sale_id' => $sale->id]);
+      $payment_validation = \App\Models\PaymentValidation::getRow(['sale_id' => $sale->id]);
+
+      if ($customer) {
+        $sale->status = lang($sale->status);
+        $response['error'] = 0;
+        $response['message'] = 'OK';
+        $response['key'] = $key;
+
+        $response['data'] = [];
+        $response['data']['customer'] = [
+          'company' => $customer->company,
+          'name'  => $customer->name,
+          'phone' => $customer->phone
+        ];
+
+        if ($payments) {
+          foreach ($payments as $payment) {
+            $response['data']['payments'][] = [
+              'date' => $payment->date,
+              'reference' => $payment->reference,
+              'method' => $payment->method,
+              'amount' => $payment->amount
+            ];
+          }
+        }
+
+        $response['data']['pic'] = [
+          'name' => $pic->fullname
+        ];
+
+        $warehouse = \App\Models\Warehouse::getRow(['id' => $sale->warehouse_id]);
+
+        $response['data']['sale'] = [
+          'no'                      => $sale->reference,
+          'date'                    => $sale->date,
+          'est_complete_date'       => ($saleJS->est_complete_date ?? ''),
+          'payment_due_date'        => ($saleJS->payment_due_date ?? ''),
+          'waiting_production_date' => ($saleJS->waiting_production_date ?? ''),
+          'grand_total'             => $sale->grand_total,
+          'paid'                    => $sale->paid,
+          'balance'                 => ($sale->grand_total - $sale->paid),
+          'status'                  => lang($sale->status),
+          'payment_status'          => lang($sale->payment_status),
+          'paid_by'                 => ($sale->payment_method ?? '-'),
+          'outlet'                  => $sale->biller,
+          'note'                    => htmlDecode($sale->note),
+          'warehouse'               => $warehouse->name,
+          'warehouse_code'          => $warehouse->code
+        ];
+
+        $response['data']['sale_items'] = [];
+
+        foreach ($saleItems as $saleItem) {
+          $saleItemJS   = getJSON($saleItem->json);
+          $operator     = \App\Models\User::getRow(['id' => $saleItemJS->operator_id ?? null]);
+          $operatorName = ($operator ? $operator->fullname : '');
+
+          $response['data']['sale_items'][] = [
+            'product_code' => $saleItem->product_code,
+            'product_name' => $saleItem->product_name,
+            'price'        => $saleItem->price,
+            'subtotal'     => $saleItem->subtotal,
+            'width'        => $saleItemJS->w,
+            'length'       => $saleItemJS->l,
+            'area'         => $saleItemJS->area,
+            'quantity'     => $saleItemJS->sqty,
+            'spec'         => $saleItemJS->spec,
+            'status'       => lang($saleItemJS->status),
+            'due_date'     => ($saleItemJS->due_date ?? ''),
+            'completed_at' => ($saleItemJS->completed_at ?? ''),
+            'operator'     => $operatorName
+          ];
+        }
+
+        if ($payment_validation) {
+          $response['data']['payment_validation'] = [
+            'amount'           => $payment_validation->amount,
+            'unique_code'      => $payment_validation->unique_code,
+            'transfer_amount'  => ($payment_validation->amount + $payment_validation->unique_code),
+            'expired_date'     => $payment_validation->expired_date,
+            'transaction_date' => $payment_validation->transaction_date,
+            'description'      => $payment_validation->description,
+            'status'           => lang($payment_validation->status)
+          ];
+        }
+      }
+    }
+
+    $body = json_encode($response);
+
+    curl_setopt($curl, CURLOPT_HEADER, false);
+    curl_setopt($curl, CURLOPT_POST, TRUE);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+
+    $res = curl_exec($curl);
+
+    if (!$res) {
+      setLastError(curl_error($curl));
+    }
+    curl_close($curl);
+  }
+
+  return $res;
+}
+
 /**
  * Format date to readable date.
  */
@@ -268,6 +394,30 @@ function getLastError()
 }
 
 /**
+ * Get working date time for customer who take an order.
+ * @param string $dateTime Initial datetime string.
+ * @return string return Working date for customer who take an order.
+ */
+function getWorkingDateTime($dateTime)
+{
+  $dt = new DateTime($dateTime);
+  $hour   = $dt->format('H');
+  $minute = $dt->format('i');
+
+  if ($hour >= 17 && $hour <= 23 && $minute <= 59) { // After office hour.
+    $h = (24 - $hour + 9); // Return must hour 9.
+  } elseif ($hour >= 0 && $hour < 9 && $minute <= 59) {
+    $h = (9 - $hour);
+  } else {
+    $h = 0;
+  }
+
+  if ($h) $dt->add(new DateInterval("PT{$h}H")); // Period Time $h Hour
+
+  return $dt->format('Y-m-d H:i:s');
+}
+
+/**
  * Check if current login session has permission access.
  * If session has permission 'All' then it's always return true.
  *
@@ -351,13 +501,13 @@ function isLoggedIn()
  */
 function isSpecialCustomer($customerId)
 {
-  $customer = Customer::getRow(['id' => $customerId]);
+  $customer = \App\Models\Customer::getRow(['id' => $customerId]);
 
   if (!$customer) {
     return false;
   }
 
-  $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
+  $csGroup = \App\Models\CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
     return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? true : false);
@@ -365,12 +515,17 @@ function isSpecialCustomer($customerId)
   return false;
 }
 
+function isTBSale(string $biller, string $warehouse)
+{
+  return (strcasecmp(\App\Models\Biller::getRow(['code' => $biller])->name, \App\Models\Warehouse::getRow(['code' => $warehouse])->name) != 0);
+}
+
 /**
  * Check if user_id is W2P or not.
  */
 function isW2PUser($user_id)
 {
-  $user = User::getRow(['id' => $user_id]);
+  $user = \App\Models\User::getRow(['id' => $user_id]);
 
   if ($user) {
     return (strcasecmp($user->username, 'W2P') === 0 ? true : false);
@@ -383,10 +538,10 @@ function isW2PUser($user_id)
  */
 function isWeb2Print($sale_id)
 {
-  $sale = Sale::getRow(['id' => $sale_id]);
+  $sale = \App\Models\Sale::getRow(['id' => $sale_id]);
 
   if ($sale) {
-    $saleJS = getJSON($sale->json_data);
+    $saleJS = getJSON($sale->json);
 
     return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0 ? true : false);
   }
@@ -469,6 +624,17 @@ function renderStatus(string $status)
 function requestMethod()
 {
   return (!isCLI() ? $_SERVER['REQUEST_METHOD'] : null);
+}
+
+/**
+ * Round decimal floating point with filtering.
+ * @param mixed $num Number to round.
+ * @example 1 roundDecimal('2,34,30.20'); // Return 23430
+ * @example 2 roundDecimal('25.5'); // Return 26
+ */
+function roundDecimal($num)
+{
+  return round(filterDecimal($num));
 }
 
 /**

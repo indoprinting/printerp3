@@ -43,6 +43,10 @@ class Qms extends BaseController
         return renderStatus($data['status2']);
       });
 
+    if ($wh = session('login')->warehouse) {
+      $warehouse = Warehouse::getRow(['code' => $wh]);
+      $dt->where('queue_tickets.warehouse_id', $warehouse->id);
+    }
 
     $dt->generate();
   }
