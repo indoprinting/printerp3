@@ -272,8 +272,12 @@ class Sale extends BaseController
       $this->response(404, ['message' => 'Invoice is not found.']);
     }
 
-    $this->data['sale'] = $sale;
+    $saleItems = SaleItem::get(['sale_id' => $sale->id]);
 
-    return view('Sale/Print', $this->data);
+    $this->data['sale']       = $sale;
+    $this->data['saleItems']  = $saleItems;
+    $this->data['title']      = "Invoice {$sale->reference}";
+
+    return view('Sale/print', $this->data);
   }
 }

@@ -4,10 +4,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AdminLTE 3 | Invoice Print</title>
+  <title><?= $title ?></title>
 
   <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback"> -->
   <!-- Font Awesome -->
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/fontawesome/css/all.min.css">
   <!-- Theme style -->
@@ -20,10 +20,9 @@
     <section class="invoice">
       <!-- title row -->
       <div class="row">
-        <div class="col-12">
+        <div class="col-md-12">
           <h2 class="page-header">
             <i class="fas fa-globe"></i> AdminLTE, Inc.
-            <small class="float-right">Date: 2/10/2014</small>
           </h2>
         </div>
         <!-- /.col -->
@@ -124,8 +123,6 @@
         </div>
         <!-- /.col -->
         <div class="col-6">
-          <p class="lead">Amount Due 2/22/2014</p>
-
           <div class="table-responsive">
             <table class="table">
               <tr>
@@ -156,7 +153,7 @@
   <!-- ./wrapper -->
   <!-- Page specific script -->
   <script>
-    window.addEventListener("load", window.print());
+    // window.addEventListener("load", window.print());
   </script>
 </body>
 
