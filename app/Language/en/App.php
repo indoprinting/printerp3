@@ -101,6 +101,7 @@ return [
   'deliverytime'          => 'Delivery Time',
   'description'           => 'Description',
   'disapprove'            => 'Disapprove',
+  'discount'              => 'Discount',
   'display'               => 'Display',
   'district'              => 'District',
   'division'              => 'Division',

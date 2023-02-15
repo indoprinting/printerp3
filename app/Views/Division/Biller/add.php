@@ -28,8 +28,22 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
+                  <label for="company"><?= lang('App.company') ?> *</label>
+                  <input id="company" name="company" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.company') ?>">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="target"><?= lang('App.targetrevenue') ?></label>
+                  <input id="target" name="target" class="form-control form-control-border form-control-sm currency" placeholder="<?= lang('App.targetrevenue') ?>">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
                   <label for="address"><?= lang('App.address') ?></label>
-                  <input id="address" name="address" class="form-control form-control-border form-control-sm">
+                  <input id="address" name="address" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.address') ?>">
                 </div>
               </div>
               <div class="col-md-6">
@@ -54,12 +68,6 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="target"><?= lang('App.targetrevenue') ?></label>
-                  <input id="target" name="target" class="form-control form-control-border form-control-sm currency" placeholder="<?= lang('App.targetrevenue') ?>">
-                </div>
-              </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <input type="checkbox" name="active" value="1" checked>

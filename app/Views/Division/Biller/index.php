@@ -16,6 +16,7 @@
                 <th></th>
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
+                <th><?= lang('App.company'); ?></th>
                 <th><?= lang('App.address'); ?></th>
                 <th><?= lang('App.city'); ?></th>
                 <th><?= lang('App.phone'); ?></th>
@@ -29,6 +30,7 @@
                 <th></th>
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
+                <th><?= lang('App.company'); ?></th>
                 <th><?= lang('App.address'); ?></th>
                 <th><?= lang('App.city'); ?></th>
                 <th><?= lang('App.phone'); ?></th>

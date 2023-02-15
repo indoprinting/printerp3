@@ -20,7 +20,7 @@ class Division extends BaseController
 
     $dt = new DataTables('biller');
     $dt
-      ->select("id, code, name, address, city, phone, email, json->>'$.target' AS target, active")
+      ->select("id, code, name, company, address, city, phone, email, json->>'$.target' AS target, active")
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -122,6 +122,7 @@ class Division extends BaseController
       $data = [
         'code'    => getPost('code'),
         'name'    => getPost('name'),
+        'company' => getPost('company'),
         'address' => getPost('address'),
         'city'    => getPost('city'),
         'phone'   => getPost('phone'),
@@ -138,6 +139,10 @@ class Division extends BaseController
 
       if (empty($data['name'])) {
         $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($data['company'])) {
+        $this->response(400, ['message' => 'Company is required.']);
       }
 
       DB::transStart();
@@ -217,6 +222,7 @@ class Division extends BaseController
       $data = [
         'code'    => getPost('code'),
         'name'    => getPost('name'),
+        'company' => getPost('company'),
         'address' => getPost('address'),
         'city'    => getPost('city'),
         'phone'   => getPost('phone'),
@@ -233,6 +239,10 @@ class Division extends BaseController
 
       if (empty($data['name'])) {
         $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($data['company'])) {
+        $this->response(400, ['message' => 'Company is required.']);
       }
 
       DB::transStart();

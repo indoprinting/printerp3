@@ -15,6 +15,7 @@
         "google/apiclient": "^2.12",
         "kint-php/kint": "^5.0",
         "php": ">=7.4",
-        "phpoffice/phpspreadsheet": "^1.25"
+        "phpoffice/phpspreadsheet": "^1.25",
+        "chillerlan/php-qrcode": "^4.3"
     }
 }

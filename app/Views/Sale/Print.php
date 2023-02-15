@@ -12,6 +12,13 @@
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/fontawesome/css/all.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="<?= base_url() ?>/assets/dist/css/adminlte.min.css">
+  <style>
+    .watermark {
+      position: absolute;
+      width: 80%;
+      opacity: 0.1;
+    }
+  </style>
 </head>
 
 <body>
@@ -22,88 +29,71 @@
       <div class="row">
         <div class="col-md-12">
           <h2 class="page-header">
-            <i class="fas fa-globe"></i> AdminLTE, Inc.
+            INVOICE
           </h2>
         </div>
         <!-- /.col -->
       </div>
       <!-- info row -->
       <div class="row invoice-info">
-        <div class="col-sm-4 invoice-col">
-          From
+        <div class="col-md-3 invoice-col">
+          <?= lang('App.from') ?>
           <address>
-            <strong>Admin, Inc.</strong><br>
-            795 Folsom Ave, Suite 600<br>
-            San Francisco, CA 94107<br>
-            Phone: (804) 123-5432<br>
-            Email: info@almasaeedstudio.com
+            <strong><?= $biller->company ?></strong><br>
+            <?= lang('App.address') ?>: <?= $biller->address ?><br>
+            <?= lang('App.phone') ?>: <?= $biller->phone ?><br>
+            <?= lang('App.email') ?>: <?= $biller->email ?>
           </address>
         </div>
-        <!-- /.col -->
-        <div class="col-sm-4 invoice-col">
-          To
+        <div class="col-md-3 invoice-col">
+          <?= lang('App.to') ?>
           <address>
-            <strong>John Doe</strong><br>
-            795 Folsom Ave, Suite 600<br>
-            San Francisco, CA 94107<br>
-            Phone: (555) 539-1037<br>
-            Email: john.doe@example.com
+            <strong><?= $customer->name . ($customer->company ? " ({$customer->company})" : '') ?></strong><br>
+            <?= lang('App.address') ?>: <?= $customer->address ?><br>
+            <?= lang('App.phone') ?>: <?= $customer->phone ?><br>
+            <?= lang('App.email') ?>: <?= $customer->email ?>
           </address>
         </div>
-        <!-- /.col -->
-        <div class="col-sm-4 invoice-col">
-          <b>Invoice #007612</b><br>
+        <div class="col-md-3 invoice-col">
+          <b><?= lang('App.invoice') . ' ' . $sale->reference ?></b><br>
           <br>
-          <b>Order ID:</b> 4F3S8J<br>
-          <b>Payment Due:</b> 2/22/2014<br>
-          <b>Account:</b> 968-34567
+          <b>Payment Due:</b> <?= formatDate($saleJS->payment_due_date) ?>
         </div>
-        <!-- /.col -->
+        <div class="col-md-3 invoice-col">
+          <img src="<?= (new \chillerlan\QRCode\QRCode())->render('https://www.indoprinting.co.id/trackorder?inv=' . $sale->reference) ?>">
+        </div>
       </div>
       <!-- /.row -->
 
       <!-- Table row -->
       <div class="row">
-        <div class="col-md-12 table-responsive">
+        <div class="col-md-12">
+          <!-- <img class="watermark" src="<?= base_url('assets/app/images/logo-indoprinting-300.png') ?>"> -->
           <table class="table table-striped">
             <thead>
               <tr>
-                <th>Qty</th>
-                <th>Product</th>
-                <th>Serial #</th>
-                <th>Description</th>
-                <th>Subtotal</th>
+                <th><?= lang('App.product') ?></th>
+                <th><?= lang('App.spec') ?></th>
+                <th><?= lang('App.width') ?></th>
+                <th><?= lang('App.length') ?></th>
+                <th><?= lang('App.quantity') ?></th>
+                <th><?= lang('App.price') ?></th>
+                <th><?= lang('App.subtotal') ?></th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1</td>
-                <td>Call of Duty</td>
-                <td>455-981-221</td>
-                <td>El snort testosterone trophy driving gloves handsome</td>
-                <td>$64.50</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>Need for Speed IV</td>
-                <td>247-925-726</td>
-                <td>Wes Anderson umami biodiesel</td>
-                <td>$50.00</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>Monsters DVD</td>
-                <td>735-845-642</td>
-                <td>Terry Richardson helvetica tousled street art master</td>
-                <td>$10.70</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>Grown Ups Blue Ray</td>
-                <td>422-568-642</td>
-                <td>Tousled lomo letterpress</td>
-                <td>$25.99</td>
-              </tr>
+              <?php foreach ($saleItems as $saleItem) : ?>
+                <?php $saleItemJS = getJSON($saleItem->json) ?>
+                <tr>
+                  <td><?= "({$saleItem->product_code}) $saleItem->product_name" ?></td>
+                  <td><?= $saleItemJS->spec ?></td>
+                  <td><?= $saleItemJS->w ?></td>
+                  <td><?= $saleItemJS->l ?></td>
+                  <td><?= $saleItemJS->sqty ?></td>
+                  <td><?= formatNumber($saleItem->price) ?></td>
+                  <td><?= formatNumber($saleItem->subtotal) ?></td>
+                </tr>
+              <?php endforeach; ?>
             </tbody>
           </table>
         </div>
@@ -126,8 +116,8 @@
           <div class="table-responsive">
             <table class="table">
               <tr>
-                <th style="width:50%">Subtotal:</th>
-                <td>$250.30</td>
+                <th style="width:50%"><?= lang('App.discount') ?>:</th>
+                <td><?= formatNumber($sale->discount) ?></td>
               </tr>
               <tr>
                 <th>Tax (9.3%)</th>

@@ -6,6 +6,8 @@ namespace App\Controllers;
 
 use App\Libraries\DataTables;
 use App\Models\Attachment;
+use App\Models\Biller;
+use App\Models\Customer;
 use App\Models\DB;
 use App\Models\Payment;
 use App\Models\Sale as Invoice;
@@ -275,7 +277,10 @@ class Sale extends BaseController
     $saleItems = SaleItem::get(['sale_id' => $sale->id]);
 
     $this->data['sale']       = $sale;
+    $this->data['saleJS']     = getJSON($sale->json);
     $this->data['saleItems']  = $saleItems;
+    $this->data['biller']     = Biller::getRow(['code' => $sale->biller]);
+    $this->data['customer']   = Customer::getRow(['id' => $sale->customer_id]);
     $this->data['title']      = "Invoice {$sale->reference}";
 
     return view('Sale/print', $this->data);

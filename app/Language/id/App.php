@@ -101,6 +101,7 @@ return [
   'deliverytime'          => 'Waktu Pengiriman',
   'description'           => 'Deskripsi',
   'disapprove'            => 'Tidak Disetujui',
+  'discount'              => 'Diskon',
   'display'               => 'Tampilan',
   'district'              => 'Kecamatan',
   'division'              => 'Divisi',
