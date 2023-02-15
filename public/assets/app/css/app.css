@@ -82,17 +82,6 @@ table.dataTable tbody tr {
   margin: 0 4px 0 0;
 }
 
-@media print {
-
-  .invoice {
-    border: none;
-  }
-}
-
-.invoice {
-  border: none;
-}
-
 .layout-navbar-fixed .wrapper .main-header {
   z-index: 1;
 }
@@ -116,6 +105,10 @@ table.dataTable tbody tr {
 
 .os-padding {
   z-index: inherit;
+}
+
+.text-decoration-underline {
+  text-decoration: underline;
 }
 
 .text-sm .brand-link {

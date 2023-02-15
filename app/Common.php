@@ -247,6 +247,14 @@ function dispatchW2PSale($saleId = null)
  */
 function formatDate(string $dateTime)
 {
+  return date('d M Y', strtotime($dateTime));
+}
+
+/**
+ * Format date to readable date.
+ */
+function formatDateTime(string $dateTime)
+{
   return date('d M Y H:i:s', strtotime($dateTime));
 }
 
@@ -441,6 +449,51 @@ function hasAccess($permission)
     }
   }
   return false;
+}
+
+/**
+ * Convert html string into readable note.
+ */
+function html2Note($html)
+{
+  $str = str_replace('<br>', "\r\n", $html);
+  return htmlRemove($str);
+}
+
+/**
+ * Decode HTML string.
+ * @param string $html HTML string to decode.
+ * @return string Return decoded HTML string.
+ * @example 1 htmlDecode('&lt;b&gt;OK&lt;/b&gt;'); // Return '<b>OK</b>'.
+ */
+function htmlDecode($html)
+{
+  return html_entity_decode(trim($html), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
+}
+
+/**
+ * Encode HTML string.
+ * @param string $html HTML string to encode.
+ * @return string Return encoded HTML string.
+ * @example 1 htmlEncode('<b>OK</b>'); // Return '&lt;b&gt;OK&lt;/b&gt;'.
+ */
+function htmlEncode($html)
+{
+  $allowed = '<a><span><div><a><br><p><b><i><u><img><blockquote><small><ul><ol><li><hr><pre>
+  <code><strong><em><table><tr><td><th><tbody><thead><tfoot><h3><h4><h5><h6>';
+  $stripped = strip_tags($html, $allowed);
+  return htmlentities(trim($stripped), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
+}
+
+/**
+ * Remove HTML tag.
+ * @param string $html HTML string to remove.
+ * @example 1 htmlRemove('<b>OK</b>'); // Return 'OK'.
+ */
+function htmlRemove($html)
+{
+  $decoded = html_entity_decode(trim($html), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
+  return preg_replace('/\<(.*?)\>/', '', $decoded);
 }
 
 /**
