@@ -136,8 +136,8 @@
                 <tr>
                   <td><?= \App\Models\User::getRow(['id' => $sale->created_by])->fullname ?></td>
                   <td><?= htmlRemove($sale->note) ?></td>
-                  <td><?= formatDate($saleJS->payment_due_date) ?></td>
-                  <td><?= formatDate($saleJS->est_complete_date) ?></td>
+                  <td><?= ($saleJS->payment_due_date ? formatDate($saleJS->payment_due_date) : '-') ?></td>
+                  <td><?= ($saleJS->est_complete_date ? formatDate($saleJS->est_complete_date) : '-') ?></td>
                 </tr>
               </tbody>
             </table>

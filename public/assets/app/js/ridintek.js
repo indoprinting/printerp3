@@ -439,6 +439,7 @@ export class Sale {
           <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
           <input type="hidden" name="item[type][]" value="${item.type}">
           <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
+          <input type="hidden" name="item[name][]" value="${item.name}">
           (${item.code}) ${item.name}
         </td>
         <td>

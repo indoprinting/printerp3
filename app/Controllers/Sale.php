@@ -264,6 +264,13 @@ class Sale extends BaseController
     $this->response(400, ['message' => 'Failed to delete invoice.']);
   }
 
+  public function preview()
+  {
+    $this->data['title'] = lang('App.preview');
+
+    $this->response(200, ['content' => view('Sale/preview', $this->data)]);
+  }
+
   public function print($id = null)
   {
     checkPermission('Sale.View');

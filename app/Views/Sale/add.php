@@ -146,7 +146,9 @@
   </form>
 </div>
 <div class="modal-footer">
+  <a href="<?= base_url('sale/preview') ?>" class="btn btn-info" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable"><?= lang('App.preview') ?></a>
   <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" id="draft" class="btn bg-gradient-warning"><?= lang('App.draft') ?></button>
   <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
 </div>
 <script>
@@ -178,7 +180,7 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
-    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i:s', strtotime('+7 day'))) ?>');
+    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
 
     $('#product').change(function() {
       if (!this.value) return false;
