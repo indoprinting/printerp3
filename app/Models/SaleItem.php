@@ -176,14 +176,14 @@ class SaleItem
           }
 
           Stock::increase([
-            'sale'        => $sale->reference,
-            'saleitem_id' => $saleItem->id,
-            'product'     => $saleItem->product,
-            'price'       => $saleItem->price,
-            'quantity'    => $completedQty,
-            'warehouse'   => $sale->warehouse,
-            'created_at'  => $data['created_at'],
-            'created_by'  => $operator->id
+            'sale'          => $sale->reference,
+            'saleitem_id'   => $saleItem->id,
+            'product'       => $saleItem->product,
+            'price'         => $saleItem->price,
+            'quantity'      => $completedQty,
+            'warehouse'     => $sale->warehouse,
+            'created_at'    => $data['created_at'],
+            'created_by'    => $operator->id
           ]);
         } else if ($saleItem->product_type == 'standard') { // SALEITEM. Decrement. FFC280, POCT15
           if ($saleItem->product_code == 'KLIKPOD') {
@@ -192,14 +192,14 @@ class SaleItem
           }
 
           Stock::decrease([
-            'sale_id'     => $sale->id,
-            'saleitem_id' => $saleItem->id,
-            'product'     => $saleItem->product,
-            'price'       => $saleItem->price,
-            'quantity'    => $completedQty,
-            'warehouse'   => $sale->warehouse,
-            'created_at'  => $data['created_at'],
-            'created_by'  => $operator->id
+            'sale_id'       => $sale->id,
+            'saleitem_id'   => $saleItem->id,
+            'product'       => $saleItem->product,
+            'price'         => $saleItem->price,
+            'quantity'      => $completedQty,
+            'warehouse'     => $sale->warehouse,
+            'created_at'    => $data['created_at'],
+            'created_by'    => $operator->id
           ]);
         }
 
