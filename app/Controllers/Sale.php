@@ -10,6 +10,7 @@ use App\Models\Biller;
 use App\Models\Customer;
 use App\Models\DB;
 use App\Models\Payment;
+use App\Models\PaymentValidation;
 use App\Models\Sale as Invoice;
 use App\Models\SaleItem;
 
@@ -160,6 +161,7 @@ class Sale extends BaseController
       $dueDate    = dateTimeJS(getPost('duedate'));
       $note       = getPost('note');
       $approve    = (getPost('approve') == 1 ? 1 : 0);
+      $transfer   = (getPost('transfer') == 1);
       $rawItems   = getPost('item');
 
       if (empty($biller)) {
@@ -223,6 +225,14 @@ class Sale extends BaseController
       if (!$insertId) {
         $this->response(400, ['message' => getLastError()]);
       }
+
+      $sale = Invoice::getRow(['id' => $insertId]);
+
+      PaymentValidation::add([
+        'sale'    => $sale->reference,
+        'biller'  => $sale->biller,
+        'amount'  => $sale->grand_total,
+      ]);
 
       DB::transComplete();
 
