@@ -48,7 +48,7 @@ class Sale
 
     $grandTotal  = 0;
     $totalPrice  = 0;
-    $total_items = 0.0;
+    $totalItems = 0.0;
     $date = ($data['date'] ?? date('Y-m-d H:i:s'));
     $reference = OrderRef::getReference('sale');
 
@@ -61,7 +61,7 @@ class Sale
 
       $qty         = ($area > 0 ? $area * $quantity : $quantity);
       $totalPrice  += round($price * $qty);
-      $total_items += $qty;
+      $totalItems += $qty;
     }
 
     // Discount.
@@ -96,7 +96,7 @@ class Sale
       'status'          => $data['status'],
       'payment_status'  => ($data['payment_status'] ?? 'pending'),
       'payment_term'    => $payment_term,
-      'total_items'     => $total_items,
+      'total_items'     => $totalItems,
       'paid'            => filterDecimal($data['paid'] ?? 0),
       'attachment'      => ($data['attachment'] ?? NULL),
       'payment_method'  => ($data['payment_method'] ?? NULL),
@@ -127,7 +127,7 @@ class Sale
 
       foreach ($items as $item) {
         $product = Product::getRow(['code' => $item['code']]);
-        $productJS = getJSON($product->json_data);
+        $productJS = getJSON($product->json);
         $operator = User::getRow(['id' => $item['operator']]);
 
         if (!empty($item['width']) && !empty($item['length'])) {
@@ -296,16 +296,15 @@ class Sale
     foreach ($sales as $sale) {
       if (empty($sale->json)) {
         setLastError("Sale::sync() Sale ID {$sale->id} has invalid json column");
-        continue;
+        return false;
       }
 
-      $saleJS = getJSON($sale->json ?? '{}');
+      $saleJS = getJSON($sale->json);
       $saleData = [];
 
       if (!$saleJS) {
         setLastError("Sale::sync() Invalid sales->json in sale id {$sale->id}, {$sale->reference}");
-        log_message('error', $sale->json);
-        continue;
+        return false;
       }
 
       $isDuePayment      = isDueDate($saleJS->payment_due_date ?? $sale->due_date);
@@ -323,16 +322,16 @@ class Sale
       $completedItems = 0;
       $deliveredItems = 0;
       $finishedItems  = 0;
-      $grandTotal     = 0;
+      $total          = 0;
       $hasPartial     = false;
       $totalSaleItems = 0;
       $saleStatus     = $sale->status;
 
       foreach ($saleItems as $saleItem) {
-        $saleItemJS = getJSON($saleItem->json_data);
+        $saleItemJS = getJSON($saleItem->json);
         $saleItemStatus = $saleItemJS->status;
         $totalSaleItems++;
-        $grandTotal += round($saleItem->price * $saleItem->quantity);
+        $total += round($saleItem->price * $saleItem->quantity);
         $isItemFinished = ($saleItem->quantity == $saleItem->finished_qty ? true : false);
         $isItemFinishedPartial = ($saleItem->finished_qty > 0 && $saleItem->quantity > $saleItem->finished_qty ? true : false);
 
@@ -360,12 +359,22 @@ class Sale
 
         $saleItemJS->status = $saleItemStatus;
 
-        SaleItem::update((int)$saleItem->id, ['json_data' => json_encode($saleItemJS)]);
+        SaleItem::update((int)$saleItem->id, [
+          'json'      => json_encode($saleItemJS),
+          'json_data' => json_encode($saleItemJS)
+        ]);
       }
 
-      $grandTotal = round($grandTotal - $sale->discount);
+      if ($sale->discount > $total) {
+        $sale->discount = $total;
+      }
 
-      $saleData['grand_total'] = $grandTotal;
+      // Tax calculation.
+      $tax        = ($sale->tax * 0.01 * $total);
+      $grandTotal = round($total + $tax - $sale->discount);
+
+      $saleData['total']        = $total;
+      $saleData['grand_total']  = $grandTotal; // Inclue tax.
 
       $isSaleCompleted        = ($completedItems == $totalSaleItems ? true : false);
       $isSaleCompletedPartial = (($completedItems > 0 && $completedItems < $totalSaleItems) || $hasPartial ? true : false);

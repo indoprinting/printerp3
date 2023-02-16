@@ -14,6 +14,7 @@
           <th><?= lang('App.spec') ?></th>
           <th><?= lang('App.width') ?></th>
           <th><?= lang('App.length') ?></th>
+          <th><?= lang('App.area') ?></th>
           <th><?= lang('App.quantity') ?></th>
           <th><?= lang('App.price') ?></th>
           <th><?= lang('App.subtotal') ?></th>
@@ -23,15 +24,15 @@
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="6"><span class="float-right"><?= lang('App.grandtotal') ?></span></td>
-          <td><span class="float-right"></span></td>
+          <td colspan="7"><span class="float-right"><?= lang('App.grandtotal') ?></span></td>
+          <td><span class="float-right grandtotal"></span></td>
         </tr>
       </tfoot>
     </table>
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.close') ?></button>
 </div>
 <script>
   (function() {
@@ -41,14 +42,35 @@
   $(document).ready(function() {
     let itemCodes = $('[name="item[code][]"]');
     let itemNames = $('[name="item[name][]"]');
+    let itemSpecs = $('[name="item[spec][]"]');
+    let itemWidths = $('[name="item[width][]"]');
+    let itemLengths = $('[name="item[length][]"]');
+    let itemAreas = $('[name="item[area][]"]');
+    let itemQuantities = $('[name="item[quantity][]"]');
+    let itemPrices = $('[name="item[price][]"]');
     let tbody = $('#table-preview tbody');
+    let gtotal = $('#table-preview .grandtotal');
+    let grandTotal = 0;
 
-    tbody.append(`
-      <tr>
-        <td></td>
-      </tr>
-    `);
-    
-    console.log(items.length);
+    for (let a = 0; a < itemCodes.length; a++) {
+      let price     = filterDecimal(itemPrices[a].value);
+      let subTotal  = (itemWidths[a].value * itemLengths[a].value * itemQuantities[a].value * price);
+      grandTotal    += subTotal;
+
+      tbody.append(`
+        <tr>
+          <td>(${itemCodes[a].value}) ${itemNames[a].value}</td>
+          <td>${itemSpecs[a].value}</td>
+          <td><span class="float-right">${itemWidths[a].value}</span></td>
+          <td><span class="float-right">${itemLengths[a].value}</span></td>
+          <td><span class="float-right">${itemAreas[a].value}</span></td>
+          <td><span class="float-right">${itemQuantities[a].value}</span></td>
+          <td><span class="float-right">${formatCurrency(price)}</span></td>
+          <td><span class="float-right">${formatCurrency(subTotal)}</span></td>
+        </tr>
+      `);
+
+      gtotal.html(formatCurrency(grandTotal));
+    }
   });
 </script>

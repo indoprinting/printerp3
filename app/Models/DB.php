@@ -71,7 +71,7 @@ class DB
    * individual data rows, which can be either an 'array', an
    * 'object', or a custom class name.
    */
-  public function get($where = NULL, ?int $limit = NULL, ?int $offset = 0, bool $reset = true)
+  public function get($where = null, ?int $limit = null, ?int $offset = 0, bool $reset = true)
   {
     return self::$qb->getWhere($where, $limit, $offset, $reset)->getResult();
   }
@@ -80,7 +80,7 @@ class DB
    * Get compiled select.
    * @param bool $reset Reset last query.
    */
-  public function getCompiledSelect(bool $reset = TRUE)
+  public function getCompiledSelect(bool $reset = true)
   {
     return self::$qb->getCompiledSelect($reset);
   }
@@ -90,18 +90,18 @@ class DB
    * individual data rows, which can be either an 'array', an
    * 'object', or a custom class name.
    */
-  public function getRow($where = NULL)
+  public function getRow($where = null)
   {
     if ($rows = self::$instance->get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
    * Group by.
    */
-  public function groupBy($by, bool $escape = NULL)
+  public function groupBy($by, bool $escape = null)
   {
     self::$qb->groupBy($by, $escape);
     return self::$instance;
@@ -131,7 +131,7 @@ class DB
    * @param array|RawSql|string $key
    * @param mixed               $value
    */
-  public function having($key, $value = NULL, bool $escape = NULL)
+  public function having($key, $value = null, bool $escape = null)
   {
     self::$qb->having($key, $value, $escape);
     return self::$instance;
@@ -140,7 +140,7 @@ class DB
   /**
    * Compiles an insert string and runs the query
    */
-  public function insert($set = NULL, ?bool $escape = NULL)
+  public function insert($set = null, ?bool $escape = null)
   {
     self::$qb->insert($set, $escape);
     return self::$db->insertID();
@@ -149,7 +149,7 @@ class DB
   /**
    * Compiles batch insert strings and runs the queries
    */
-  public function insertBatch(array $set = NULL, bool $escape = NULL, int $batchSize = 100)
+  public function insertBatch(array $set = null, bool $escape = null, int $batchSize = 100)
   {
     return self::$qb->insertBatch($set, $escape, $batchSize);
   }
@@ -163,20 +163,20 @@ class DB
   }
 
   /**
-   * Is not NULL
+   * Is not null
    */
   public function isNotNull($field)
   {
-    self::$qb->where("{$field} IS NOT NULL");
+    self::$qb->where("{$field} IS NOT null");
     return self::$instance;
   }
 
   /**
-   * Is NULL
+   * Is null
    */
   public function isNull($field)
   {
-    self::$qb->where("{$field} IS NULL");
+    self::$qb->where("{$field} IS null");
     return self::$instance;
   }
 
@@ -187,7 +187,7 @@ class DB
    * @param RawSql|string $cond Clause condition.
    * @param string $type Type of join: left, right, outer, inner, left outer, right outer.
    */
-  public function join($table, $cond, $type = '', bool $escape = NULL)
+  public function join($table, $cond, $type = '', bool $escape = null)
   {
     self::$qb->join($table, $cond, $type, $escape);
     return self::$instance;
@@ -199,7 +199,7 @@ class DB
    *
    * @param array|RawSql|string $field
    */
-  public function like($field, string $match = '', string $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
+  public function like($field, string $match = '', string $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
   {
     self::$qb->like($field, $match, $side, $escape, $insensitiveSearch);
     return self::$instance;
@@ -210,7 +210,7 @@ class DB
    * @param int $value Size of rows.
    * @param int $offset Offset of rows index.
    */
-  public function limit(?int $value = NULL, ?int $offset = 0)
+  public function limit(?int $value = null, ?int $offset = 0)
   {
     self::$qb->limit($value, $offset);
     return self::$instance;
@@ -222,7 +222,7 @@ class DB
    *
    * @param array|RawSql|string $field
    */
-  public function notHavingLike($field, $match = '', $side = 'both', bool $escape = NULL, bool $insensitiveSearch = false)
+  public function notHavingLike($field, $match = '', $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
   {
     self::$qb->notHavingLike($field, $match, $side, $escape, $insensitiveSearch);
     return self::$instance;
@@ -234,7 +234,7 @@ class DB
    *
    * @param array|RawSql|string $field
    */
-  public function notLike($field, string $match = '', string $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
+  public function notLike($field, string $match = '', string $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
   {
     self::$qb->notLike($field, $match, $side, $escape, $insensitiveSearch);
     return self::$instance;
@@ -246,7 +246,7 @@ class DB
    * @param string $orderBy Column name.
    * @param string $direction ASC, DESC or RANDOM
    */
-  public function orderBy(string $orderBy, string $direction = '', ?bool $escape = NULL)
+  public function orderBy(string $orderBy, string $direction = '', ?bool $escape = null)
   {
     self::$qb->orderBy($orderBy, $direction, $escape);
     return self::$instance;
@@ -258,7 +258,7 @@ class DB
    * @param array|RawSql|string $key
    * @param mixed               $value
    */
-  public function orHaving($key, $value = NULL, bool $escape = NULL)
+  public function orHaving($key, $value = null, bool $escape = null)
   {
     self::$qb->orHaving($key, $value, $escape);
     return self::$instance;
@@ -271,7 +271,7 @@ class DB
    * @param array|RawSql|string $field
    *
    */
-  public function orNotLike($field, string $match = '', string $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
+  public function orNotLike($field, string $match = '', string $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
   {
     self::$qb->orNotLike($field, $match, $side, $escape, $insensitiveSearch);
     return self::$instance;
@@ -283,7 +283,7 @@ class DB
    *
    * @param array|RawSql|string $field
    */
-  public function orLike($field, string $match = '', string $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
+  public function orLike($field, string $match = '', string $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
   {
     self::$qb->orLike($field, $match, $side, $escape, $insensitiveSearch);
     return self::$instance;
@@ -297,7 +297,7 @@ class DB
    * @param mixed               $value
    * @param bool                $escape
    */
-  public function orWhere($key, $value = NULL, bool $escape = NULL)
+  public function orWhere($key, $value = null, bool $escape = null)
   {
     self::$qb->orWhere($key, $value, $escape);
     return self::$instance;
@@ -321,7 +321,7 @@ class DB
     if ($rows = self::$instance->rows()) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -332,15 +332,15 @@ class DB
     if ($rows = self::$instance->rows()) {
       return $rows[count($rows) - 1];
     }
-    return NULL;
+    return null;
   }
 
   /**
    * Generates the SELECT portion of the query
    * @param array|RawSql|string $select
-   * @param NULL|bool $escape
+   * @param null|bool $escape
    */
-  public function select($select = '*', bool $escape = NULL)
+  public function select($select = '*', bool $escape = null)
   {
     self::$qb->select($select, $escape);
     return self::$instance;
@@ -367,7 +367,7 @@ class DB
   /**
    * Sets a flag which tells the query string compiler to add DISTINCT
    */
-  public function distinct($val = TRUE)
+  public function distinct($val = true)
   {
     self::$qb->distinct($val);
     return self::$instance;
@@ -416,7 +416,7 @@ class DB
   /**
    * Begin Transaction
    */
-  public static function transBegin(bool $testMode = FALSE)
+  public static function transBegin(bool $testMode = false)
   {
     self::$db = db_connect();
     return self::$db->transBegin($testMode);
@@ -458,7 +458,7 @@ class DB
   /**
    * Start Transaction
    */
-  public static function transStart(bool $testMode = FALSE)
+  public static function transStart(bool $testMode = false)
   {
     self::$db = db_connect();
     return self::$db->transStart($testMode);
@@ -487,9 +487,9 @@ class DB
    * 
    * @param array|RawSql|string $key
    * @param mixed $value
-   * @param NULL|bool $escape
+   * @param null|bool $escape
    */
-  public function where($key, $value = NULL, bool $escape = NULL)
+  public function where($key, $value = null, bool $escape = null)
   {
     self::$qb->where($key, $value, $escape);
     return self::$instance;
@@ -502,7 +502,7 @@ class DB
    * @param array|RawSql|string|null $where
    * @return int Return affected rows of updates.
    */
-  public function update($set = NULL, $where = NULL, ?int $limit = NULL)
+  public function update($set = null, $where = null, ?int $limit = null)
   {
     self::$qb->update($set, $where, $limit);
     return self::$instance->affectedRows();
@@ -514,7 +514,7 @@ class DB
    *
    * @param array|BaseBuilder|Closure|string $values The values searched on, or anonymous function with subquery
    */
-  public function whereIn($key, $value = NULL, bool $escape = NULL)
+  public function whereIn($key, $value = null, bool $escape = null)
   {
     self::$qb->whereIn($key, $value, $escape);
     return self::$instance;

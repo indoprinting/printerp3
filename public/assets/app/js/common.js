@@ -479,7 +479,17 @@ function initModalForm(opt = {}) {
       return false;
     }
 
-    $(this).prepend(`<i class="fad fa-spinner-third fa-spin"></i> `);
+    let icon = $(this).find('i');
+    let oldClass = '';
+
+    if (icon.length) {
+      oldClass = icon.prop('class');
+
+      icon.removeClass().addClass('fad fa-fw fa-spinner-third fa-spin');
+    } else {
+      $(this).prepend(`<i class="fad fa-fw fa-spinner-third fa-spin"></i> `);
+    }
+
     $(this).prop('disabled', true);
 
     let formData = new FormData(typeof opt.form == 'string' ? $(opt.form)[0] : opt.form);
@@ -495,7 +505,12 @@ function initModalForm(opt = {}) {
         });
 
         $(opt.submit).prop('disabled', false);
-        $(opt.submit).find('i').remove();
+
+        if (icon.length) {
+          icon.removeClass().addClass(oldClass);
+        } else {
+          $(opt.submit).find('i').remove();
+        }
       },
       method: 'POST',
       processData: false,
@@ -518,7 +533,12 @@ function initModalForm(opt = {}) {
         }
 
         $(opt.submit).prop('disabled', false);
-        $(opt.submit).find('i').remove();
+
+        if (icon.length) {
+          icon.removeClass().addClass(oldClass);
+        } else {
+          $(opt.submit).find('i').remove();
+        }
       },
       url: opt.url
     });

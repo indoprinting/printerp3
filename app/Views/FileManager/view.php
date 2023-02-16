@@ -14,8 +14,8 @@
   <?php endif; ?>
 </div>
 <div class="modal-footer">
-  <a href="<?= base_url('attachment/' . $attachment->hashname) ?>?d=1" class="btn btn-success"><?= lang('App.download') ?></a>
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.close') ?></button>
+  <a href="<?= base_url('attachment/' . $attachment->hashname) ?>?d=1" class="btn bg-gradient-success"><?= lang('App.download') ?></a>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><?= lang('App.close') ?></button>
 </div>
 <script>
   (function() {

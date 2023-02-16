@@ -1,3 +1,4 @@
+<?php $deliveryNote = (getGet('deliverynote') == 1) ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -36,7 +37,7 @@
         <div class="row">
           <div class="col-md-12">
             <h2 class="page-header">
-              INVOICE
+              <?= ($deliveryNote ? lang('App.deliverynote') : lang('App.invoice')) ?>
             </h2>
           </div>
         </div>
@@ -154,8 +155,10 @@
                   <th><?= lang('App.width') ?></th>
                   <th><?= lang('App.length') ?></th>
                   <th><?= lang('App.quantity') ?></th>
-                  <th><?= lang('App.price') ?></th>
-                  <th><?= lang('App.subtotal') ?></th>
+                  <?php if (!$deliveryNote) : ?>
+                    <th><?= lang('App.price') ?></th>
+                    <th><?= lang('App.subtotal') ?></th>
+                  <?php endif; ?>
                 </tr>
               </thead>
               <tbody>
@@ -164,11 +167,13 @@
                   <tr>
                     <td><span class="float-left"><?= "({$saleItem->product_code}) $saleItem->product_name" ?></span></td>
                     <td><?= $saleItemJS->spec ?></td>
-                    <td><?= $saleItemJS->w ?></td>
-                    <td><?= $saleItemJS->l ?></td>
-                    <td><?= $saleItemJS->sqty ?></td>
-                    <td><span class="float-right"><?= formatNumber($saleItem->price) ?></span></td>
-                    <td><span class="float-right"><?= formatNumber($saleItem->subtotal) ?></span></td>
+                    <td><?= filterDecimal($saleItemJS->w) ?></td>
+                    <td><?= filterDecimal($saleItemJS->l) ?></td>
+                    <td><?= filterDecimal($saleItemJS->sqty) ?></td>
+                    <?php if (!$deliveryNote) : ?>
+                      <td><span class="float-right"><?= formatNumber($saleItem->price) ?></span></td>
+                      <td><span class="float-right"><?= formatNumber($saleItem->subtotal) ?></span></td>
+                    <?php endif; ?>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
@@ -176,51 +181,59 @@
           </div>
         </div>
         <div class="row pb-5">
-          <div class="col-md-8">
-            <p class="lead text-bold"><?= lang('App.paymentmethod') ?></p>
-            <p class="" style="margin-top: 10px;">
-              Pembayaran dengan transfer dianggap sah jika ditransfer dengan kode unik pada rekening berikut:
-            </p>
-            <div class="row">
-              <div class="col-md-2 text-bold">BCA</div>
-              <div class="col-md-4">8030 200234</div>
-              <div class="col-md-2 text-bold">Mandiri</div>
-              <div class="col-md-4">1360 0005 5532 3</div>
+          <?php if (!$deliveryNote) : ?>
+            <div class="col-md-8">
+              <p class="lead text-bold"><?= lang('App.paymentmethod') ?></p>
+              <p class="" style="margin-top: 10px;">
+                Pembayaran dengan transfer dianggap sah jika ditransfer dengan kode unik pada rekening berikut:
+              </p>
+              <div class="row">
+                <div class="col-md-2 text-bold">BCA</div>
+                <div class="col-md-4">8030 200234</div>
+                <div class="col-md-2 text-bold">Mandiri</div>
+                <div class="col-md-4">1360 0005 5532 3</div>
+              </div>
+              <div class="row">
+                <div class="col-md-2 text-bold">BNI</div>
+                <div class="col-md-4">5592 09008</div>
+                <div class="col-md-2 text-bold">BRI</div>
+                <div class="col-md-4">0083 01 001092 56 5</div>
+              </div>
             </div>
-            <div class="row">
-              <div class="col-md-2 text-bold">BNI</div>
-              <div class="col-md-4">5592 09008</div>
-              <div class="col-md-2 text-bold">BRI</div>
-              <div class="col-md-4">0083 01 001092 56 5</div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="table-responsive">
-              <table class="table" style="background-color:transparent">
-                <tr>
-                  <th><?= lang('App.total') ?>:</th>
-                  <td><span class="float-right"><?= formatCurrency($sale->grand_total) ?></span></td>
-                </tr>
-                <tr>
-                  <th style="width:50%"><?= lang('App.discount') ?>:</th>
-                  <td><span class="float-right"><?= formatCurrency($sale->discount) ?></span></td>
-                </tr>
-                <?php if ($sale->tax > 0) : ?>
-                  <?php $tax = ($sale->tax / 100 * $sale->grand_total); ?>
+            <div class="col-md-4">
+              <div class="table-responsive">
+                <table class="table" style="background-color:transparent">
                   <tr>
-                    <th><?= lang('App.tax') ?> (<?= floatval($sale->tax) ?>%):</th>
-                    <td><span class="float-right"><?= formatCurrency($tax) ?></span></td>
+                    <th><?= lang('App.total') ?>:</th>
+                    <td><span class="float-right"><?= formatCurrency($sale->total) ?></span></td>
                   </tr>
-                <?php else : ?>
-                  <?php $tax = 0; ?>
-                <?php endif; ?>
-                <tr>
-                  <th><?= lang('App.grandtotal') ?>:</th>
-                  <td><span class="float-right"><?= formatCurrency($sale->grand_total + $tax) ?></span></td>
-                </tr>
-              </table>
+                  <tr>
+                    <th style="width:50%"><?= lang('App.discount') ?>:</th>
+                    <td><span class="float-right"><?= formatCurrency($sale->discount) ?></span></td>
+                  </tr>
+                  <?php if ($sale->tax > 0) : ?>
+                    <?php $tax = ($sale->total * $sale->tax * 0.01); ?>
+                    <tr>
+                      <th><?= lang('App.tax') ?> (<?= floatval($sale->tax) ?>%):</th>
+                      <td><span class="float-right"><?= formatCurrency($tax) ?></span></td>
+                    </tr>
+                  <?php endif; ?>
+                  <tr>
+                    <th><?= lang('App.grandtotal') ?>:</th>
+                    <td><span class="float-right"><?= formatCurrency($sale->grand_total) ?></span></td>
+                  </tr>
+                  <tr>
+                    <th><?= lang('App.paid') ?>:</th>
+                    <td><span class="float-right"><?= formatCurrency($sale->paid) ?></span></td>
+                  </tr>
+                  <tr>
+                    <th><?= lang('App.debt') ?>:</th>
+                    <td><span class="float-right"><?= formatCurrency($sale->balance) ?></span></td>
+                  </tr>
+                </table>
+              </div>
             </div>
-          </div>
+          <?php endif; ?>
         </div>
         <div class="row pb-5 text-center">
           <div class="col-md-4">
@@ -248,9 +261,8 @@
       </div>
     </div>
   </div>
-
   <script>
-    // window.addEventListener("load", window.print());
+    window.addEventListener("load", window.print());
   </script>
 </body>
 

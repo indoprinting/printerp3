@@ -69,7 +69,7 @@ class Sale extends BaseController
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
-            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
               <i class="fad fa-page"></i>
             </a>
             <div class="dropdown-menu">
@@ -81,6 +81,10 @@ class Sale extends BaseController
               <a class="dropdown-item" href="' . base_url('sale/print/' . $data['id']) . '"
                 target="_blank">
                 <i class="fad fa-fw fa-print"></i> ' . lang('App.print') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('sale/print/' . $data['id']) . '?deliverynote=1"
+                target="_blank">
+                <i class="fad fa-fw fa-print"></i> ' . lang('App.deliverynote') . '
               </a>
               <a class="dropdown-item" href="' . base_url('sale/view/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"

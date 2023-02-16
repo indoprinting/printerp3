@@ -100,6 +100,7 @@ return [
   'deleteuser'            => 'Hapus Pengguna',
   'deleteusergroup'       => 'Hapus Grup Pengguna',
   'deletewarehouse'       => 'Hapus Gudang',
+  'deliverynote'          => 'Surat Jalan',
   'deliverytime'          => 'Waktu Pengiriman',
   'description'           => 'Deskripsi',
   'disapprove'            => 'Tidak Disetujui',

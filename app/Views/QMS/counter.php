@@ -22,12 +22,12 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col-md-9">
-                      <button class="btn btn-lg btn-primary" id="btn-call"><i class="fa fa-megaphone"></i> <span data-field="label">CALL</span></button>
-                      <button class="btn btn-lg btn-danger" id="btn-recall"><i class="fa fa-phone"></i> <span data-field="label">RECALL</span></button>
-                      <button class="btn btn-lg btn-success" id="btn-serve"><i class="fa fa-play"></i> <span data-field="label">SERVE</span></button>
-                      <button class="btn btn-lg btn-warning" id="btn-rest"><i class="fa fa-mug-hot"></i> <span data-field="label">REST</span></button>
-                      <button class="btn btn-lg btn-default" id="btn-extend"><i class="fa fa-clock"></i> <span data-field="label">EXTEND TIME</span></button>
-                      <button class="btn btn-lg btn-primary" id="btn-addsale" data-remote="<?= base_url('sale/add') ?>" data-toggle="modal" data-target="#ModalStatic"><i class="fa fa-plus"></i> <span data-field="label">ADD SALE</span></button>
+                      <button class="btn btn-lg bg-gradient-primary" id="btn-call"><i class="fa fa-megaphone"></i> <span data-field="label">CALL</span></button>
+                      <button class="btn btn-lg bg-gradient-danger" id="btn-recall"><i class="fa fa-phone"></i> <span data-field="label">RECALL</span></button>
+                      <button class="btn btn-lg bg-gradient-success" id="btn-serve"><i class="fa fa-play"></i> <span data-field="label">SERVE</span></button>
+                      <button class="btn btn-lg bg-gradient-warning" id="btn-rest"><i class="fa fa-mug-hot"></i> <span data-field="label">REST</span></button>
+                      <button class="btn btn-lg bg-gradient-default" id="btn-extend"><i class="fa fa-clock"></i> <span data-field="label">EXTEND TIME</span></button>
+                      <button class="btn btn-lg bg-gradient-primary" id="btn-addsale" data-remote="<?= base_url('sale/add') ?>" data-toggle="modal" data-target="#ModalStatic"><i class="fa fa-plus"></i> <span data-field="label">ADD SALE</span></button>
                     </div>
                     <div class="col-md-3">
                       <?php $counterOpts = [

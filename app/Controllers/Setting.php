@@ -35,7 +35,7 @@ class Setting extends BaseController
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
-            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
               <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">

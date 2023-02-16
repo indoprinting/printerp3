@@ -40,8 +40,8 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {

@@ -36,7 +36,7 @@ class Finance extends BaseController
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
-            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
               <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
@@ -103,7 +103,7 @@ class Finance extends BaseController
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
-            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
               <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
@@ -176,7 +176,7 @@ class Finance extends BaseController
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
-            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
               <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
@@ -236,7 +236,7 @@ class Finance extends BaseController
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
-            <a class="btn btn-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
               <i class="fad fa-gear"></i>
             </a>
             <div class="dropdown-menu">
@@ -362,7 +362,7 @@ class Finance extends BaseController
     $this->data['page'] = [
       'bc' => [
         ['name' => lang('App.finance'), 'slug' => 'finance', 'url' => '#'],
-        ['name' => lang('App.bank'), 'slug' => 'bank', 'url' => '#']
+        ['name' => lang('App.bankaccount'), 'slug' => 'bank', 'url' => '#']
       ],
       'content' => 'Finance/Bank/index',
       'title' => lang('App.bankaccount')

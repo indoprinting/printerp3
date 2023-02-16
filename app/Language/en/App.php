@@ -100,6 +100,7 @@ return [
   'deleteuser'            => 'Delete User',
   'deleteusergroup'       => 'Delete User Group',
   'deleteWarehouse'       => 'Delete Warehouse',
+  'deliverynote'          => 'Delivery Note',
   'deliverytime'          => 'Delivery Time',
   'description'           => 'Description',
   'disapprove'            => 'Disapprove',

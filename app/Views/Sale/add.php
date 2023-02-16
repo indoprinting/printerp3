@@ -89,6 +89,14 @@
                     </div>
                   <?php endif; ?>
                 </div>
+                <div class="col-md-4">
+                  <?php if (hasAccess('Sale.Approve')) : ?>
+                    <div class="form-group">
+                      <input type="checkbox" id="transfer" name="transfer" value="1">
+                      <label for="transfer"><?= lang('App.transfer') ?></label>
+                    </div>
+                  <?php endif; ?>
+                </div>
               <?php endif; ?>
             </div>
             <div class="row">
@@ -146,10 +154,12 @@
   </form>
 </div>
 <div class="modal-footer">
-  <a href="<?= base_url('sale/preview') ?>" class="btn btn-info" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable"><?= lang('App.preview') ?></a>
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="draft" class="btn bg-gradient-warning"><?= lang('App.draft') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <a href="<?= base_url('sale/preview') ?>" class="btn bg-gradient-info" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <i class="fad fa-fw fa-magnifying-glass"></i> <?= lang('App.preview') ?>
+  </a>
+  <button type="button" id="draft" class="btn bg-gradient-warning"><i class="fad fa-fw fa-pen-ruler"></i> <?= lang('App.draft') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {

@@ -72,10 +72,10 @@ $hash = (!empty($hash) ? $hash : bin2hex(random_bytes(4)));
       <div class="card-body pt-2">
         <div class="row">
           <div class="col-sm btn-group">
-            <button id="btn_cetak" class="btn btn-danger btn-block btn-lg btn-reg">SIAP CETAK</button>
+            <button id="btn_cetak" class="btn bg-gradient-danger btn-block btn-lg btn-reg">SIAP CETAK</button>
           </div>
           <div class="col-sm btn-group">
-            <button id="btn_design" class="btn btn-success btn-block btn-lg btn-reg">EDIT DESIGN</button>
+            <button id="btn_design" class="btn bg-gradient-success btn-block btn-lg btn-reg">EDIT DESIGN</button>
           </div>
           <!--
             <div class="col-sm btn-group">
