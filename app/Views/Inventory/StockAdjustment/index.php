@@ -13,14 +13,14 @@
           <table id="Table" class="table table-bordered table-hover" style="width:100%;">
             <thead>
               <tr>
-                <th class="col-sm-1"></th>
+                <th></th>
                 <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
                 <th><?= lang('App.warehouse'); ?></th>
                 <th><?= lang('App.mode'); ?></th>
                 <th><?= lang('App.note'); ?></th>
-                <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.createdat'); ?></th>
+                <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </thead>
@@ -32,8 +32,8 @@
                 <th><?= lang('App.warehouse'); ?></th>
                 <th><?= lang('App.mode'); ?></th>
                 <th><?= lang('App.note'); ?></th>
-                <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.createdat'); ?></th>
+                <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </tfoot>

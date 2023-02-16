@@ -47,7 +47,7 @@ class OrderRef
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -57,7 +57,7 @@ class OrderRef
   {
     $order = self::getRow(['ref_id' => 1]);
 
-    if (strcmp($order->date, date('Y-m-') . '01') === FALSE) {
+    if (strcmp($order->date, date('Y-m-') . '01') === false) {
       DB::table('order_ref')->update([
         'date'        => date('Y-m-') . '01',
         'adjustment'  => 1,
@@ -70,10 +70,10 @@ class OrderRef
         'sale'        => 1,
         'transfer'    => 1
       ], ['ref_id' => $order->ref_id]);
-      return TRUE;
+      return true;
     }
 
-    return FALSE;
+    return false;
   }
 
   /**
@@ -86,8 +86,18 @@ class OrderRef
 
     if (property_exists($order, $name) && isset(self::$prefix[$name])) {
       DB::table('order_ref')->update([$name => [$order->{$name} + 1]], ['ref_id' => $order->ref_id]);
-      return DB::affectedRows();
+
+      if ($affectedRows = DB::affectedRows()) {
+        return $affectedRows;
+      }
+
+      setLastError(DB::error()['message']);
+
+      return false;
     }
-    return FALSE;
+
+    setLastError("Property doesn't exist {$name}.");
+
+    return false;
   }
 }

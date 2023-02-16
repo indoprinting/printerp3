@@ -10,7 +10,7 @@
           <table id="Table" class="table table-bordered table-hover" style="width:100%;">
             <thead>
               <tr>
-                <th class="col-sm-1"></th>
+                <th></th>
                 <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
                 <th><?= lang('App.createdby'); ?></th>

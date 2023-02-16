@@ -3,6 +3,8 @@
 return [
   'approved'            => 'Disetujui',
   'bad'                 => 'Buruk',
+  'called'              => 'Terpanggil',
+  'calling'             => 'Memanggil',
   'cancelled'           => 'Dibatalkan',
   'checked'             => 'Dicek',
   'completed'           => 'Dikomplit',
@@ -16,6 +18,7 @@ return [
   'excellent'           => 'Luar Biasa',
   'expired'             => 'Kadaluarsa',
   'finished'            => 'Terselesaikan',
+  'formula'             => 'Formula',
   'good'                => 'Baik',
   'increase'            => 'Bertambah',
   'installed'           => 'Terinstall',
@@ -26,6 +29,7 @@ return [
   'ordered'             => 'Terpesan',
   'over_due'            => 'Lewat',
   'over_received'       => 'Terima Lebih',
+  'overwrite'           => 'Meniban',
   'packing'             => 'Packing',
   'paid'                => 'Dibayar',
   'partial'             => 'Sebagian',
@@ -35,9 +39,13 @@ return [
   'received_partial'    => 'Diterima Sebagian',
   'returned'            => 'Dikembalikan',
   'sent'                => 'Terkirim',
+  'served'              => 'Terlayani',
+  'serving'             => 'Melayani',
+  'skipped'             => 'Terlewati',
   'slow'                => 'Lambat',
   'trouble'             => 'Masalah',
   'verified'            => 'Terverifikasi',
+  'waiting'             => 'Menunggu',
   'waiting_production'  => 'Menunggu Produksi',
   'waiting_transfer'    => 'Menunggu Transfer'
 ];

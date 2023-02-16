@@ -99,14 +99,15 @@
   <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
   <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
 </div>
+<script>
+  (function() {
+    initControls();
+  })();
+</script>
 <script type="module">
   import {
     StockAdjustment
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
-
-  (function() {
-    initControls();
-  })();
 
   $(document).ready(function() {
     let editor = new Quill('#editor', {
@@ -138,7 +139,12 @@
         success: (data) => {
           let sa = new StockAdjustment('#table-stockadjustment');
 
-          sa.addItem(data.data);
+          sa.addItem({
+            code: data.data.code,
+            name: data.data.name,
+            quantity: 0,
+            current_qty: data.data.quantity
+          });
 
           $(this).val('').trigger('change');
         },

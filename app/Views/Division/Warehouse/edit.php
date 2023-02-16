@@ -14,23 +14,37 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="code"><?= lang('App.code') ?></label>
+                  <label for="code"><?= lang('App.code') ?> *</label>
                   <input id="code" name="code" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.code') ?>" value="<?= $warehouse->code ?>">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.name') ?></label>
+                  <label for="name"><?= lang('App.name') ?> *</label>
                   <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.name') ?>" value="<?= $warehouse->name ?>">
                 </div>
               </div>
             </div>
             <div class="row">
-              <div class="col-md-12">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="pricegroup"><?= lang('App.pricegroup') ?> *</label>
+                  <select id="pricegroup" name="pricegroup" class="select" style="width:100%">
+                    <?php foreach (\App\Models\PriceGroup::get() as $pg) : ?>
+                      <option value="<?= $pg->id ?>"><?= $pg->name ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
                 <div class="form-group">
                   <label for="address"><?= lang('App.address') ?></label>
                   <input id="address" name="address" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.address') ?>" value="<?= $warehouse->address ?>">
                 </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
                 <div class="form-group">
                   <label><?= lang('App.coordinate') ?></label>
                   <div class="row">
@@ -186,6 +200,7 @@
       }
     }
 
+    $('#pricegroup').val('<?= $warehouse->pricegroup ?>').trigger('change');
     $('#visit_days').val(visit_days).trigger('change');
     $('#visit_weeks').val(visit_weeks).trigger('change');
 

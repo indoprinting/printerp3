@@ -4,7 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{Attachment, Biller, Customer, DB, Locale, Product, ProductTransfer, Sale, Supplier, User};
+use App\Models\{
+  Attachment,
+  Biller,
+  Customer,
+  DB,
+  Locale,
+  Product,
+  ProductTransfer,
+  Sale,
+  Supplier,
+  User,
+  Warehouse
+};
 
 class Home extends BaseController
 {
@@ -226,44 +238,95 @@ class Home extends BaseController
       $this->response(400, ['message' => 'Bad request.']);
     }
 
-    $mode = strtolower($mode);
-    $results = [];
-    $term = getGet('term');
-    $type = getGet('type');
+    $mode     = strtolower($mode);
+    $results  = [];
+    $term     = getGet('term');
+    $types    = getGet('type');
 
     switch ($mode) {
-      case 'customer':
-        $q = Customer::select("id, (CASE WHEN company IS NOT NULL THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
+      case 'biller':
+        $q = Biller::select("code id, name text")
+          ->where('active', 1)
           ->limit(10);
 
         if ($term) {
-          $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
+        }
+
+        if ($biller = session('login')->biller) {
+          $q->where('code', $biller);
+        }
+
+        $results = $q->get();
+
+        break;
+      case 'customer':
+        $q = Customer::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
+          ->limit(10);
+
+        if ($term) {
+          $q->where('id', $term)->orLike('name', $term, 'both')
+            ->orLike('company', $term, 'both')->orLike('phone', $term, 'none');
         }
 
         $results = $q->get();
 
         break;
       case 'product':
-        $q = Product::select("code id, CONCAT('(', code, ') ', name) text ")
+        $q = Product::select("code id, CONCAT('(', code, ') ', name) text")
           ->limit(10);
 
-        if ($type) {
-          $q->where('type', $type);
+        if ($term) {
+          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
-        if ($term) {
-          $q->like('code', $term, 'both')->orLike('name', $term, 'both');
+        if ($types) {
+          if (!is_array($types)) {
+            $types = [$types];
+          }
+
+          $q->whereIn('type', $types);
         }
 
         $results = $q->get();
 
         break;
       case 'supplier':
-        $q = Supplier::select("id, (CASE WHEN company IS NOT NULL THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
+        $q = Supplier::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
           ->limit(10);
 
         if ($term) {
-          $q->like('name', $term, 'both')->orLike('company', $term, 'both');
+          $q->where('id', $term)->orLike('name', $term, 'both')->orLike('company', $term, 'both');
+        }
+
+        $results = $q->get();
+
+        break;
+      case 'user':
+        $q = User::select("id, fullname text")
+          ->limit(10);
+
+        if ($term) {
+          $q->like('fullname', $term, 'both')
+            ->where('active', 1)
+            ->orLike('username', $term, 'both')
+            ->orWhere('phone', $term);
+        }
+
+        $results = $q->get();
+
+        break;
+      case 'warehouse':
+        $q = Warehouse::select("code id, name text ")
+          ->where('active', 1)
+          ->limit(10);
+
+        if ($term) {
+          $q->where('id', $term)->like('code', $term, 'both')->orLike('name', $term, 'both');
+        }
+
+        if ($warehouse = session('login')->warehouse) {
+          $q->where('code', $warehouse);
         }
 
         $results = $q->get();

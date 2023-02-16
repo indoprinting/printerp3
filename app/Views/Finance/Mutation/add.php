@@ -70,7 +70,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="bankfrom"><?= lang('App.from') ?></label>
+                  <label for="bankfrom"><?= lang('App.from') ?> *</label>
                   <select id="bankfrom" name="bankfrom" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                     <option value=""></option>
                     <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
@@ -89,7 +89,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="bankto"><?= lang('App.to') ?></label>
+                  <label for="bankto"><?= lang('App.to') ?> *</label>
                   <select id="bankto" name="bankto" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                     <option value=""></option>
                     <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
@@ -105,6 +105,16 @@
                 </div>
               </div>
             </div>
+            <?php if (hasAccess('PaymentValidation.Skip')) : ?>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <input type="checkbox" id="skip_pv" name="skip_pv" value="1">
+                    <label for="skip_pv"><?= lang('App.skippaymentvalidation') ?></label>
+                  </div>
+                </div>
+              </div>
+            <?php endif; ?>
           </div>
         </div>
       </div>

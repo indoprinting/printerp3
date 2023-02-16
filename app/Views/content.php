@@ -4,11 +4,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="<?= csrf_token() ?>" content="<?= csrf_hash() ?>">
   <title>PrintERP 3</title>
   <link rel="icon" href="<?= base_url(); ?>/favicon.ico">
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/fontawesome/css/all.min.css">
   <!-- Third party -->
+  <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/alertifyjs/css/alertify.min.css">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/datatables/datatables.min.css">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/modules/flag-icon/css/flag-icon.min.css">
@@ -27,11 +27,13 @@
   <link rel="stylesheet" href="<?= base_url() ?>/assets/app/css/common.css?v=<?= $resver ?>">
   <link rel="stylesheet" href="<?= base_url() ?>/assets/app/css/loader.css?v=<?= $resver ?>">
   <script>
+    const lang = JSON.parse(atob('<?= $lang64 ?>'));
     const <?= csrf_token() ?> = '<?= csrf_hash() ?>';
     const base_url = '<?= base_url(); ?>';
     const langId = '<?= session('login')->lang ?>';
-    const lang = JSON.parse(atob('<?= $lang64 ?>'));
+    const permissions = JSON.parse(atob('<?= $permission64 ?>'));
     window.Table = null;
+    window.show_timer = true;
   </script>
 </head>
 
@@ -176,7 +178,7 @@
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a href="<?= base_url('debug/page') ?>" class="nav-link" data-action="link" data-slug="debug">
+                    <a href="<?= base_url('debug/page') ?>" class="nav-link" data-action="link" data-slug="page">
                       <i class="nav-icon fad fa-page"></i>
                       <p>Page</p>
                     </a>
@@ -187,7 +189,7 @@
             <?php if (hasAccess('Biller.View') || hasAccess('Warehouse.View')) : ?>
               <li class="nav-item">
                 <a href="#" class="nav-link" data-slug="division">
-                  <i class="nav-icon fad fa-building"></i>
+                  <i class="nav-icon fad fa-building" style="color:#ff4040"></i>
                   <p><?= lang('App.division') ?> <i class="fad fa-angle-right right"></i>
                   </p>
                 </a>
@@ -195,7 +197,7 @@
                   <?php if (hasAccess('Biller.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('division/biller') ?>" class="nav-link" data-action="link" data-slug="biller">
-                        <i class="nav-icon fad fa-warehouse"></i>
+                        <i class="nav-icon fad fa-warehouse" style="color:#40ff40"></i>
                         <p><?= lang('App.biller') ?></p>
                       </a>
                     </li>
@@ -203,7 +205,7 @@
                   <?php if (hasAccess('Warehouse.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('division/warehouse') ?>" class="nav-link" data-action="link" data-slug="warehouse">
-                        <i class="nav-icon fad fa-warehouse-alt"></i>
+                        <i class="nav-icon fad fa-warehouse-alt" style="color:#4040ff"></i>
                         <p><?= lang('App.warehouse') ?></p>
                       </a>
                     </li>
@@ -218,7 +220,7 @@
               <!-- Finance -->
               <li class="nav-item">
                 <a href="#" class="nav-link" data-slug="finance">
-                  <i class="nav-icon fad fa-usd"></i>
+                  <i class="nav-icon fad fa-usd" style="color:#00ff00"></i>
                   <p><?= lang('App.finance') ?> <i class="fad fa-angle-right right"></i>
                   </p>
                 </a>
@@ -226,7 +228,7 @@
                   <?php if (hasAccess('BankAccount.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('finance/bank') ?>" class="nav-link" data-action="link" data-slug="bank">
-                        <i class="nav-icon fad fa-landmark"></i>
+                        <i class="nav-icon fad fa-landmark" style="color:#ff8040;"></i>
                         <p><?= lang('App.bankaccount') ?></p>
                       </a>
                     </li>
@@ -234,7 +236,7 @@
                   <?php if (hasAccess('BankMutation.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('finance/mutation') ?>" class="nav-link" data-action="link" data-slug="mutation">
-                        <i class="nav-icon fad fa-box-usd"></i>
+                        <i class="nav-icon fad fa-box-usd" style="color:#ff00ff"></i>
                         <p><?= lang('App.bankmutation') ?></p>
                       </a>
                     </li>
@@ -242,7 +244,7 @@
                   <?php if (hasAccess('BankReconciliation.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('finance/reconciliation') ?>" class="nav-link" data-action="link" data-slug="reconciliation">
-                        <i class="nav-icon fad fa-sync"></i>
+                        <i class="nav-icon fad fa-sync" style="color:#8040ff"></i>
                         <p><?= lang('App.bankreconciliation') ?></p>
                       </a>
                     </li>
@@ -250,7 +252,7 @@
                   <?php if (hasAccess('Expense.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('finance/expense') ?>" class="nav-link" data-action="link" data-slug="expense">
-                        <i class="nav-icon fad fa-arrow-alt-left"></i>
+                        <i class="nav-icon fad fa-arrow-alt-left" style="color:#ff8080"></i>
                         <p><?= lang('App.expense') ?></p>
                       </a>
                     </li>
@@ -258,7 +260,7 @@
                   <?php if (hasAccess('Income.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('finance/income') ?>" class="nav-link" data-action="link" data-slug="income">
-                        <i class="nav-icon fad fa-arrow-alt-right"></i>
+                        <i class="nav-icon fad fa-arrow-alt-right" style="color:#8080ff"></i>
                         <p><?= lang('App.income') ?></p>
                       </a>
                     </li>
@@ -266,7 +268,7 @@
                   <?php if (hasAccess('PaymentValidation.View')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('finance/validation') ?>" class="nav-link" data-action="link" data-slug="validation">
-                        <i class="nav-icon fad fa-check"></i>
+                        <i class="nav-icon fad fa-check" style="color:#80ff80"></i>
                         <p><?= lang('App.paymentvalidation') ?></p>
                       </a>
                     </li>
@@ -275,49 +277,61 @@
               </li>
             <?php endif; ?>
             <!-- Human Resource -->
-            <li class="nav-item">
-              <a href="#" class="nav-link" data-slug="humanresource">
-                <i class="nav-icon fad fa-users-cog"></i>
-                <p><?= lang('App.humanresource') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/customer') ?>" class="nav-link" data-action="link" data-slug="customer">
-                    <i class="nav-icon fad fa-user-tie-hair"></i>
-                    <p><?= lang('App.customer') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/customergroup') ?>" class="nav-link" data-action="link" data-slug="customergroup">
-                    <i class="nav-icon fad fa-users"></i>
-                    <p><?= lang('App.customergroup') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/user') ?>" class="nav-link" data-action="link" data-slug="user">
-                    <i class="nav-icon fad fa-user"></i>
-                    <p><?= lang('App.user') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/usergroup') ?>" class="nav-link" data-action="link" data-slug="usergroup">
-                    <i class="nav-icon fad fa-users"></i>
-                    <p><?= lang('App.usergroup') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('humanresource/supplier') ?>" class="nav-link" data-action="link" data-slug="supplier">
-                    <i class="nav-icon fad fa-user-tie-hair"></i>
-                    <p><?= lang('App.supplier') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess(['Customer.View', 'CustomerGroup.View', 'User.View', 'UserGroup.View', 'Supplier.View'])) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link" data-slug="humanresource">
+                  <i class="nav-icon fad fa-users-cog" style="color:#4040ff"></i>
+                  <p><?= lang('App.humanresource') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('Customer.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/customer') ?>" class="nav-link" data-action="link" data-slug="customer">
+                        <i class="nav-icon fad fa-user-tie-hair" style="color:#80ffff"></i>
+                        <p><?= lang('App.customer') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('CustomerGroup.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/customergroup') ?>" class="nav-link" data-action="link" data-slug="customergroup">
+                        <i class="nav-icon fad fa-users" style="color:#40ff80"></i>
+                        <p><?= lang('App.customergroup') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('User.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/user') ?>" class="nav-link" data-action="link" data-slug="user">
+                        <i class="nav-icon fad fa-user" style="color:#ff8040"></i>
+                        <p><?= lang('App.user') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('UserGroup.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/usergroup') ?>" class="nav-link" data-action="link" data-slug="usergroup">
+                        <i class="nav-icon fad fa-users" style="color:#8080ff"></i>
+                        <p><?= lang('App.usergroup') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Supplier.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('humanresource/supplier') ?>" class="nav-link" data-action="link" data-slug="supplier">
+                        <i class="nav-icon fad fa-user-tie-hair" style="color:#ffff80"></i>
+                        <p><?= lang('App.supplier') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- Inventory -->
             <li class="nav-item">
               <a href="#" class="nav-link" data-slug="inventory">
-                <i class="nav-icon fad fa-box-open-full"></i>
+                <i class="nav-icon fad fa-box-open-full" style="color:#ffff00"></i>
                 <p><?= lang('App.inventory') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
@@ -347,14 +361,14 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
+                  <a href="<?= base_url('inventory/product') ?>" class="nav-link" data-action="link" data-slug="product">
                     <i class="nav-icon fad fa-box-up"></i>
                     <p><?= lang('App.product') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
                   <a href="<?= base_url('inventory/stockadjustment') ?>" class="nav-link" data-action="link" data-slug="stockadjustment">
-                    <i class="nav-icon fad fa-sliders"></i>
+                    <i class="nav-icon fad fa-sliders" style="color:#ffff40"></i>
                     <p><?= lang('App.stockadjustment') ?></p>
                   </a>
                 </li>
@@ -440,33 +454,33 @@
             </li>
             <!-- QMS -->
             <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fad fa-users-class"></i>
+              <a href="#" class="nav-link" data-slug="qms">
+                <i class="nav-icon fad fa-users-class" style="color:#ff80ff"></i>
                 <p>QMS <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-list"></i>
+                  <a href="<?= base_url('qms') ?>" class="nav-link" data-action="link" data-slug="queue">
+                    <i class="nav-icon fad fa-list" style="color:#40ffff"></i>
                     <p><?= lang('App.queue') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-user-headset"></i>
+                  <a href="<?= base_url('qms/counter') ?>" class="nav-link" data-action="link" data-slug="counter">
+                    <i class="nav-icon fad fa-user-headset" style="color:#ffff80"></i>
                     <p>Counter</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-desktop"></i>
+                  <a href="<?= base_url('qms/display?active=1') ?>" class="nav-link" target="_blank">
+                    <i class="nav-icon fad fa-desktop" style="color:#ff8080"></i>
                     <p><?= lang('App.display') ?></p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-file-alt"></i>
+                  <a href="<?= base_url('qms/registration') ?>" class="nav-link" target="_blank">
+                    <i class="nav-icon fad fa-file-alt" style="color:#80ff40"></i>
                     <p><?= lang('App.registration') ?></p>
                   </a>
                 </li>
@@ -527,21 +541,15 @@
             <!-- Sales -->
             <li class="nav-item">
               <a href="#" class="nav-link" data-slug="sale">
-                <i class="nav-icon fad fa-cash-register"></i>
+                <i class="nav-icon fad fa-cash-register" style="color:#40ffff"></i>
                 <p><?= lang('App.sale') ?> <i class="fad fa-angle-right right"></i>
                 </p>
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="<?= base_url('sale/invoice') ?>" class="nav-link" data-action="link" data-slug="invoice">
-                    <i class="nav-icon fad fa-file-invoice"></i>
+                  <a href="<?= base_url('sale') ?>" class="nav-link" data-action="link" data-slug="invoice">
+                    <i class="nav-icon fad fa-file-invoice" style="color:#ff8040"></i>
                     <p><?= lang('App.invoice') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('sale/receivable') ?>" class="nav-link" data-action="link" data-slug="receivable">
-                    <i class="nav-icon fad fa-file-invoice"></i>
-                    <p><?= lang('App.receivable') ?></p>
                   </a>
                 </li>
               </ul>
@@ -713,6 +721,7 @@
   <!-- Bootstrap 4 -->
   <script src="<?= base_url() ?>/assets/modules/bootstrap/js/bootstrap.bundle.min.js"></script>
   <!-- Application -->
+  <script src="<?= base_url() ?>/assets/modules/alertifyjs/alertify.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/bootstrap-validate/bootstrap-validate.js"></script>
   <script src="<?= base_url() ?>/assets/modules/bs-custom-file-input/bs-custom-file-input.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/chart.js/chart.umd.js"></script>

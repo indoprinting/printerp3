@@ -1,5 +1,5 @@
 <div class="modal-header bg-gradient-dark">
-  <h5 class="modal-title"><i class="fad fa-fw fa-file"></i>
+  <h5 class="modal-title overflow-hidden"><i class="fad fa-fw fa-file"></i>
     <?= $attachment->filename . ' (' . $attachment->mime . ')' ?>
   </h5>
   <button type="button" class="close" data-dismiss="modal" aria-label="Close">

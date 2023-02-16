@@ -14,14 +14,28 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="code"><?= lang('App.code') ?></label>
+                  <label for="code"><?= lang('App.code') ?> *</label>
                   <input id="code" name="code" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.code') ?>" value="<?= $biller->code ?>">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.name') ?></label>
+                  <label for="name"><?= lang('App.name') ?> *</label>
                   <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.name') ?>" value="<?= $biller->name ?>">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="company"><?= lang('App.company') ?></label>
+                  <input id="company" name="company" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.company') ?>" value="<?= $biller->company ?>">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="target"><?= lang('App.targetrevenue') ?></label>
+                  <input id="target" name="target" class="form-control form-control-border form-control-sm currency" placeholder="<?= lang('App.targetrevenue') ?>" value="">
                 </div>
               </div>
             </div>
@@ -54,12 +68,6 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="target"><?= lang('App.targetrevenue') ?></label>
-                  <input id="target" name="target" class="form-control form-control-border form-control-sm currency" placeholder="<?= lang('App.targetrevenue') ?>" value="">
-                </div>
-              </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <input type="checkbox" id="active" name="active" value="1">

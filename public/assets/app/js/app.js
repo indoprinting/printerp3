@@ -10,6 +10,7 @@
     this._bc = $('[data-type="breadcrumb"]');
     this._content = $('[data-type="content"]');
     this._title = $('[data-type="title"]');
+    this._icon = null;
   }
 
   App.prototype._setBreadcrumb = function (bc) {
@@ -29,6 +30,8 @@
           link = `<a href="${b.url}" data-action="link">${b.name}</a>`;
         }
 
+        this._icon = $(`a[data-slug="${b.slug}"]`).find('i');
+
         $(`a[data-slug="${b.slug}"]`).addClass('active');
         $(`a[data-slug="${b.slug}"]`).closest('.nav-item')
           .addClass('menu-open').find('.nav-treeview').css('display', 'block');
@@ -46,8 +49,9 @@
   }
 
   App.prototype._setTitle = function (title) {
+    let className = this._icon[0].className.replace('nav-icon', '');
     document.title = title;
-    this._title.html(title);
+    this._title.html(`<i class="${className} mr-2"></i>${title}`);
     return this;
   }
 
@@ -64,11 +68,12 @@
 
     $.ajax({
       error: (xhr) => {
-        if (isObject(xhr.responseJSON) && xhr.status == 401) {
+        if (isObject(xhr.responseJSON)) {
           toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
-          location.reload();
-        } else if (isObject(xhr.responseJSON)) {
-          toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
+
+          if (xhr.status) {
+            location.reload();
+          }
         } else {
           toastr.error(xhr.statusText, xhr.status);
         }
@@ -84,7 +89,7 @@
 
             initControls();
           } else {
-            toastr.error(data.text, data.title);
+            toastr.error(data.message, data.title);
             if (data.code == 401) location.reload();
           }
         } else {
@@ -131,6 +136,60 @@ $(document).ready(function () {
     }, 10);
   });
 
+  // Auto hide control-sidebar.
+  $(document).on('click', '.container-fluid', () => {
+    if ($('body').hasClass('control-sidebar-slide-open')) {
+      controlSidebar('collapse');
+    }
+  });
+
+  $(document).on('change', '.saleitem', function (e) {
+    let area = $(this).closest('tr').find('[name="item[area][]"]');
+    let price = $(this).closest('tr').find('[name="item[price][]"]');
+    let prices = $(this).closest('tr').find('[name="item[prices][]"]');
+    let ranges = $(this).closest('tr').find('[name="item[ranges][]"]');
+    let length = $(this).closest('tr').find('[name="item[length][]"]');
+    let width = $(this).closest('tr').find('[name="item[width][]"]');
+    let type = $(this).closest('tr').find('[name="item[type][]"]');
+    let quantity = $(this).closest('tr').find('[name="item[quantity][]"]');
+    let subTotal = $(this).closest('tr').find('.saleitem-subtotal');
+
+    if (quantity.val() < 0) {
+      quantity.val(0);
+
+      SweetAlert.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Quantity cannot be less than zero.'
+      });
+    }
+
+    if (type.val() == 'service' && quantity.val().indexOf('.') >= 0) {
+      quantity.val(1);
+
+      SweetAlert.fire({
+        icon: 'error',
+        title: 'Ketahuan deh!',
+        text: 'Hayoo mau ngapain? Tak laporin loh!'
+      });
+
+      return false;
+    }
+
+    prices = JSON.parse(prices.val());
+    ranges = JSON.parse(ranges.val());
+
+    area.val(width.val() * length.val());
+
+    if (this.name != 'item[price][]') {
+      price.val(formatCurrency(getSalePrice(area.val() * quantity.val(), ranges, prices)));
+    }
+
+    subTotal.html(formatCurrency(length.val() * width.val() * quantity.val() * filterDecimal(price.val())));
+
+    calculateSale();
+  });
+
   $(document).on('click', '[data-action="confirm"]', function (e) {
     e.preventDefault();
 
@@ -163,6 +222,7 @@ $(document).ready(function () {
             });
 
             if (typeof Table !== 'undefined') Table.draw(false);
+            if (typeof ModalTable !== 'undefined') ModalTable.draw(false);
           },
           url: url
         });
@@ -328,14 +388,14 @@ $(document).ready(function () {
   });
 
   $(document).on('click', '[data-toggle="modal"]', function (e) {
-    let href = this.href;
+    let url = this.href ?? this.dataset.remote;
 
-    if (href.substr(href.length - 1, 1) != '#') {
+    if (url.slice(url.length - 1, 1) != '#') {
       let modalClass = (this.dataset.modalClass ?? '');
       let target = this.dataset.target;
 
       if (target.length) {
-        document.querySelector(target).dataset.remote = href;
+        document.querySelector(target).dataset.remote = url;
         $(target).find('.modal-dialog').addClass(modalClass);
       }
     }
@@ -387,6 +447,10 @@ $(document).ready(function () {
           Swal.fire({ icon: 'error', text: xhr.responseJSON.message, title: xhr.status }).then((result) => {
             $(this).modal('hide');
           });
+
+          if (xhr.status == 401) {
+            location.reload();
+          }
         } else {
           Swal.fire({ icon: 'error', text: xhr.statusText, title: xhr.status }).then((result) => {
             $(this).modal('hide');
@@ -416,6 +480,8 @@ $(document).ready(function () {
 
   $(document).on('click', '.table-row-delete', function () {
     $(this).closest('tr').remove();
+
+    calculateSale();
   });
 
   $.extend(true, $.fn.DataTable.defaults, {

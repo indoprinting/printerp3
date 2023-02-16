@@ -4,7 +4,20 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{DB, PaymentValidation, Product, Sale, Voucher, Warehouse, WarehouseProduct};
+use App\Models\{
+  Customer,
+  DB,
+  PaymentValidation,
+  PriceGroup,
+  Product,
+  ProductCategory,
+  ProductPrice,
+  Sale,
+  Stock,
+  Voucher,
+  Warehouse,
+  WarehouseProduct
+};
 
 class Api extends BaseController
 {
@@ -148,8 +161,8 @@ class Api extends BaseController
 
     $response = file_get_contents('php://input');
 
-    if (PaymentValidation::validate($response)) { // Segala pengecekan dan validasi data di sini.
-      $this->response(200, ['message' => 'Validated']);
+    if ($total = PaymentValidation::validate($response)) { // Segala pengecekan dan validasi data di sini.
+      $this->response(200, ['message' => 'Validated', 'data' => ['validated' => $total]]);
     } else {
       $this->response(406, ['message' => 'Not Validated']);
     }
@@ -166,35 +179,66 @@ class Api extends BaseController
     }
 
     $code = getGet('code');
-    $wh = getGet('warehouse');
+    $cust = getGet('customer'); // id
+    $id   = getGet('id');
+    $wh   = getGet('warehouse');
 
-    if (!$code) {
-      $this->response(400, ['message' => 'Product code is required.']);
+    $clause = [];
+
+    if ($code)  $clause['code'] = $code;
+    if ($id)    $clause['id']   = $id;
+
+    if (empty($code) && empty($id)) {
+      $this->response(400, ['message' => 'Product code or id is required.']);
     }
 
-    $product = Product::getRow(['code' => $code]);
+    $product = Product::getRow($clause);
 
     if (!$product) {
       $this->response(404, ['message' => 'Product is not found.']);
     }
 
-    $whProduct = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_code' => $wh]);
-
     if ($product) {
+      $pcategory = ProductCategory::getRow(['id' => $product->category_id]);
+      $priceGroup = null;
+
       $data = [
         'code'          => $product->code,
         'name'          => $product->name,
         'cost'          => floatval($product->cost),
         'price'         => floatval($product->price),
+        'prices'        => [floatval($product->price)],
         'markon_price'  => floatval($product->markon_price),
+        'category'      => $pcategory->code,
+        'category_name' => $pcategory->name,
         'iuse_type'     => $product->iuse_type,
+        'quantity'      => floatval($product->quantity),
+        'ranges'        => getJSON($product->price_ranges_value),
         'type'          => $product->type,
         'warehouses'    => $product->warehouses,
-        'quantity'      => floatval($product->quantity),
       ];
 
-      if ($whProduct) {
-        $data['quantity'] = floatval($whProduct->quantity);
+      if ($warehouse = Warehouse::getRow(['code' => $wh])) {
+        $priceGroup = PriceGroup::getRow(['id' => $warehouse->pricegroup]);
+      }
+
+      if ($customer = Customer::getRow(['id' => $cust])) {
+        $priceGroup = PriceGroup::getRow(['id' => $customer->price_group_id]);
+      }
+
+      if ($priceGroup) {
+        $productPrice = ProductPrice::getRow(['product_id' => $product->id, 'price_group_id' => $priceGroup->id]);
+
+        if ($productPrice) {
+          $data['prices'] = [
+            floatval($productPrice->price), floatval($productPrice->price2), floatval($productPrice->price3),
+            floatval($productPrice->price4), floatval($productPrice->price5), floatval($productPrice->price6)
+          ];
+        }
+      }
+
+      if ($whp = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_code' => $wh])) {
+        $data['quantity'] = floatval($whp->quantity);
       }
 
       $this->response(200, ['data' => $data]);
@@ -205,12 +249,10 @@ class Api extends BaseController
 
   protected function product_add()
   {
-
   }
 
   protected function product_delete()
   {
-
   }
 
   protected function v1_voucher($mode = NULL)

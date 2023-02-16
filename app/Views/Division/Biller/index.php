@@ -13,9 +13,10 @@
           <table id="Table" class="table table-bordered table-hover" style="width:100%;">
             <thead>
               <tr>
-                <th class="col-sm-1"></th>
+                <th></th>
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
+                <th><?= lang('App.company'); ?></th>
                 <th><?= lang('App.address'); ?></th>
                 <th><?= lang('App.city'); ?></th>
                 <th><?= lang('App.phone'); ?></th>
@@ -29,6 +30,7 @@
                 <th></th>
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
+                <th><?= lang('App.company'); ?></th>
                 <th><?= lang('App.address'); ?></th>
                 <th><?= lang('App.city'); ?></th>
                 <th><?= lang('App.phone'); ?></th>

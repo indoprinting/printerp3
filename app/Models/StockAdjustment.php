@@ -19,31 +19,67 @@ class StockAdjustment
     }
 
     $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
+
+    if (!$warehouse) {
+      setLastError("Warehouse {$data['warehouse']} is not found.");
+      return false;
+    }
+
+    $data = setCreatedBy($data);
+    $data['reference']    = OrderRef::getReference('adjustment');
     $data['warehouse_id'] = $warehouse->id;
 
     DB::table('adjustments')->insert($data);
-    $insertID = DB::insertID();
 
-    if ($insertID) {
+    if ($insertID = DB::insertID()) {
+      OrderRef::updateReference('adjustment');
+
       foreach ($items as $item) {
         $product = Product::getRow(['code' => $item['code']]);
+
+        if (!$product) {
+          setLastError("Product {$item['code']} is not found.");
+          return false;
+        }
+
         $whProduct = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_id' => $warehouse->id]);
 
-        $adjusted = getAdjustedQty((float)$whProduct->quantity, (float)$item['quantity']);
+        if (!$whProduct) {
+          setLastError("WarehouseProduct {$product->code}, {$warehouse->code} is not found.");
+          return false;
+        }
 
-        Stock::add([
+        if ($data['mode'] == 'overwrite') {
+          $adjusted = getAdjustedQty((float)$whProduct->quantity, (float)$item['quantity']);
+        } else if ($data['mode'] == 'formula') {
+          $adjusted = [
+            'quantity'  => $item['quantity'],
+            'type'      => 'received'
+          ];
+        } else {
+          setLastError('Mode must be overwrite or formula.');
+          return false;
+        }
+
+        $res = Stock::add([
           'date'            => $data['date'],
-          'adjustment_id'   => $insertID,
-          'product_id'      => $product->id,
-          'warehouse_id'    => $warehouse->id,
+          'adjustment'      => $data['reference'],
+          'product'         => $product->code,
+          'warehouse'       => $warehouse->code,
           'quantity'        => $adjusted['quantity'],
           'adjustment_qty'  => $item['quantity'],
-          'type'            => $adjusted['type']
+          'status'          => $adjusted['type']
         ]);
+
+        if (!$res) {
+          return false;
+        }
       }
 
       return $insertID;
     }
+
+    setLastError(DB::error()['message']);
 
     return false;
   }
@@ -54,7 +90,14 @@ class StockAdjustment
   public static function delete(array $where)
   {
     DB::table('adjustments')->delete($where);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 
   /**
@@ -90,6 +133,13 @@ class StockAdjustment
   public static function update(int $id, array $data)
   {
     DB::table('adjustments')->update($data, ['id' => $id]);
-    return DB::affectedRows();
+
+    if ($affectedRows = DB::affectedRows()) {
+      return $affectedRows;
+    }
+
+    setLastError(DB::error()['message']);
+
+    return false;
   }
 }

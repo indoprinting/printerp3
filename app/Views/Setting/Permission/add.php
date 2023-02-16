@@ -9,25 +9,34 @@
     <?= csrf_field() ?>
     <div class="row">
       <div class="col-md-12">
-        <div class="form-group">
-          <label for="name"><?= lang('App.name') ?></label>
-          <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.permissionname') ?>" required>
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="name"><?= lang('App.name') ?></label>
+                  <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.permissionname') ?>" required>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="action"><?= lang('App.action') ?></label>
+                  <select name="action[]" class="select-allow-clear-tags" data-placeholder="<?= lang('App.permissionaction') ?>" style="width:100%" multiple>
+                    <option value="Add">Add</option>
+                    <option value="Delete">Delete</option>
+                    <option value="Edit">Edit</option>
+                    <option value="View">View</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="form-group">
-          <label for="action"><?= lang('App.action') ?></label>
-          <select name="action[]" class="select-allow-clear-tags" data-placeholder="<?= lang('App.permissionaction') ?>" style="width:100%" multiple>
-            <option value="Add">Add</option>
-            <option value="Delete">Delete</option>
-            <option value="Edit">Edit</option>
-            <option value="View">View</option>
-          </select>
-        </div>
-      </div>
-    </div>
+
   </form>
 </div>
 <div class="modal-footer">

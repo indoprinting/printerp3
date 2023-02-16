@@ -62,11 +62,11 @@ class Biller
   }
 
   /**
-   * Select _Template.
+   * Select Biller.
    */
   public static function select(string $columns, $escape = TRUE)
   {
-    return DB::table('tableName')->select($columns, $escape);
+    return DB::table('biller')->select($columns, $escape);
   }
 
   /**

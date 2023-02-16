@@ -78,9 +78,9 @@ class DataTables
    */
   private $start;
 
-  public function __construct($tableName = NULL)
+  public function __construct($tableName = null)
   {
-    $this->returnObject  = FALSE;
+    $this->returnObject  = false;
     self::$db            = db_connect();
     $this->columns       = [];
     $this->filterData    = [];
@@ -119,7 +119,7 @@ class DataTables
    * Generate will return as object.
    * @param bool $returnObject Return as object.
    */
-  public function asObject(bool $returnObject = TRUE)
+  public function asObject(bool $returnObject = true)
   {
     $this->returnObject = $returnObject;
     return $this;
@@ -145,7 +145,7 @@ class DataTables
     return $this;
   }
 
-  public function from($table, bool $overwrite = FALSE)
+  public function from($table, bool $overwrite = false)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -157,9 +157,9 @@ class DataTables
 
   /**
    * Generate output to stdout by default.
-   * @param bool $useReturn Function will return array or object if TRUE.
+   * @param bool $useReturn Function will return array or object if true.
    */
-  public function generate(bool $useReturn = FALSE)
+  public function generate(bool $useReturn = false)
   {
     $results = [];
 
@@ -168,7 +168,7 @@ class DataTables
     }
 
     // Get total records. 'where', 'orWhere', 'like' and 'orLike' is not filtering.
-    $recordsTotal = self::$qb->countAllResults(FALSE);
+    $recordsTotal = self::$qb->countAllResults(false);
 
     // Internal filter data.
     if ($this->filterData) {
@@ -187,7 +187,7 @@ class DataTables
 
       foreach ($this->columns as $col) {
         if (!empty($col)) {
-          if (stripos($col, 'GROUP_CONCAT') !== FALSE) continue;
+          if (stripos($col, 'GROUP_CONCAT') !== false) continue;
 
           self::$qb->orLike($col, strval($this->search), 'both');
         }
@@ -195,13 +195,13 @@ class DataTables
 
       self::$qb->groupEnd();
 
-      // die(print_r($this->columns, TRUE));
+      // die(print_r($this->columns, true));
       // die(self::$qb->getCompiledSelect()); // DEBUG_ONLY
       self::$qb->groupBy('id'); // Temporary test. Required.
     }
 
     // Return number of filtered rows.
-    $recordsFiltered = self::$qb->countAllResults(FALSE);
+    $recordsFiltered = self::$qb->countAllResults(false);
 
     if ($this->order && is_array($this->order)) {
       foreach ($this->order as $order) {
@@ -239,7 +239,7 @@ class DataTables
 
             if (strcasecmp($addColumn['after'], 'first') === 0) {
               $pos = 0;
-            } else if (strcasecmp($addColumn['after'], 'last') === 0 || $pos === FALSE) {
+            } else if (strcasecmp($addColumn['after'], 'last') === 0 || $pos === false) {
               $pos = count($rows[$x]);
             } else {
               $pos++;
@@ -298,7 +298,7 @@ class DataTables
   /**
    * Return query
    */
-  public function get(int $limit = NULL, int $offset = 0, bool $reset = TRUE)
+  public function get(int $limit = null, int $offset = 0, bool $reset = true)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -343,7 +343,7 @@ class DataTables
 
       while ($a < count($cols)) {
         // Check if col has ' as '.
-        if (stripos($cols[$a], ' as ') !== FALSE) {
+        if (stripos($cols[$a], ' as ') !== false) {
           $cols[$a] = preg_split('/\ as\ /i', $cols[$a])[0];
         } else {
           // Check if col has space character.
@@ -375,7 +375,7 @@ class DataTables
     return $cols;
   }
 
-  public function groupBy($by, $escape = NULL)
+  public function groupBy($by, $escape = null)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -385,7 +385,27 @@ class DataTables
     return $this;
   }
 
-  public function join(string $table, string $cond, string $type = '', bool $escape = NULL)
+  public function groupEnd()
+  {
+    if (!self::$qb) {
+      throw new \Exception(self::ERR_QUERY_BUILDER);
+    }
+
+    self::$qb->groupEnd();
+    return $this;
+  }
+
+  public function groupStart()
+  {
+    if (!self::$qb) {
+      throw new \Exception(self::ERR_QUERY_BUILDER);
+    }
+
+    self::$qb->groupStart();
+    return $this;
+  }
+
+  public function join(string $table, string $cond, string $type = '', bool $escape = null)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -395,7 +415,7 @@ class DataTables
     return $this;
   }
 
-  public function like($field, string $match = '', string $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
+  public function like($field, string $match = '', string $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -405,7 +425,7 @@ class DataTables
     return $this;
   }
 
-  protected function limit(int $value = NULL, int $offset = 0)
+  protected function limit(int $value = null, int $offset = 0)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -415,7 +435,7 @@ class DataTables
     return $this;
   }
 
-  protected function orderBy(string $orderBy, string $direction = '', bool $escape = NULL)
+  protected function orderBy(string $orderBy, string $direction = '', bool $escape = null)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -425,7 +445,7 @@ class DataTables
     return $this;
   }
 
-  public function orLike($field, string $match = '', $side = 'both', bool $escape = NULL, bool $insensitiveSearch = FALSE)
+  public function orLike($field, string $match = '', $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -435,13 +455,43 @@ class DataTables
     return $this;
   }
 
-  public function orWhere($key, $value = NULL, bool $escape = NULL)
+  public function orNotLike($field, string $match = '', $side = 'both', bool $escape = null, bool $insensitiveSearch = false)
+  {
+    if (!self::$qb) {
+      throw new \Exception(self::ERR_QUERY_BUILDER);
+    }
+
+    self::$qb->orNotLike($field, $match, $side, $escape, $insensitiveSearch);
+    return $this;
+  }
+
+  public function orWhere($key, $value = null, bool $escape = null)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
     self::$qb->orWhere($key, $value, $escape);
+    return $this;
+  }
+
+  public function orWhereIn($key, $values = null, bool $escape = null)
+  {
+    if (!self::$qb) {
+      throw new \Exception(self::ERR_QUERY_BUILDER);
+    }
+
+    self::$qb->orWhereIn($key, $values, $escape);
+    return $this;
+  }
+
+  public function orWhereNotIn($key, $values = null, bool $escape = null)
+  {
+    if (!self::$qb) {
+      throw new \Exception(self::ERR_QUERY_BUILDER);
+    }
+
+    self::$qb->orWhereNotIn($key, $values, $escape);
     return $this;
   }
 
@@ -453,7 +503,7 @@ class DataTables
     return $this;
   }
 
-  public function select($select, bool $escape = NULL)
+  public function select($select, bool $escape = null)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
@@ -481,13 +531,33 @@ class DataTables
     return $data;
   }
 
-  public function where($key, $value = NULL, bool $escape = NULL)
+  public function where($key, $value = null, bool $escape = null)
   {
     if (!self::$qb) {
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
     self::$qb->where($key, $value, $escape);
+    return $this;
+  }
+
+  public function whereIn(string $key, $values = null, $escape = null)
+  {
+    if (!self::$qb) {
+      throw new \Exception(self::ERR_QUERY_BUILDER);
+    }
+
+    self::$qb->whereIn($key, $values, $escape);
+    return $this;
+  }
+
+  public function whereNotIn(string $key, $values = null, $escape = null)
+  {
+    if (!self::$qb) {
+      throw new \Exception(self::ERR_QUERY_BUILDER);
+    }
+
+    self::$qb->whereNotIn($key, $values, $escape);
     return $this;
   }
 }

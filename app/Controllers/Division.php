@@ -20,7 +20,7 @@ class Division extends BaseController
 
     $dt = new DataTables('biller');
     $dt
-      ->select("id, code, name, address, city, phone, email, json->>'$.target' AS target, active")
+      ->select("id, code, name, company, address, city, phone, email, json->>'$.target' AS target, active")
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -122,6 +122,7 @@ class Division extends BaseController
       $data = [
         'code'    => getPost('code'),
         'name'    => getPost('name'),
+        'company' => getPost('company'),
         'address' => getPost('address'),
         'city'    => getPost('city'),
         'phone'   => getPost('phone'),
@@ -132,17 +133,33 @@ class Division extends BaseController
         ])
       ];
 
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($data['company'])) {
+        $this->response(400, ['message' => 'Company is required.']);
+      }
+
       DB::transStart();
 
       $insertID = Biller::add($data);
+
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $biller = Biller::getRow(['id' => $insertID]);
 
-        addActivity("Biller ({$biller->code}) {$biller->code} has been added.", [
-          'add' => $biller
+        addActivity("Add biller {$biller->code}.", [
+          'data' => $biller
         ]);
 
         $this->response(201, ['message' => 'Biller has been added.']);
@@ -167,9 +184,19 @@ class Division extends BaseController
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (Biller::delete(['id' => $id])) {
-        addActivity("Biller ({$biller->code}) {$biller->name} has been deleted.", [
-          'delete' => $biller
+      DB::transStart();
+
+      $res = Biller::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        addActivity("Delete biller {$biller->code}.", [
+          'data' => $biller
         ]);
 
         $this->response(200, ['message' => 'Biller has been deleted.']);
@@ -195,6 +222,7 @@ class Division extends BaseController
       $data = [
         'code'    => getPost('code'),
         'name'    => getPost('name'),
+        'company' => getPost('company'),
         'address' => getPost('address'),
         'city'    => getPost('city'),
         'phone'   => getPost('phone'),
@@ -205,19 +233,35 @@ class Division extends BaseController
         ])
       ];
 
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($data['company'])) {
+        $this->response(400, ['message' => 'Company is required.']);
+      }
+
       DB::transStart();
 
-      Biller::update((int)$id, $data);
+      $res = Biller::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $billerNew = Biller::getRow(['id' => $id]);
 
-        addActivity("Biller ({$biller->code}) {$biller->name} has been updated.", [
-          'edit' => [
-            'old' => $biller,
-            'new' => $billerNew
+        addActivity("Edit biller {$biller->code}.", [
+          'data' => [
+            'after' => $billerNew,
+            'before' => $biller
           ]
         ]);
 
@@ -275,13 +319,14 @@ class Division extends BaseController
       }
 
       $data = [
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'address' => getPost('address'),
-        'phone'   => getPost('phone'),
-        'email'   => getPost('email'),
-        'active'  => (getPost('active') == 1 ? 1 : 0),
-        'json'    => json_encode([
+        'code'        => getPost('code'),
+        'name'        => getPost('name'),
+        'address'     => getPost('address'),
+        'phone'       => getPost('phone'),
+        'email'       => getPost('email'),
+        'pricegroup'  => getPost('pricegroup'),
+        'active'      => (getPost('active') == 1 ? 1 : 0),
+        'json'        => json_encode([
           'cycle_transfer'  => intval(getPost('transfer_cycle')),
           'delivery_time'   => intval(getPost('delivery_time')),
           'lat'             => getPost('latitude'),
@@ -292,17 +337,29 @@ class Division extends BaseController
         ])
       ];
 
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
       DB::transStart();
 
       $insertID = Warehouse::add($data);
+
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $warehouse = Warehouse::getRow(['id' => $insertID]);
 
-        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been added.", [
-          'add' => $warehouse
+        addActivity("Add warehouse {$warehouse->code}.", [
+          'data' => $warehouse
         ]);
 
         $this->response(201, ['message' => 'Warehouse has been added.']);
@@ -327,9 +384,19 @@ class Division extends BaseController
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (Warehouse::delete(['id' => $id])) {
-        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been deleted.", [
-          'delete' => $warehouse
+      DB::transStart();
+
+      $res = Warehouse::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        addActivity("Delete warehouse {$warehouse->code}.", [
+          'data' => $warehouse
         ]);
 
         $this->response(200, ['message' => 'Warehouse has been deleted.']);
@@ -368,6 +435,7 @@ class Division extends BaseController
         'address'     => getPost('address'),
         'phone'       => getPost('phone'),
         'email'       => getPost('email'),
+        'pricegroup'  => getPost('pricegroup'),
         'active'      => (getPost('active') == 1 ? 1 : 0),
         'json'        => json_encode([
           'cycle_transfer'  => intval(getPost('transfer_cycle')),
@@ -380,19 +448,31 @@ class Division extends BaseController
         ])
       ];
 
+      if (empty($data['code'])) {
+        $this->response(400, ['message' => 'Code is required.']);
+      }
+
+      if (empty($data['name'])) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
       DB::transStart();
 
-      Warehouse::update((int)$id, $data);
+      $res = Warehouse::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
         $newWarehouse = Warehouse::getRow(['id' => $id]);
 
-        addActivity("Warehouse ({$warehouse->code}) {$warehouse->name} has been updated.", [
-          'edit' => [
-            'old' => $warehouse,
-            'new' => $newWarehouse
+        addActivity("Edit warehouse {$warehouse->code}.", [
+          'data' => [
+            'after'   => $newWarehouse,
+            'before'  => $warehouse
           ]
         ]);
 
