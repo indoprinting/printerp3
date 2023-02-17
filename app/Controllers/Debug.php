@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\PaymentValidation;
+use App\Models\{DB};
 
 class Debug extends BaseController
 {
   public function debug()
   {
-    $a = 0;
-
-    if ($b = $a) {
-      echo 'b:' . $b . '<br>';
-    }
-
-    echo 'a:' . $a;
+    // DB::table('test1')->insert(['date' => '0000-00-00 00:00:00', 'name' => 'riyan']);
+    $r = getGet('r');
+    var_dump($r);
   }
 
   public function invoice()

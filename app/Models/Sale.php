@@ -44,7 +44,7 @@ class Sale
     // Is special customer (Privilege, TOP)
     $isSpecialCustomer = isSpecialCustomer($customer->id);
 
-    $data['status'] = ($isSpecialCustomer ? 'waiting_production' : 'need_payment');
+    $data['status'] = ($data['status'] ?? ($isSpecialCustomer ? 'waiting_production' : 'need_payment'));
 
     $grandTotal  = 0;
     $totalPrice  = 0;
@@ -119,7 +119,7 @@ class Sale
     ];
 
     $saleData = setCreatedBy($saleData);
-    // print_r($data); die;
+
     DB::table('sales')->insert($saleData);
 
     if (DB::affectedRows()) {
@@ -127,7 +127,7 @@ class Sale
 
       foreach ($items as $item) {
         $product = Product::getRow(['code' => $item['code']]);
-        $productJS = getJSON($product->json);
+        $productJS = getJSON($product->json_data);
         $operator = User::getRow(['id' => $item['operator']]);
 
         if (!empty($item['width']) && !empty($item['length'])) {
@@ -177,21 +177,23 @@ class Sale
         /**
          * Autocomplete Engine
          */
-        if (!isWeb2Print($insertId) && isset($productJS->autocomplete) && $productJS->autocomplete == 1) {
-          $saleItem = SaleItem::getRow(['id' => $saleItemId]);
-          $saleItemJS = getJSON($saleItem->json);
+        if ($saleData['status'] == 'waiting_production') {
+          if (!isWeb2Print($insertId) && isset($productJS->autocomplete) && $productJS->autocomplete == 1) {
+            $saleItem = SaleItem::getRow(['id' => $saleItemId]);
+            $saleItemJS = getJSON($saleItem->json);
 
-          if (isCompleted($saleItemJS->status)) {
-            continue;
-          }
+            if (isCompleted($saleItemJS->status)) {
+              continue;
+            }
 
-          $res = SaleItem::complete((int)$saleItemId, [
-            'quantity'    => $saleItem->quantity,
-            'created_by'  => $saleItemJS->operator_id
-          ]);
+            $res = SaleItem::complete((int)$saleItemId, [
+              'quantity'    => $saleItem->quantity,
+              'created_by'  => $saleItemJS->operator_id
+            ]);
 
-          if (!$res) {
-            return false;
+            if (!$res) {
+              return false;
+            }
           }
         }
       }
@@ -357,6 +359,10 @@ class Sale
           $saleItemStatus = 'need_payment';
         }
 
+        if ($saleItemJS->status == 'draft') {
+          continue;
+        }
+
         $saleItemJS->status = $saleItemStatus;
 
         SaleItem::update((int)$saleItem->id, [
@@ -451,10 +457,13 @@ class Sale
         $saleJS->waiting_production_date = date('Y-m-d H:i:s');
       }
 
+      if ($sale->status != 'draft') {
+        $saleData['status']         = $saleStatus;
+        $saleData['payment_status'] = $paymentStatus;
+      }
+
       $saleData['paid']           = $totalPaid;
       $saleData['balance']        = $balance;
-      $saleData['status']         = $saleStatus;
-      $saleData['payment_status'] = $paymentStatus;
       $saleData['json']           = json_encode($saleJS);
       $saleData['json_data']      = json_encode($saleJS);
 

@@ -80,6 +80,11 @@ class BaseController extends Controller
 			// Set language locale for global lang().
 			Services::language(session('login')->lang);
 
+			// Remove these line after release.
+			if (session('login')->username != 'owner') {
+				die(lang('Msg.accessDenied'));
+			}
+
 			$lang = [
 				'App' 		=> include(APPPATH . 'Language/' . session('login')->lang . '/App.php'),
 				'Msg' 		=> include(APPPATH . 'Language/' . session('login')->lang . '/Msg.php'),

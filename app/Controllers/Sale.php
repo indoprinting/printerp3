@@ -76,7 +76,7 @@ class Sale extends BaseController
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('sale/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
               <a class="dropdown-item" href="' . base_url('sale/print/' . $data['id']) . '"
@@ -162,6 +162,7 @@ class Sale extends BaseController
       $note       = getPost('note');
       $approve    = (getPost('approve') == 1 ? 1 : 0);
       $transfer   = (getPost('transfer') == 1);
+      $draft      = (getPost('draft') == 1);
       $rawItems   = getPost('item');
 
       if (empty($biller)) {
@@ -194,6 +195,7 @@ class Sale extends BaseController
 
         $items[] = [
           'code'      => $rawItems['code'][$a],
+          'spec'      => $rawItems['spec'][$a],
           'width'     => $rawItems['width'][$a],
           'length'    => $rawItems['length'][$a],
           'price'     => filterDecimal($rawItems['price'][$a]),
@@ -216,6 +218,10 @@ class Sale extends BaseController
         'approved'  => $approve,
       ];
 
+      if ($draft) {
+        $data['status'] = 'draft';
+      }
+
       $data = $this->useAttachment($data);
 
       DB::transStart();
@@ -226,13 +232,17 @@ class Sale extends BaseController
         $this->response(400, ['message' => getLastError()]);
       }
 
-      $sale = Invoice::getRow(['id' => $insertId]);
+      if ($transfer) {
+        $sale = Invoice::getRow(['id' => $insertId]);
 
-      PaymentValidation::add([
-        'sale'    => $sale->reference,
-        'biller'  => $sale->biller,
-        'amount'  => $sale->grand_total,
-      ]);
+        PaymentValidation::add([
+          'sale'    => $sale->reference,
+          'biller'  => $sale->biller,
+          'amount'  => $sale->grand_total,
+        ]);
+
+        Invoice::sync(['id' => $insertId]);
+      }
 
       DB::transComplete();
 
@@ -261,10 +271,21 @@ class Sale extends BaseController
     if (requestMethod() == 'POST' && isAJAX()) {
       DB::transStart();
 
-      Invoice::delete(['id' => $id]);
-      SaleItem::delete(['sale_id' => $id]);
+      $res = Invoice::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      $res = SaleItem::delete(['sale_id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
       Attachment::delete(['hashname' => $sale->attachment]);
       Payment::delete(['sale_id' => $id]);
+      PaymentValidation::delete(['sale_id' => $id]);
 
       DB::transComplete();
 
@@ -276,6 +297,21 @@ class Sale extends BaseController
     }
 
     $this->response(400, ['message' => 'Failed to delete invoice.']);
+  }
+
+  public function edit($id = null)
+  {
+    $sale = Invoice::getRow(['id' => $id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    $this->data['sale']   = $sale;
+    $this->data['saleJS'] = getJSON($sale->json);
+    $this->data['title']  = lang('App.editsale') . ' ' . $sale->reference;
+
+    $this->response(200, ['content' => view('Sale/edit', $this->data)]);
   }
 
   public function preview()

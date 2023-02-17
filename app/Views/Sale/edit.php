@@ -96,7 +96,7 @@
                       <label for="transfer"><?= lang('App.transfer') ?></label>
                     </div>
                   <?php endif; ?>
-                  <?php if (hasAccess('Sale.Draft')) : ?>
+                  <?php if (hasAccess('Sale.Draft') || $sale->status == 'draft') : ?>
                     <div class="form-group">
                       <input type="checkbox" id="draft" name="draft" value="1">
                       <label for="draft"><?= lang('App.draft') ?></label>
@@ -203,7 +203,8 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
-    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
+    $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
+    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
 
     $('#product').change(function() {
       if (!this.value) return false;
@@ -257,10 +258,17 @@
       });
     });
 
+    preSelect2('biller', '#biller', '<?= $sale->biller ?>');
+    preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
+    preSelect2('customer', '#customer', '<?= $sale->customer_id ?>');
+    console.log(`<?= $sale->due_date ?>`);
+
+    editor.root.innerHTML = `<?= $sale->note ?>`;
+
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/sale/add'
+      url: base_url + '/sale/edit/<?= $sale->id ?>'
     });
   });
 </script>

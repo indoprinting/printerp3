@@ -87,18 +87,24 @@ function checkPermission(string $permission = null)
 
 /**
  * Convert JS time to PHP time or vice versa.
+ * @param string $dateTime dateTime.
+ * @param int $currentDate Return current date if dateTime is empty.
  */
-function dateTimeJS(string $datetime)
+function dateTimeJS(string $dateTime, bool $currentDate = true)
 {
-  if (strlen($datetime) && strpos($datetime, 'T') !== false) {
-    return str_replace('T', ' ', $datetime);
+  if ($currentDate && empty($dateTime)) {
+    $dateTime = date('Y-m-d H:i:s');
   }
 
-  if (empty($datetime)) {
-    return date('Y-m-d H:i:s');
+  if (empty($dateTime)) {
+    return null;
   }
 
-  return str_replace(' ', 'T', $datetime);
+  if (strlen($dateTime) && strpos($dateTime, 'T') !== false) {
+    return str_replace('T', ' ', $dateTime);
+  }
+
+  return str_replace(' ', 'T', $dateTime);
 }
 
 /**
@@ -730,7 +736,7 @@ function setExpired(array $data)
 {
   if (empty($data['expired_at'])) {
     $data['expired_at']   = date('Y-m-d H:i:s', strtotime('+1 day', time()));
-    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Compatibility
+    $data['expired_date'] = $data['expired_at']; // Compatibility
   }
 
   return $data;

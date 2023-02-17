@@ -87,7 +87,7 @@ class PaymentValidation
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -107,7 +107,7 @@ class PaymentValidation
       while (1) {
         $uq = mt_rand(1, 200);
 
-        if (array_search($uq, $uqs) === FALSE) {
+        if (array_search($uq, $uqs) === false) {
           break;
         }
       }
@@ -121,14 +121,14 @@ class PaymentValidation
   /**
    * Select PaymentValidation.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('payment_validations')->select($columns, $escape);
   }
 
   public static function sync()
   {
-    $synced = FALSE;
+    $synced = false;
 
     $validations = self::get(['status' => 'pending']);
 
@@ -139,12 +139,12 @@ class PaymentValidation
 
           if ($pv->sale_id) {
             Sale::update((int)$pv->sale_id, ['payment_status' => 'expired']);
-            Sale::sync();
+            Sale::sync(['id' => $pv->sale_id]);
           }
           if ($pv->mutation_id) {
             BankMutation::update((int)$pv->mutation_id, ['status' => 'expired']);
           }
-          $synced = TRUE;
+          $synced = true;
         }
       }
     }
@@ -162,7 +162,7 @@ class PaymentValidation
           Sale::update((int)$wt->id, ['payment_status' => 'partial']);
         }
 
-        Sale::sync(['sale_id' => $wt->id]);
+        Sale::sync(['id' => $wt->id]);
       }
     }
 
@@ -193,16 +193,16 @@ class PaymentValidation
   public static function validate(string $response, array $options = [])
   {
     if (empty($response)) {
-      return FALSE;
+      return false;
     }
 
-    $paymentValidated = FALSE;
+    $paymentValidated = false;
     $mbResponse = getJSON($response);
 
     self::sync(); // Change pending payment to expired if any.
     return true;
-    $saleId     = ($options['sale_id'] ?? NULL);
-    $mutationId = ($options['mutation_id'] ?? NULL);
+    $saleId     = ($options['sale_id'] ?? null);
+    $mutationId = ($options['mutation_id'] ?? null);
     // Expired required for manual validation.
     $status = ($saleId || $mutationId ? ['expired', 'pending'] : 'pending');
     $paymentValidation = self::get(['status' => $status]);
@@ -214,7 +214,7 @@ class PaymentValidation
         $dataMutasi = $mbResponse->data_mutasi;
 
         foreach ($dataMutasi as $dm) { // DM = Data Mutasi.
-          $amount_match = ((floatval($pv->amount) + floatval($pv->unique)) == floatval($dm->amount) ? TRUE : FALSE);
+          $amount_match = ((floatval($pv->amount) + floatval($pv->unique)) == floatval($dm->amount) ? true : false);
           // If amount same as unique_code + amount OR sale_id same OR mutation_id same
           // Executed by CRON or Manually.
           // CR(mutasibank) = Masuk ke rekening.
@@ -310,7 +310,7 @@ class PaymentValidation
                 $validatedCount++;
               }
 
-              $paymentValidated = TRUE;
+              $paymentValidated = true;
             }
           }
         }
@@ -318,6 +318,6 @@ class PaymentValidation
 
       if ($paymentValidated) return $validatedCount;
     }
-    return FALSE;
+    return false;
   }
 }
