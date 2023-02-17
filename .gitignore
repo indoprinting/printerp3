@@ -129,3 +129,4 @@ nb-configuration.xml
 
 # Custom
 composer.phar
+.user.ini
