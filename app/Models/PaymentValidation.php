@@ -46,8 +46,8 @@ class PaymentValidation
 
     DB::table('payment_validations')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -62,8 +62,8 @@ class PaymentValidation
   {
     DB::table('payment_validations')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -144,6 +144,7 @@ class PaymentValidation
           if ($pv->mutation_id) {
             BankMutation::update((int)$pv->mutation_id, ['status' => 'expired']);
           }
+
           $synced = true;
         }
       }
@@ -176,8 +177,8 @@ class PaymentValidation
   {
     DB::table('payment_validations')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

@@ -55,10 +55,16 @@ class Payment
 
     if (isset($data['bank'])) {
       $bank = Bank::getRow(['code' => $data['bank']]);
+
+      if (!$bank) {
+        setLastError('Bank is not found.');
+        return false;
+      }
+
       $data['bank_id']  = $bank->id;
     } else {
       setLastError('Bank is not set.');
-      return FALSE;
+      return false;
     }
 
     if (isset($data['biller'])) {
@@ -66,24 +72,26 @@ class Payment
       $data['biller_id']  = $biller->id;
     } else {
       setLastError('Biller is not set.');
-      return FALSE;
+      return false;
     }
 
     if (empty($data['amount'])) {
       setLastError('Amount is empty or zero');
-      return FALSE;
+      return false;
     }
 
     if (empty($data['type'])) {
       setLastError('Type is empty and must be received or sent.');
-      return FALSE;
+      return false;
     }
 
     $data = setCreatedBy($data);
 
     DB::table('payments')->insert($data);
 
-    if ($insertID = DB::insertID()) {
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
+
       if ($data['type'] == 'received') {
         Bank::amountIncrease((int)$bank->id, floatval($data['amount']));
       } else if ($data['type'] == 'sent') {
@@ -92,10 +100,10 @@ class Payment
         setLastError('Type is unknown.');
       }
 
-      return $insertID;
+      return $insertId;
     }
 
-    return FALSE;
+    return false;
   }
 
   /**
@@ -104,9 +112,9 @@ class Payment
   public static function delete(array $where)
   {
     DB::table('payments')->delete($where);
-    
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -131,13 +139,13 @@ class Payment
       return $rows[0];
     }
 
-    return NULL;
+    return null;
   }
 
   /**
    * Select Payment.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('payments')->select($columns, $escape);
   }
@@ -195,22 +203,22 @@ class Payment
 
     if (isset($data['amount']) && empty($data['amount'])) {
       setLastError('Amount is empty or zero');
-      return FALSE;
+      return false;
     }
 
     if (isset($data['type'])) {
       if (!in_array($data['type'], ['received', 'sent'])) {
         setLastError('Type must be received or sent.');
       }
-      return FALSE;
+      return false;
     }
 
     $data = setUpdatedBy($data);
 
     DB::table('payments')->update($data, ['id' => $id]);
-    
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

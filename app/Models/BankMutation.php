@@ -33,10 +33,11 @@ class BankMutation
 
     DB::table('bank_mutations')->insert($data);
 
-    if ($insertID = DB::insertID()) {
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
       OrderRef::updateReference('mutation');
 
-      return $insertID;
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);
@@ -51,8 +52,8 @@ class BankMutation
   {
     DB::table('bank_mutations')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -94,8 +95,8 @@ class BankMutation
   {
     DB::table('bank_mutations')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

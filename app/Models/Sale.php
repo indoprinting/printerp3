@@ -122,7 +122,7 @@ class Sale
 
     DB::table('sales')->insert($saleData);
 
-    if (DB::affectedRows()) {
+    if (DB::error()['code'] == 0) {
       $insertId = DB::insertID();
 
       foreach ($items as $item) {
@@ -215,7 +215,7 @@ class Sale
   {
     $sale = self::getRow(['id' => $saleId]);
 
-    Payment::add([
+    $res = Payment::add([
       'sale'            => $sale->reference,
       'bank'            => $data['bank'],
       'biller'          => $sale->biller,
@@ -224,9 +224,13 @@ class Sale
       'attachment'      => ($data['attachment'] ?? NULL)
     ]);
 
+    if (!$res) {
+      return false;
+    }
+
     self::sync(['id' => $sale->id]);
 
-    return true;
+    return $res;
   }
 
   /**
@@ -236,8 +240,8 @@ class Sale
   {
     DB::table('sales')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -485,8 +489,8 @@ class Sale
   {
     DB::table('sales')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
