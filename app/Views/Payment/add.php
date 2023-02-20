@@ -51,7 +51,7 @@
                 </div>
               </div>
             </div>
-            <div class="row">
+            <div class="row bank-account" style="display: none">
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
@@ -129,6 +129,10 @@
     });
 
     $('#bank').change(function() {
+      if (!this.value.length) {
+        return false;
+      }
+
       $.ajax({
         success: (data) => {
           $('#bankbalance').val(formatCurrency(data.data));
@@ -142,6 +146,22 @@
         $('.payment-validation').slideDown();
       } else {
         $('.payment-validation').slideUp();
+      }
+
+      if (this.value != 'Transfer') {
+        $('.bank-account').slideDown();
+      } else {
+        if (!$('#skip_validation').is(':checked')) {
+          $('.bank-account').slideUp();
+        }
+      }
+    });
+
+    $('#skip_validation').change(function() {
+      if (this.checked) {
+        $('.bank-account').slideDown();
+      } else {
+        $('.bank-account').slideUp();
       }
     });
 

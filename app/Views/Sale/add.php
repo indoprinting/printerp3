@@ -234,9 +234,7 @@
           warehouse: warehouse
         },
         success: (data) => {
-          let sa = new Sale('#table-sale');
-
-          sa.addItem({
+          Sale.table('#table-sale').addItem({
             code: data.data.code,
             name: data.data.name,
             category: data.data.category,

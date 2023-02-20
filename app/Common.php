@@ -654,12 +654,12 @@ function renderStatus(string $status)
     'installed_partial', 'ordered', 'partial', 'preparing', 'received', 'received_partial', 'serving'
   ];
   $success = [
-    'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
+    'active', 'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
     'sent', 'served', 'verified'
   ];
   $warning = [
-    'called', 'cancelled', 'checked', 'draft', 'packing', 'pending', 'slow', 'trouble', 'waiting',
-    'waiting_production', 'waiting_transfer'
+    'called', 'cancelled', 'checked', 'draft', 'inactive', 'packing', 'pending', 'slow',
+    'trouble', 'waiting', 'waiting_production', 'waiting_transfer'
   ];
 
   if (array_search($st, $danger) !== false) {

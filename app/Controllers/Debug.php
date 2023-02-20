@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{DB};
+use App\Models\{DB, Test1, Test2};
 
 class Debug extends BaseController
 {
@@ -13,6 +13,31 @@ class Debug extends BaseController
     // DB::table('test1')->insert(['date' => '0000-00-00 00:00:00', 'name' => 'riyan']);
     $r = getGet('r');
     var_dump($r);
+  }
+
+  public function dbtrans()
+  {
+    DB::transStart();
+
+    $insertId = Test1::add(['name' => 'RIYAN']);
+
+    if (!$insertId) {
+      $this->response(400, ['message' => 'error 1: ' . getLastError()]);
+    }
+
+    $insertId2 = Test2::add(['test1_id' => $insertId, 'name' => 'WIDIYANTO']);
+
+    if (!$insertId2) {
+      $this->response(400, ['message' => 'error 2: ' . getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      echo "Success";
+    } else {
+      echo "FAILED: {$insertId}:{$insertId2} => " . DB::error()['message'];
+    }
   }
 
   public function invoice()

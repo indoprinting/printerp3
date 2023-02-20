@@ -168,12 +168,10 @@
     TableFilter
   } from '<?= base_url('assets/app/js/ridintek.js?v=') . $resver ?>';
 
-  let tableFilter = new TableFilter();
+  TableFilter.bind('apply', '.filter-apply');
+  TableFilter.bind('clear', '.filter-clear');
 
-  tableFilter.bind('apply', '.filter-apply');
-  tableFilter.bind('clear', '.filter-clear');
-
-  tableFilter.on('clear', () => {
+  TableFilter.on('clear', () => {
     $('#filter-biller').val([]).trigger('change');
     $('#filter-warehouse').val([]).trigger('change');
     $('#filter-createdby').val([]).trigger('change');
