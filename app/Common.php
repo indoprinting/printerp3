@@ -718,12 +718,19 @@ function sendJSON($data, $options = [])
  */
 function setCreatedBy(array $data)
 {
-  $data['created_at'] = ($data['created_at'] ?? date('Y-m-d H:i:s'));
+  $createdAt = new DateTime($data['created_at'] ?? date('Y-m-d H:i:s'));
 
   if (empty($data['created_by']) && isLoggedIn()) {
     $data['created_by'] = session('login')->user_id;
   } else if (empty($data['created_by'])) {
     $data['created_by'] = 119; // System.
+  }
+
+  $data['created_at'] = $createdAt->format('Y-m-d H:i:s');
+
+  // Zero date protection.
+  if (isset($data['date']) && empty($data['date'])) {
+    $data['date'] = $data['created_at'];
   }
 
   return $data;

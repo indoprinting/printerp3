@@ -17,7 +17,8 @@ use App\Models\{
   ProductCategory,
   ProductPrice,
   Sale as Invoice,
-  SaleItem
+  SaleItem,
+    User
 };
 
 class Sale extends BaseController
@@ -253,11 +254,15 @@ class Sale extends BaseController
       if ($transfer) {
         $sale = Invoice::getRow(['id' => $insertId]);
 
-        PaymentValidation::add([
+        $res = PaymentValidation::add([
           'sale'    => $sale->reference,
           'biller'  => $sale->biller,
           'amount'  => $sale->grand_total,
         ]);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
 
         Invoice::sync(['id' => $insertId]);
       }
@@ -319,7 +324,7 @@ class Sale extends BaseController
 
   public function edit($id = null)
   {
-    $sale     = Invoice::getRow(['id' => $id]);
+    $sale = Invoice::getRow(['id' => $id]);
 
     if (!$sale) {
       $this->response(404, ['message' => 'Invoice is not found.']);
@@ -329,6 +334,112 @@ class Sale extends BaseController
 
     if (!$sale) {
       $this->response(404, ['message' => 'Customer is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $date       = dateTimeJS(getPost('date'));
+      $biller     = getPost('biller');
+      $warehouse  = getPost('warehouse');
+      $cashier    = getPost('cashier');
+      $customer   = getPost('customer');
+      $dueDate    = dateTimeJS(getPost('duedate'));
+      $note       = getPost('note');
+      $approve    = (getPost('approve') == 1 ? 1 : 0);
+      $transfer   = (getPost('transfer') == 1);
+      $draft      = (getPost('draft') == 1);
+      $rawItems   = getPost('item');
+
+      if (empty($biller)) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
+      if (empty($warehouse)) {
+        $this->response(400, ['message' => 'Warehouse is required.']);
+      }
+
+      if (empty($customer)) {
+        $this->response(400, ['message' => 'Customer is required.']);
+      }
+
+      if (empty($cashier)) {
+        $this->response(400, ['message' => 'Cashier is required.']);
+      }
+
+      if (empty($rawItems) || !is_array($rawItems)) {
+        $this->response(400, ['message' => 'Item is empty or not valid.']);
+      }
+
+      // Convert rawItems to items
+      $items = [];
+
+      for ($a = 0; $a < count($rawItems['code']); $a++) {
+        if (empty($rawItems['operator'][$a])) {
+          $this->response(400, ['message' => "Operator is empty for {$rawItems['code'][$a]}. Please set operator!"]);
+        }
+
+        $items[] = [
+          'code'      => $rawItems['code'][$a],
+          'spec'      => $rawItems['spec'][$a],
+          'width'     => $rawItems['width'][$a],
+          'length'    => $rawItems['length'][$a],
+          'price'     => filterDecimal($rawItems['price'][$a]),
+          'quantity'  => $rawItems['quantity'][$a],
+          'operator'  => $rawItems['operator'][$a],
+        ];
+      }
+
+      unset($rawItems);
+
+      $data = [
+        'date'      => $date,
+        'biller'    => $biller,
+        'warehouse' => $warehouse,
+        'cashier'   => $cashier,
+        'customer'  => $customer,
+        'due_date'  => $dueDate,
+        'note'      => $note,
+        'source'    => 'PrintERP',
+        'approved'  => $approve,
+      ];
+
+      if ($draft) {
+        $data['status'] = 'draft';
+      }
+
+      $data = $this->useAttachment($data);
+
+      DB::transStart();
+
+      $res = Invoice::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      
+      if ($transfer) {
+        $sale = Invoice::getRow(['id' => $id]);
+
+        $res = PaymentValidation::add([
+          'sale'    => $sale->reference,
+          'biller'  => $sale->biller,
+          'amount'  => $sale->grand_total,
+        ]);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
+
+        Invoice::sync(['id' => $id]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Invoice has been updated.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $items = [];
@@ -346,7 +457,7 @@ class Sale extends BaseController
       $items[] = [
         'code'      => $saleItem->product,
         'name'      => $saleItem->product_name,
-        'category'  => ProductCategory::getRow(['id' => $product->category_id]),
+        'category'  => ProductCategory::getRow(['id' => $product->category_id])->code,
         'width'     => floatval($saleItemJS->w),
         'length'    => floatval($saleItemJS->l),
         'quantity'  => floatval($saleItemJS->sqty),
@@ -391,8 +502,6 @@ class Sale extends BaseController
     $this->data['sale']       = $sale;
     $this->data['saleJS']     = getJSON($sale->json);
     $this->data['saleItems']  = $saleItems;
-    $this->data['biller']     = Biller::getRow(['code' => $sale->biller]);
-    $this->data['customer']   = Customer::getRow(['id' => $sale->customer_id]);
     $this->data['title']      = "Invoice {$sale->reference}";
 
     return view('Sale/print', $this->data);

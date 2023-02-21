@@ -8,11 +8,13 @@ use App\Models\{DB, Test1, Test2};
 
 class Debug extends BaseController
 {
-  public function debug()
+  public function datetime2()
   {
-    // DB::table('test1')->insert(['date' => '0000-00-00 00:00:00', 'name' => 'riyan']);
-    $r = getGet('r');
-    var_dump($r);
+    $dt = new \DateTime(''); // Return current date.
+    echo $dt->format('Y-m-d H:i:s');
+
+    // $dt = new \DateTime('xvsdklf'); // Throw an exception.
+    // echo $dt->format('Y-m-d H:i:s');
   }
 
   public function dbtrans()

@@ -295,6 +295,7 @@ return [
   'transactiondate'       => 'Transaction Date',
   'transfer'              => 'Transfer',
   'transfercycle'         => 'Transfer Cycle',
+  'transferlimit'         => 'Transfer Limit',
   'tuesday'               => 'Tuesday',
   'type'                  => 'Type',
   'uniquecode'            => 'Unique Code',
