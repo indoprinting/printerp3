@@ -74,36 +74,36 @@
                   </div>
                 </div>
               </div>
-              <?php if (hasAccess(['Sale.Approve', 'Sale.RawMaterial'])) : ?>
-                <div class="col-md-4">
-                  <?php if (hasAccess('Sale.RawMaterial')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="rawmaterial" name="rawmaterial">
-                      <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
-                    </div>
-                  <?php endif; ?>
-                  <?php if (hasAccess('Sale.Approve')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="approve" name="approve" value="1">
-                      <label for="approve"><?= lang('App.approve') ?></label>
-                    </div>
-                  <?php endif; ?>
-                </div>
-                <div class="col-md-4">
-                  <?php if (hasAccess('Sale.Approve')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="transfer" name="transfer" value="1">
-                      <label for="transfer"><?= lang('App.transfer') ?></label>
-                    </div>
-                  <?php endif; ?>
-                  <?php if (hasAccess('Sale.Draft') || $sale->status == 'draft') : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="draft" name="draft" value="1">
-                      <label for="draft"><?= lang('App.draft') ?></label>
-                    </div>
-                  <?php endif; ?>
-                </div>
-              <?php endif; ?>
+              <div class="col-md-4">
+                <?php if (hasAccess('Sale.RawMaterial')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="rawmaterial" name="rawmaterial">
+                    <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
+                  </div>
+                <?php endif; ?>
+                <?php if (hasAccess('Sale.Approve')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="approved" name="approved" value="1">
+                    <label for="approved"><?= lang('Status.approved') ?></label>
+                  </div>
+                <?php else : ?>
+                  <input type="hidden" id="approved" name="approved" value="0">
+                <?php endif; ?>
+              </div>
+              <div class="col-md-4">
+                <?php if (hasAccess('Sale.Payment')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="transfer" name="transfer" value="1">
+                    <label for="transfer"><?= lang('App.transfer') ?></label>
+                  </div>
+                <?php endif; ?>
+                <?php if (hasAccess('Sale.Draft') || $sale->status == 'draft') : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="draft" name="draft" value="1">
+                    <label for="draft"><?= lang('App.draft') ?></label>
+                  </div>
+                <?php endif; ?>
+              </div>
             </div>
             <div class="row">
               <div class="col-md-12">
@@ -203,9 +203,6 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
-    $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
-    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
-
     $('#product').change(function() {
       if (!this.value) return false;
 
@@ -235,9 +232,7 @@
           warehouse: warehouse
         },
         success: (data) => {
-          let sa = new Sale('#table-sale');
-
-          sa.addItem({
+          Sale.table('#table-sale').addItem({
             code: data.data.code,
             name: data.data.name,
             category: data.data.category,
@@ -258,10 +253,20 @@
       });
     });
 
+    window.items = `<?= json_encode($saleItems) ?>`;
+
+
+    if (<?= $saleJS->approved ?>) {
+      $('#approved').iCheck('check');
+    }
+
+    $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
+    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
+
     preSelect2('biller', '#biller', '<?= $sale->biller ?>');
     preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
+    preSelect2('user', '#cashier', '<?= $saleJS->cashier_by ?>');
     preSelect2('customer', '#customer', '<?= $sale->customer_id ?>');
-    console.log(`<?= $sale->due_date ?>`);
 
     editor.root.innerHTML = `<?= $sale->note ?>`;
 

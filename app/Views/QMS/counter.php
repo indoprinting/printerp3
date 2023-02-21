@@ -598,12 +598,17 @@
 
       let res = {};
 
-      if (typeof window.recallTicketId !== 'undefined' && window.recallTicketId) {
-        res = await QueueHttp.send('GET', base_url + '/qms/recallQueue/' + window.recallTicketId);
-        delete(window.recallTicketId);
-      } else {
-        res = await QueueHttp.send('GET', base_url + '/qms/callQueue/<?= session('login')->warehouse ?? 'LUC' ?>');
+      try {
+        if (typeof window.recallTicketId !== 'undefined' && window.recallTicketId) {
+          res = await QueueHttp.send('GET', base_url + '/qms/recallQueue/' + window.recallTicketId);
+          delete(window.recallTicketId);
+        } else {
+          res = await QueueHttp.send('GET', base_url + '/qms/callQueue/<?= session('login')->warehouse ?? 'LUC' ?>');
+        }
+      } catch (e) {
+        console.warn(e);
       }
+
 
       let old_ticket = QueueConfig.getObject('ticket_data');
 
@@ -691,7 +696,11 @@
 
       let ticket = QueueConfig.getObject('ticket_data');
 
-      let res = await QueueHttp.send('GET', base_url + '/qms/recallQueue/' + ticket.id);
+      try {
+        let res = await QueueHttp.send('GET', base_url + '/qms/recallQueue/' + ticket.id);
+      } catch (e) {
+        console.log(e);
+      }
 
       if (!res.error) {
         QueueNotify.success('<strong>Recall success.</strong>');
@@ -721,7 +730,11 @@
 
       $(this).prop('disabled', true);
 
-      let res = await QueueHttp.send('POST', base_url + '/qms/serveQueue', data);
+      try {
+        let res = await QueueHttp.send('POST', base_url + '/qms/serveQueue', data);
+      } catch (e) {
+        console.warn(e);
+      }
 
       if (!res.error) {
         timerServing.start();
@@ -758,22 +771,26 @@
         data['serve_time'] = timerCustServing.getTime();
         data['ticket'] = old_ticket.id;
 
-        if (Counter.status == 'serve' || Counter.status == 'paused') {
-          QueueHttp.send('POST', base_url + '/qms/endQueue', data).then((r) => {
-            if (!r.error) {
-              console.log('Current ticket has been ended.');
-            } else {
-              console.log(r.msg);
-            }
-          });
-        } else if (Counter.status == 'call') {
-          QueueHttp.send('POST', base_url + '/qms/skipQueue', data).then((r) => {
-            if (!r.error) {
-              console.log('Current ticket has been skipped.');
-            } else {
-              console.log(r.msg);
-            }
-          });
+        try {
+          if (Counter.status == 'serve' || Counter.status == 'paused') {
+            QueueHttp.send('POST', base_url + '/qms/endQueue', data).then((r) => {
+              if (!r.error) {
+                console.log('Current ticket has been ended.');
+              } else {
+                console.log(r.msg);
+              }
+            });
+          } else if (Counter.status == 'call') {
+            QueueHttp.send('POST', base_url + '/qms/skipQueue', data).then((r) => {
+              if (!r.error) {
+                console.log('Current ticket has been skipped.');
+              } else {
+                console.log(r.msg);
+              }
+            });
+          }
+        } catch (e) {
+          console.warn(e);
         }
       }
 
@@ -811,16 +828,11 @@
       }, 10 * 1000); // Time out for 10 seconds.
     });
 
-    // btnAddSale.click(function() {
-    //   location.href = base_url + '/sale/add';
-
-    //   $(this).prop('disabled', true);
-    // });
-
     cbCounter.change(function() { // Counter number change.
       let data = {};
       data.counter = this.value;
       data[<?= csrf_token() ?>] = '<?= csrf_hash() ?>';
+
       QueueHttp.send('POST', base_url + '/qms/setCounter', data).then((res) => {
         if (!res.error) {
           Counter.setNumber(this.value);

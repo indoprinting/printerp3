@@ -407,13 +407,23 @@ export class QueueTimer {
 }
 
 export class Sale {
-  tbody = null;
+  static tbody = null;
 
-  constructor(table) {
+  static table(table) {
     this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('Sale::table() Cannot find tbody.');
+    }
+
+    return this;
   }
 
-  addItem(item, allowDuplicate = false) {
+  static addItem(item, allowDuplicate = false) {
+    if (!this.tbody.length) {
+      return false;
+    }
+
     if (!allowDuplicate) {
       let items = this.tbody.find('.item_name');
 
@@ -524,13 +534,22 @@ export class Sale {
 }
 
 export class StockAdjustment {
-  tbody = null;
+  static tbody = null;
 
-  constructor(table) {
+  static table(table) {
     this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('Sale::table() Cannot find tbody.');
+    }
+
+    return this;
   }
 
-  addItem(item, allowDuplicate = false) {
+  static addItem(item, allowDuplicate = false) {
+    if (!this.tbody.length) {
+      return false;
+    }
 
     if (!allowDuplicate) {
       let items = this.tbody.find('.item_name');
@@ -556,11 +575,9 @@ export class StockAdjustment {
 }
 
 export class TableFilter {
-  constructor() {
-    this._cb = [];
-  }
+  static _cb = [];
 
-  bind(action, selector) {
+  static bind(action, selector) {
     if (action == 'apply') {
       $(document).on('click', selector, (ev) => {
         for (let a in this._cb) {
@@ -594,7 +611,7 @@ export class TableFilter {
     }
   }
 
-  on(event, callback) {
+  static on(event, callback) {
     this._cb.push({
       ev: event,
       cb: callback

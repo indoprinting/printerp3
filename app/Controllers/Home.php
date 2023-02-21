@@ -274,6 +274,7 @@ class Home extends BaseController
         break;
       case 'product':
         $q = Product::select("code id, CONCAT('(', code, ') ', name) text")
+          ->where('active', 1)
           ->limit(10);
 
         if ($term) {
@@ -304,13 +305,12 @@ class Home extends BaseController
         break;
       case 'user':
         $q = User::select("id, fullname text")
+          ->where('active', 1)
           ->limit(10);
 
         if ($term) {
-          $q->like('fullname', $term, 'both')
-            ->where('active', 1)
-            ->orLike('username', $term, 'both')
-            ->orWhere('phone', $term);
+          $q->where('id', $term)->orWhere('phone', $term)
+            ->orLike('fullname', $term, 'both')->orLike('username', $term, 'both');
         }
 
         $results = $q->get();
@@ -322,7 +322,7 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->where('id', $term)->like('code', $term, 'both')->orLike('name', $term, 'both');
+          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
         if ($warehouse = session('login')->warehouse) {
@@ -333,6 +333,7 @@ class Home extends BaseController
 
         break;
     }
+
     $this->response(200, ['results' => $results]);
   }
 }

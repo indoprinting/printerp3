@@ -585,6 +585,10 @@ function lc(str) {
  * @param {*} id Id of mode.
  */
 function preSelect2(mode, elm, id) {
+  if (isEmpty(id)) {
+    return false;
+  }
+
   $.ajax({
     error: (xhr) => {
       toastr.error(xhr.responseJSON.message, xhr.status);

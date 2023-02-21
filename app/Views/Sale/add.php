@@ -74,36 +74,34 @@
                   </div>
                 </div>
               </div>
-              <?php if (hasAccess(['Sale.Approve', 'Sale.RawMaterial'])) : ?>
-                <div class="col-md-4">
-                  <?php if (hasAccess('Sale.RawMaterial')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="rawmaterial" name="rawmaterial">
-                      <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
-                    </div>
-                  <?php endif; ?>
-                  <?php if (hasAccess('Sale.Approve')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="approve" name="approve" value="1">
-                      <label for="approve"><?= lang('App.approve') ?></label>
-                    </div>
-                  <?php endif; ?>
-                </div>
-                <div class="col-md-4">
-                  <?php if (hasAccess('Sale.Approve')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="transfer" name="transfer" value="1">
-                      <label for="transfer"><?= lang('App.transfer') ?></label>
-                    </div>
-                  <?php endif; ?>
-                  <?php if (hasAccess('Sale.Draft')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="draft" name="draft" value="1">
-                      <label for="draft"><?= lang('App.draft') ?></label>
-                    </div>
-                  <?php endif; ?>
-                </div>
-              <?php endif; ?>
+              <div class="col-md-4">
+                <?php if (hasAccess('Sale.RawMaterial')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="rawmaterial" name="rawmaterial">
+                    <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
+                  </div>
+                <?php endif; ?>
+                <?php if (hasAccess('Sale.Approve')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="approved" name="approved" value="1">
+                    <label for="approved"><?= lang('Status.approved') ?></label>
+                  </div>
+                <?php endif; ?>
+              </div>
+              <div class="col-md-4">
+                <?php if (hasAccess('Sale.Payment')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="transfer" name="transfer" value="1">
+                    <label for="transfer"><?= lang('App.transfer') ?></label>
+                  </div>
+                <?php endif; ?>
+                <?php if (hasAccess('Sale.Draft')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="draft" name="draft" value="1">
+                    <label for="draft"><?= lang('App.draft') ?></label>
+                  </div>
+                <?php endif; ?>
+              </div>
             </div>
             <div class="row">
               <div class="col-md-12">
@@ -234,9 +232,7 @@
           warehouse: warehouse
         },
         success: (data) => {
-          let sa = new Sale('#table-sale');
-
-          sa.addItem({
+          Sale.table('#table-sale').addItem({
             code: data.data.code,
             name: data.data.name,
             category: data.data.category,

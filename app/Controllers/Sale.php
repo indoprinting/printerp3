@@ -160,7 +160,7 @@ class Sale extends BaseController
       $customer   = getPost('customer');
       $dueDate    = dateTimeJS(getPost('duedate'));
       $note       = getPost('note');
-      $approve    = (getPost('approve') == 1 ? 1 : 0);
+      $approved   = (getPost('approved') == 1 ? 1 : 0);
       $transfer   = (getPost('transfer') == 1);
       $draft      = (getPost('draft') == 1);
       $rawItems   = getPost('item');
@@ -215,7 +215,7 @@ class Sale extends BaseController
         'due_date'  => $dueDate,
         'note'      => $note,
         'source'    => 'PrintERP',
-        'approved'  => $approve,
+        'approved'  => $approved,
       ];
 
       if ($draft) {
@@ -309,6 +309,7 @@ class Sale extends BaseController
 
     $this->data['sale']   = $sale;
     $this->data['saleJS'] = getJSON($sale->json);
+    $this->data['saleItems'] = SaleItem::get(['sale_id' => $sale->id]);
     $this->data['title']  = lang('App.editsale') . ' ' . $sale->reference;
 
     $this->response(200, ['content' => view('Sale/edit', $this->data)]);
