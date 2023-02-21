@@ -5,14 +5,21 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
-use App\Models\Attachment;
-use App\Models\Biller;
-use App\Models\Customer;
-use App\Models\DB;
-use App\Models\Payment;
-use App\Models\PaymentValidation;
-use App\Models\Sale as Invoice;
-use App\Models\SaleItem;
+use App\Models\{
+  Attachment,
+  Biller,
+  Customer,
+  DB,
+  Payment,
+  PaymentValidation,
+  PriceGroup,
+  Product,
+  ProductCategory,
+  ProductPrice,
+  Sale as Invoice,
+  SaleItem,
+    User
+};
 
 class Sale extends BaseController
 {
@@ -58,7 +65,8 @@ class Sale extends BaseController
     $dt
       ->select("sales.id AS id, sales.date, sales.reference, pic.fullname,
         biller.name AS biller_name, warehouse.name AS warehouse_name,
-        customers.name AS customer_name, customergroup.name AS customergroup_name,
+        CONCAT(customers.name, ' (', customers.phone, ')') AS customer_name,
+        customergroup.name AS customergroup_name,
         sales.status, sales.payment_status, sales.grand_total, sales.paid, sales.balance,
         sales.created_at, sales.attachment")
       ->join('biller', 'biller.code = sales.biller', 'left')
@@ -89,8 +97,19 @@ class Sale extends BaseController
               </a>
               <a class="dropdown-item" href="' . base_url('sale/view/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('payment/add/sale/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.addpayment') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('payment/view/sale/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
               </a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('sale/delete/' . $data['id']) . '"
@@ -235,11 +254,15 @@ class Sale extends BaseController
       if ($transfer) {
         $sale = Invoice::getRow(['id' => $insertId]);
 
-        PaymentValidation::add([
+        $res = PaymentValidation::add([
           'sale'    => $sale->reference,
           'biller'  => $sale->biller,
           'amount'  => $sale->grand_total,
         ]);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
 
         Invoice::sync(['id' => $insertId]);
       }
@@ -307,9 +330,151 @@ class Sale extends BaseController
       $this->response(404, ['message' => 'Invoice is not found.']);
     }
 
+    $customer = Customer::getRow(['id' => $sale->customer_id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Customer is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $date       = dateTimeJS(getPost('date'));
+      $biller     = getPost('biller');
+      $warehouse  = getPost('warehouse');
+      $cashier    = getPost('cashier');
+      $customer   = getPost('customer');
+      $dueDate    = dateTimeJS(getPost('duedate'));
+      $note       = getPost('note');
+      $approve    = (getPost('approve') == 1 ? 1 : 0);
+      $transfer   = (getPost('transfer') == 1);
+      $draft      = (getPost('draft') == 1);
+      $rawItems   = getPost('item');
+
+      if (empty($biller)) {
+        $this->response(400, ['message' => 'Biller is required.']);
+      }
+
+      if (empty($warehouse)) {
+        $this->response(400, ['message' => 'Warehouse is required.']);
+      }
+
+      if (empty($customer)) {
+        $this->response(400, ['message' => 'Customer is required.']);
+      }
+
+      if (empty($cashier)) {
+        $this->response(400, ['message' => 'Cashier is required.']);
+      }
+
+      if (empty($rawItems) || !is_array($rawItems)) {
+        $this->response(400, ['message' => 'Item is empty or not valid.']);
+      }
+
+      // Convert rawItems to items
+      $items = [];
+
+      for ($a = 0; $a < count($rawItems['code']); $a++) {
+        if (empty($rawItems['operator'][$a])) {
+          $this->response(400, ['message' => "Operator is empty for {$rawItems['code'][$a]}. Please set operator!"]);
+        }
+
+        $items[] = [
+          'code'      => $rawItems['code'][$a],
+          'spec'      => $rawItems['spec'][$a],
+          'width'     => $rawItems['width'][$a],
+          'length'    => $rawItems['length'][$a],
+          'price'     => filterDecimal($rawItems['price'][$a]),
+          'quantity'  => $rawItems['quantity'][$a],
+          'operator'  => $rawItems['operator'][$a],
+        ];
+      }
+
+      unset($rawItems);
+
+      $data = [
+        'date'      => $date,
+        'biller'    => $biller,
+        'warehouse' => $warehouse,
+        'cashier'   => $cashier,
+        'customer'  => $customer,
+        'due_date'  => $dueDate,
+        'note'      => $note,
+        'source'    => 'PrintERP',
+        'approved'  => $approve,
+      ];
+
+      if ($draft) {
+        $data['status'] = 'draft';
+      }
+
+      $data = $this->useAttachment($data);
+
+      DB::transStart();
+
+      $res = Invoice::update((int)$id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      
+      if ($transfer) {
+        $sale = Invoice::getRow(['id' => $id]);
+
+        $res = PaymentValidation::add([
+          'sale'    => $sale->reference,
+          'biller'  => $sale->biller,
+          'amount'  => $sale->grand_total,
+        ]);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
+
+        Invoice::sync(['id' => $id]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Invoice has been updated.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    $items = [];
+    $saleItems = SaleItem::get(['sale_id' => $sale->id]);
+
+    foreach ($saleItems as $saleItem) {
+      $product      = Product::getRow(['code' => $saleItem->product]);
+      $saleItemJS   = getJSON($saleItem->json);
+      $priceGroup   = PriceGroup::getRow(['id' => $customer->price_group_id ?? 1]);
+      $productPrice = ProductPrice::getRow([
+        'product_id'      => $product->id,
+        'price_group_id'  => $priceGroup->id
+      ]);
+
+      $items[] = [
+        'code'      => $saleItem->product,
+        'name'      => $saleItem->product_name,
+        'category'  => ProductCategory::getRow(['id' => $product->category_id])->code,
+        'width'     => floatval($saleItemJS->w),
+        'length'    => floatval($saleItemJS->l),
+        'quantity'  => floatval($saleItemJS->sqty),
+        'spec'      => $saleItemJS->spec,
+        'operator'  => intval($saleItemJS->operator_id),
+        'type'      => $saleItem->product_type,
+        'ranges'    => getJSON($product->price_ranges_value),
+        'prices'    => [
+          floatval($saleItem->price), floatval($productPrice->price2), floatval($productPrice->price3),
+          floatval($productPrice->price4), floatval($productPrice->price5), floatval($productPrice->price6)
+        ]
+      ];
+    }
+
     $this->data['sale']   = $sale;
     $this->data['saleJS'] = getJSON($sale->json);
-    $this->data['saleItems'] = SaleItem::get(['sale_id' => $sale->id]);
+    $this->data['items']  = $items;
     $this->data['title']  = lang('App.editsale') . ' ' . $sale->reference;
 
     $this->response(200, ['content' => view('Sale/edit', $this->data)]);
@@ -337,10 +502,30 @@ class Sale extends BaseController
     $this->data['sale']       = $sale;
     $this->data['saleJS']     = getJSON($sale->json);
     $this->data['saleItems']  = $saleItems;
+    $this->data['title']      = "Invoice {$sale->reference}";
+
+    return view('Sale/print', $this->data);
+  }
+
+  public function view($id = null)
+  {
+    checkPermission('Sale.View');
+
+    $sale = Invoice::getRow(['id' => $id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    $saleItems = SaleItem::get(['sale_id' => $sale->id]);
+
+    $this->data['sale']       = $sale;
+    $this->data['saleJS']     = getJSON($sale->json);
+    $this->data['saleItems']  = $saleItems;
     $this->data['biller']     = Biller::getRow(['code' => $sale->biller]);
     $this->data['customer']   = Customer::getRow(['id' => $sale->customer_id]);
     $this->data['title']      = "Invoice {$sale->reference}";
 
-    return view('Sale/print', $this->data);
+    $this->response(200, ['content' => view('Sale/view', $this->data)]);
   }
 }

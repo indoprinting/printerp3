@@ -137,9 +137,7 @@
           warehouse: warehouse
         },
         success: (data) => {
-          let sa = new StockAdjustment('#table-stockadjustment');
-
-          sa.addItem({
+          StockAdjustment.table('#table-stockadjustment').addItem({
             code: data.data.code,
             name: data.data.name,
             quantity: 0,

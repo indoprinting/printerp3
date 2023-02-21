@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'active'              => 'Aktif',
   'approved'            => 'Disetujui',
   'bad'                 => 'Buruk',
   'called'              => 'Terpanggil',
@@ -20,6 +21,7 @@ return [
   'finished'            => 'Terselesaikan',
   'formula'             => 'Formula',
   'good'                => 'Baik',
+  'inactive'            => 'Tidak Aktif',
   'increase'            => 'Bertambah',
   'installed'           => 'Terinstall',
   'installed_partial'   => 'Terinstall Sebagian',

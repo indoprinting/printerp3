@@ -1,4 +1,4 @@
-Test<div class="modal-header bg-gradient-dark">
+<div class="modal-header bg-gradient-dark">
   <h5 class="modal-title"><i class="fad fa-fw fa-money-bill"></i> <?= $title . " ({$modeLang})" ?></h5>
   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
     <span aria-hidden="true">&times;</span>
@@ -35,7 +35,7 @@ Test<div class="modal-header bg-gradient-dark">
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $amount ?>">
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $payment->amount ?>">
                 </div>
               </div>
               <div class="col-md-6">
@@ -148,14 +148,18 @@ Test<div class="modal-header bg-gradient-dark">
     if (!hasSkipValidation) {
       $('#skip_validation').iCheck('disable');
     }
+    
+    $('#date').val('<?= dateTimeJS($payment->date) ?>');
+    $('#bank').val('<?= $payment->bank ?>').trigger('change');
+    $('#biller').val('<?= $payment->biller ?>').trigger('change');
+    $('#method').val('<?= $payment->method ?>').trigger('change');
 
-    $('#bank').val('<?= $bank ?>').trigger('change');
-    $('#biller').val('<?= $biller ?>').trigger('change');
+    editor.root.innerHTML = `<?= $payment->note ?>`;
 
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/payment/add/<?= $mode ?>/<?= $id ?>'
+      url: base_url + '/payment/edit/<?= $payment->id ?>'
     });
   });
 </script>

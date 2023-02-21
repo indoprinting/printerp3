@@ -654,12 +654,12 @@ function renderStatus(string $status)
     'installed_partial', 'ordered', 'partial', 'preparing', 'received', 'received_partial', 'serving'
   ];
   $success = [
-    'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
+    'active', 'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
     'sent', 'served', 'verified'
   ];
   $warning = [
-    'called', 'cancelled', 'checked', 'draft', 'packing', 'pending', 'slow', 'trouble', 'waiting',
-    'waiting_production', 'waiting_transfer'
+    'called', 'cancelled', 'checked', 'draft', 'inactive', 'packing', 'pending', 'slow',
+    'trouble', 'waiting', 'waiting_production', 'waiting_transfer'
   ];
 
   if (array_search($st, $danger) !== false) {
@@ -718,12 +718,19 @@ function sendJSON($data, $options = [])
  */
 function setCreatedBy(array $data)
 {
-  $data['created_at'] = ($data['created_at'] ?? date('Y-m-d H:i:s'));
+  $createdAt = new DateTime($data['created_at'] ?? date('Y-m-d H:i:s'));
 
   if (empty($data['created_by']) && isLoggedIn()) {
     $data['created_by'] = session('login')->user_id;
   } else if (empty($data['created_by'])) {
     $data['created_by'] = 119; // System.
+  }
+
+  $data['created_at'] = $createdAt->format('Y-m-d H:i:s');
+
+  // Zero date protection.
+  if (isset($data['date']) && empty($data['date'])) {
+    $data['date'] = $data['created_at'];
   }
 
   return $data;

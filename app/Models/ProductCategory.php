@@ -13,8 +13,8 @@ class ProductCategory
   {
     DB::table('categories')->insert($data);
     
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -29,8 +29,8 @@ class ProductCategory
   {
     DB::table('categories')->delete($where);
     
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -72,8 +72,8 @@ class ProductCategory
   {
     DB::table('categories')->update($data, ['id' => $id]);
     
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

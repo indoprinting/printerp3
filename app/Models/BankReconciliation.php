@@ -13,8 +13,8 @@ class BankReconciliation
   {
     DB::table('bank_reconciliations')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -29,8 +29,8 @@ class BankReconciliation
   {
     DB::table('bank_reconciliations')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -162,8 +162,8 @@ class BankReconciliation
   {
     DB::table('bank_reconciliations')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

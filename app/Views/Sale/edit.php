@@ -177,9 +177,47 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
+    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
+
+    try {
+      preSelect2('biller', '#biller', '<?= $sale->biller ?>');
+      preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
+      preSelect2('user', '#cashier', '<?= $saleJS->cashier_by ?>');
+      preSelect2('customer', '#customer', '<?= $sale->customer_id ?>');
+    } catch (e) {
+      console.warn(e);
+    }
+
+    if (<?= $saleJS->approved ?>) {
+      $('#approved').iCheck('check');
+    }
+
+    let items = JSON.parse(`<?= json_encode($items) ?>`);
+
+    for (let item of items) {
+      Sale.table('#table-sale').addItem({
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        width: item.width,
+        length: item.length,
+        quantity: item.quantity,
+        spec: item.spec,
+        operator: item.operator,
+        type: item.type,
+        prices: item.prices,
+        ranges: item.ranges
+      }, true);
+
+      initControls();
+    }
+
     let editor = new Quill('#editor', {
       theme: 'snow'
     });
+
+    editor.root.innerHTML = `<?= $sale->note ?>`;
 
     window.saleUseRawMaterial = false;
 
@@ -252,23 +290,6 @@
         url: base_url + '/api/v1/product'
       });
     });
-
-    window.items = `<?= json_encode($saleItems) ?>`;
-
-
-    if (<?= $saleJS->approved ?>) {
-      $('#approved').iCheck('check');
-    }
-
-    $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
-    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
-
-    preSelect2('biller', '#biller', '<?= $sale->biller ?>');
-    preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
-    preSelect2('user', '#cashier', '<?= $saleJS->cashier_by ?>');
-    preSelect2('customer', '#customer', '<?= $sale->customer_id ?>');
-
-    editor.root.innerHTML = `<?= $sale->note ?>`;
 
     initModalForm({
       form: '#form',

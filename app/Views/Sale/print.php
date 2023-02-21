@@ -1,4 +1,7 @@
 <?php $deliveryNote = (getGet('deliverynote') == 1) ?>
+<?php $biller = \App\Models\Biller::getRow(['code' => $sale->biller]) ?>
+<?php $customer = \App\Models\Customer::getRow(['id' => $sale->customer_id]) ?>
+<?php $paymentValidation = \App\Models\PaymentValidation::getRow(['sale' => $sale->reference]) ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -72,6 +75,12 @@
               <div class="col-md-4 text-bold"><?= lang('App.productionplace') ?></div>
               <div class="col-md-8">: <?= \App\Models\Warehouse::getRow(['code' => $sale->warehouse])->name ?></div>
             </div>
+            <?php if (!empty($saleJS->cashier_by)) : ?>
+              <div class="row">
+                <div class="col-md-4 text-bold"><?= lang('App.cashier') ?></div>
+                <div class="col-md-8">: <?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])->fullname ?></div>
+              </div>
+            <?php endif; ?>
             <div class="row">
               <div class="col-md-4 text-bold"><?= lang('App.source') ?></div>
               <div class="col-md-8">: <?= $saleJS->source ?></div>
@@ -127,10 +136,13 @@
             <table class="table table-bordered table-striped">
               <thead>
                 <tr>
-                  <th><?= lang('App.pic') ?></th>
-                  <th><?= lang('App.note') ?></th>
-                  <th><?= lang('App.paymentdue') ?></th>
-                  <th><?= lang('App.completeestimation') ?></th>
+                  <th class="col-md-3"><?= lang('App.pic') ?></th>
+                  <th class="col-md-3"><?= lang('App.note') ?></th>
+                  <th class="col-md-2"><?= lang('App.paymentdue') ?></th>
+                  <th class="col-md-2"><?= lang('App.completeestimation') ?></th>
+                  <?php if ($paymentValidation) : ?>
+                    <th class="col-md-2"><?= lang('App.transferlimit') ?></th>
+                  <?php endif; ?>
                 </tr>
               </thead>
               <tbody>
@@ -139,6 +151,9 @@
                   <td><?= htmlRemove($sale->note) ?></td>
                   <td><?= ($saleJS->payment_due_date ? formatDate($saleJS->payment_due_date) : '-') ?></td>
                   <td><?= ($saleJS->est_complete_date ? formatDate($saleJS->est_complete_date) : '-') ?></td>
+                  <?php if ($paymentValidation) : ?>
+                    <td><?= formatDateTime($paymentValidation->expired_at) ?></td>
+                  <?php endif; ?>
                 </tr>
               </tbody>
             </table>
@@ -188,21 +203,29 @@
                 Pembayaran dengan transfer dianggap sah jika ditransfer dengan kode unik pada rekening berikut:
               </p>
               <div class="row">
-                <div class="col-md-2 text-bold">BCA</div>
+                <div class="col-md-2 text-bold">
+                  <img src="<?= base_url('assets/app/images/logo-bca.png') ?>" style="max-width:100px">
+                </div>
                 <div class="col-md-4">8030 200234</div>
-                <div class="col-md-2 text-bold">Mandiri</div>
+                <div class="col-md-2 text-bold">
+                  <img src="<?= base_url('assets/app/images/logo-mandiri.png') ?>" style="max-width:100px">
+                </div>
                 <div class="col-md-4">1360 0005 5532 3</div>
               </div>
               <div class="row">
-                <div class="col-md-2 text-bold">BNI</div>
+                <div class="col-md-2 text-bold">
+                  <img src="<?= base_url('assets/app/images/logo-bni.png') ?>" style="max-width:100px">
+                </div>
                 <div class="col-md-4">5592 09008</div>
-                <div class="col-md-2 text-bold">BRI</div>
+                <div class="col-md-2 text-bold">
+                  <img src="<?= base_url('assets/app/images/logo-bri.png') ?>" style="max-width:100px">
+                </div>
                 <div class="col-md-4">0083 01 001092 56 5</div>
               </div>
             </div>
             <div class="col-md-4">
               <div class="table-responsive">
-                <table class="table" style="background-color:transparent">
+                <table class="table table-hover table-sm table-striped">
                   <tr>
                     <th><?= lang('App.total') ?>:</th>
                     <td><span class="float-right"><?= formatCurrency($sale->total) ?></span></td>
@@ -230,6 +253,16 @@
                     <th><?= lang('App.debt') ?>:</th>
                     <td><span class="float-right"><?= formatCurrency($sale->balance) ?></span></td>
                   </tr>
+                  <?php if ($paymentValidation) : ?>
+                    <tr>
+                      <th><?= lang('App.uniquecode') ?>:</th>
+                      <td><span class="float-right"><?= formatCurrency($paymentValidation->unique) ?></span></td>
+                    </tr>
+                    <tr>
+                      <th><?= lang('App.transfer') ?>:</th>
+                      <td><span class="float-right"><?= formatCurrency($paymentValidation->amount + $paymentValidation->unique) ?></span></td>
+                    </tr>
+                  <?php endif; ?>
                 </table>
               </div>
             </div>

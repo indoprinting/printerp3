@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'active'              => 'Active',
   'approved'            => 'Approved',
   'bad'                 => 'Bad',
   'called'              => 'Called',
@@ -20,6 +21,7 @@ return [
   'finished'            => 'Finished',
   'formula'             => 'Formula',
   'good'                => 'Good',
+  'inactive'            => 'Inactive',
   'increase'            => 'Increase',
   'installed'           => 'Installed',
   'installed_partial'   => 'Installed Partial',

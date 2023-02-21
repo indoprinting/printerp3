@@ -57,7 +57,7 @@ class Payment extends BaseController
             <div class="dropdown-menu">
               <a class="dropdown-item" href="' . base_url('payment/edit/' . $data['id']) . '"
                 data-toggle="modal" data-target="#ModalStatic2"
-                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
                 <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
               </a>
               <div class="dropdown-divider"></div>
@@ -185,13 +185,14 @@ class Payment extends BaseController
         $data['type']         = 'received';
         $this->data['amount'] = ($inv->grand_total - $inv->paid - $inv->discount);
         $this->data['biller'] = $inv->biller;
-        $this->data['bank']   = $inv->bank;
+        $this->data['bank']   = '';
         break;
       case 'transfer':
         $inv = ProductTransfer::getRow(['id' => $id]);
         $modeLang = lang('App.producttransfer');
         $data['transfer']     = $inv->reference;
         $data['transfer_id']  = $inv->id;
+        $data['type']         = 'sent';
         $this->data['amount'] = ($inv->grand_total - $inv->paid);
         $this->data['biller'] = $inv->biller;
         $this->data['bank']   = $inv->bank;
@@ -209,7 +210,6 @@ class Payment extends BaseController
       $data['biller']         = getPost('biller');
       $data['method']         = getPost('method'); // Cash / EDC / Transfer
       $data['note']           = getPost('note');
-      $data['type']           = 'sent';
 
       // Used by Sale. Bank mutation has payment ui itself.
       $skipValidation = (getPost('skip_validation') == 1);
@@ -228,15 +228,11 @@ class Payment extends BaseController
 
       $nonValidation = (isset($data['expense']) || isset($data['purchase']) || isset($data['transfer']));
 
-      if ($skipValidation || $nonValidation) {
+      if ($skipValidation || $nonValidation || $data['method'] != 'Transfer') {
         $res = PaymentModel::add($data);
 
         if (!$res) {
           $this->response(400, ['message' => getLastError()]);
-        }
-
-        if (isset($data['expense'])) {
-          Expense::update((int)$inv->id, ['payment_status' => 'paid']);
         }
       } else { // Use payment validation. (Sale only)
         $res = PaymentValidation::add([
@@ -249,10 +245,14 @@ class Payment extends BaseController
         if (!$res) {
           $this->response(400, ['message' => getLastError()]);
         }
+      }
 
-        if (isset($data['sale'])) {
-          Sale::sync(['id' => $data['sale_id']]);
-        }
+      if (isset($data['expense'])) {
+        Expense::update((int)$inv->id, ['payment_status' => 'paid']);
+      }
+
+      if (isset($data['sale'])) {
+        Sale::sync(['id' => $data['sale_id']]);
       }
 
       DB::transComplete();
@@ -326,24 +326,56 @@ class Payment extends BaseController
       $this->response(404, ['message' => 'Payment is not found.']);
     }
 
-    if (!empty($payment->expense)) {
+    if ($payment->expense) {
       $this->response(400, ['message' => 'Edit from Expense']);
-    } else if (!empty($payment->income)) {
+    } else if ($payment->income) {
       $this->response(400, ['message' => 'Edit from Income']);
-    } else if (!empty($payment->mutation)) {
+    } else if ($payment->mutation) {
       $this->response(400, ['message' => 'Edit from Bank Mutation']);
-    } else if (!empty($payment->purchase)) {
-    } else if (!empty($payment->sale)) {
-    } else if (!empty($payment->transfer)) {
+    } else if ($payment->purchase) {
+    } else if ($payment->sale) {
+      $inv = Sale::getRow(['reference' => $payment->sale]);
+      $this->data['modeLang'] = lang('App.invoice');
+    } else if ($payment->transfer) {
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
+      $data['amount']         = filterDecimal(getPost('amount'));
+      $data['date']           = dateTimeJS(getPost('date'));
+      $data['reference']      = $inv->reference;
+      $data['reference_date'] = $inv->date;
+      $data['bank']           = getPost('bank');
+      $data['biller']         = getPost('biller');
+      $data['method']         = getPost('method'); // Cash / EDC / Transfer
+      $data['note']           = getPost('note');
+
+      DB::transStart();
+
+      $data = $this->useAttachment($data);
+
+      $res = PaymentModel::update((int)$payment->id, $data);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        if ($payment->sale) {
+          Sale::sync(['id' => $inv->id]);
+        }
+
+        $this->response(200, ['message' => 'Payment has been updated.']);
+      }
+
+      $this->response(400, ['message' => 'Failed to update payment.']);
     }
 
     $this->data['payment']  = $payment;
     $this->data['title']    = lang('editpayment');
 
-    $this->response(200, ['content' => view('Payment/view', $this->data)]);
+    $this->response(200, ['content' => view('Payment/edit', $this->data)]);
   }
 
   public function view($mode = null, $id = null)

@@ -46,6 +46,8 @@ function calculateSale() {
   });
 
   grandTotal.html(formatCurrency(amount));
+
+  return amount;
 }
 
 /**
@@ -584,6 +586,7 @@ function lc(str) {
  * @param {*} elm Element to change.
  * @param {*} id Id of mode.
  */
+<<<<<<< HEAD
 function preSelect2(mode, elm, id) {
   if (isEmpty(id)) {
     return false;
@@ -595,11 +598,42 @@ function preSelect2(mode, elm, id) {
     },
     success: (data) => {
       let opt = new Option(data.results[0].text, data.results[0].id, true, true);
+=======
+async function preSelect2(mode, elm, id) {
+  return new Promise((resolve, reject) => {
+    if (isEmpty(id)) {
+      console.warn(`preSelect2: id for ${mode}:${elm}.`);
+      reject(false);
+    }
+>>>>>>> d85d7bd4886731d3f42d1a11dfb598e4d0880bdd
 
-      $(elm).html('').append(opt).trigger('change');
-    },
-    url: base_url + `/select2/${mode}?term=${id}`
+    $.ajax({
+      error: (xhr) => {
+        toastr.error(xhr.responseJSON.message, xhr.status);
+
+        reject(false);
+      },
+      success: (data) => {
+        let opt = new Option(data.results[0].text, data.results[0].id, true, true);
+
+        $(elm).html('').append(opt).trigger('change');
+
+        resolve(true);
+      },
+      url: base_url + `/select2/${mode}?term=${id}`
+    });
   });
+}
+
+function randomString(length = 8) {
+  let chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+  let buff = '';
+
+  for (let a = 0; a < length; a++) {
+    buff += chars.charAt(Math.floor(Math.random() * chars.length) % chars.length);
+  }
+
+  return buff;
 }
 
 /**
@@ -656,6 +690,21 @@ function ucwords(words, delimiter = ' \,\-\_\t\r\n') {
   }
 
   return s.trim();
+}
+
+function uuid() {
+  let buff = '';
+  let bytes = randomString(16);
+
+  for (let a = 0; a < bytes.length; a++) {
+    buff += bytes.charCodeAt(a).toString(16);
+
+    if (a == 3 || a == 5 || a == 7 || a == 9) {
+      buff += '-';
+    }
+  }
+
+  return buff;
 }
 
 function validateData(data) {

@@ -38,12 +38,13 @@ class Expense
     $data['payment_status'] = 'pending';
 
     DB::table('expenses')->insert($data);
-    $insertID = DB::insertID();
 
-    if ($insertID) {
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
+
       OrderRef::updateReference('expense');
 
-      return $insertID;
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);
@@ -58,8 +59,8 @@ class Expense
   {
     DB::table('expenses')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -123,8 +124,8 @@ class Expense
 
     DB::table('expenses')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

@@ -295,6 +295,7 @@ return [
   'transactiondate'       => 'Tanggal Transaksi',
   'transfer'              => 'Transfer',
   'transfercycle'         => 'Siklus Transfer',
+  'transferlimit'         => 'Batas Transfer',
   'tuesday'               => 'Selasa',
   'type'                  => 'Tipe',
   'uniquecode'            => 'Kode Unik',

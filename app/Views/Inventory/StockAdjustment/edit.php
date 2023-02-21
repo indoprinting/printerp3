@@ -110,12 +110,11 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
-    let sa = new StockAdjustment('#table-stockadjustment');
     let items = JSON.parse('<?= json_encode($items) ?>');
 
     if (items) {
       for (let item of items) {
-        sa.addItem(item);
+        StockAdjustment.table('#table-stockadjustment').addItem(item);
       }
     } else {
       console.warn('Items are empty.');

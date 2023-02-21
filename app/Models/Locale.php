@@ -13,8 +13,8 @@ class Locale
   {
     DB::table('locale')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -29,8 +29,8 @@ class Locale
   {
     DB::table('locale')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -72,8 +72,8 @@ class Locale
   {
     DB::table('locale')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

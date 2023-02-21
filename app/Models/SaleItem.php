@@ -44,8 +44,8 @@ class SaleItem
 
     DB::table('sale_items')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -220,8 +220,8 @@ class SaleItem
   {
     DB::table('sale_items')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -263,8 +263,8 @@ class SaleItem
   {
     DB::table('sale_items')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
