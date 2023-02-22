@@ -20,7 +20,7 @@ class Sale
       return false;
     }
 
-    $customer = Customer::getRow(['id' => $data['customer']]);
+    $customer = Customer::getRow(['phone' => $data['customer']]);
 
     if (!$customer) {
       setLastError('Customer is not found.');
@@ -34,7 +34,7 @@ class Sale
       return false;
     }
 
-    $cashier = User::getRow(['id' => $data['cashier']]);
+    $cashier = User::getRow(['phone' => $data['cashier']]);
 
     if (!$cashier) {
       setLastError('Cashier is not found.');
@@ -318,7 +318,11 @@ class Sale
       $isW2PUser         = isW2PUser($sale->created_by); // Is sale created_by user is w2p?
       $isSpecialCustomer = isSpecialCustomer($sale->customer_id); // Special customer (Privilege, TOP)
       $payments          = Payment::get(['sale_id' => $sale->id]);
-      $paymentValidation = PaymentValidation::getRow(['sale_id' => $sale->id]);
+      $paymentValidation = PaymentValidation::select('*')
+        ->orderBy('id', 'DESC')
+        ->where('sale_id', $sale->id)
+        ->getRow();
+
       $saleItems         = SaleItem::get(['sale_id' => $sale->id]);
 
       if (empty($saleItems)) {
@@ -486,7 +490,7 @@ class Sale
   /**
    * Update Sale.
    */
-  public static function update(int $id, array $data, ?array $items = [])
+  public static function update(int $id, array $data, array $items = [])
   {
     if (isset($data['biller'])) {
       $biller = Biller::getRow(['code' => $data['biller']]);
@@ -494,7 +498,7 @@ class Sale
     }
 
     if (isset($data['customer'])) {
-      $customer = Customer::getRow(['phone' => $data['customer']]);
+      $customer = Customer::getRow(['id' => $data['customer']]);
       $data['customer_id'] = $customer->id;
     }
 
@@ -503,173 +507,16 @@ class Sale
       $data['warehouse_id'] = $warehouse->id;
     }
 
-    if (isset($data['cashier'])) {
-      $cashier = User::getRow(['id' => $data['cashier']]);
+    if ($items) {
     }
 
-    if (!$cashier) {
-      setLastError('Cashier is not found.');
-      return false;
-    }
-
-    // Is special customer (Privilege, TOP)
-    $isSpecialCustomer = isSpecialCustomer($customer->id);
-
-    $data['status'] = ($data['status'] ?? ($isSpecialCustomer ? 'waiting_production' : 'need_payment'));
-
-    $grandTotal = 0;
-    $totalPrice = 0;
-    $totalItems = 0;
-
-    foreach ($items as $item) {
-      $price    = filterDecimal($item['price']);
-      $quantity = filterDecimal($item['quantity']);
-      $width    = filterDecimal($item['width'] ?? 0);
-      $length   = filterDecimal($item['length'] ?? 0);
-      $area     = ($width * $length);
-
-      $qty         = ($area > 0 ? $area * $quantity : $quantity);
-      $totalPrice  += round($price * $qty);
-      $totalItems += $qty;
-    }
-
-    // Discount.
-    $grandTotal = ($totalPrice - ($data['discount'] ?? 0));
-
-    // Get balance.
-    $balance = ($isSpecialCustomer ? $grandTotal : 0);
-
-    // Determine use TB by biller and warehouse, if both different, then use tb (1).
-    $useTB = isTBSale($data['biller'], $data['warehouse']);
-
-    // Get payment term.
-    $payment_term = filterDecimal($data['payment_term'] ?? 1);
-    $payment_term = ($payment_term > 0 ? $payment_term : 1);
-
-    $saleData = [
-      'date'            => $date,
-      'reference'       => $reference,
-      'customer_id'     => $customer->id,
-      'customer'        => $customer->phone,
-      'biller_id'       => $biller->id,
-      'biller'          => $biller->code,
-      'warehouse_id'    => $warehouse->id,
-      'warehouse'       => $warehouse->code,
-      'no_po'           => ($data['no_po'] ?? null),
-      'note'            => ($data['note'] ?? null),
-      'discount'        => filterDecimal($data['discount'] ?? 0),
-      'total'           => roundDecimal($totalPrice),
-      'shipping'        => filterDecimal($data['shipping'] ?? 0),
-      'grand_total'     => roundDecimal($grandTotal), // IMPORTANT roundDecimal !!
-      'balance'         => $balance,
-      'status'          => $data['status'],
-      'payment_status'  => ($data['payment_status'] ?? 'pending'),
-      'payment_term'    => $payment_term,
-      'due_date'        => ($data['due_date'] ?? null),
-      'total_items'     => $totalItems,
-      'paid'            => filterDecimal($data['paid'] ?? 0),
-      'attachment'      => ($data['attachment'] ?? null),
-      'payment_method'  => ($data['payment_method'] ?? null),
-      'use_tb'          => $useTB,
-      'active'          => 1,
-      'json'            => json_encode([
-        'approved'          => ($data['approved'] ?? 0),
-        'cashier_by'        => $cashier->id,
-        'source'            => ($data['source'] ?? ''),
-        'est_complete_date' => ($data['due_date'] ?? ''),
-        'payment_due_date'  => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days'))))
-      ]),
-      'json_data'       => json_encode([
-        'approved'          => ($data['approved'] ?? 0),
-        'cashier_by'        => $cashier->id,
-        'source'            => ($data['source'] ?? ''),
-        'est_complete_date' => ($data['due_date'] ?? ''),
-        'payment_due_date'  => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days'))))
-      ])
-    ];
-
-    $saleData = setCreatedBy($saleData);
-
-    DB::table('sales')->insert($saleData);
+    DB::table('sales')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
-      $insertId = DB::insertID();
-
-      foreach ($items as $item) {
-        $product = Product::getRow(['code' => $item['code']]);
-        $productJS = getJSON($product->json_data);
-        $operator = User::getRow(['id' => $item['operator']]);
-
-        if (!empty($item['width']) && !empty($item['length'])) {
-          $area = filterDecimal($item['width']) * filterDecimal($item['length']);
-          $quantity = ($area * filterDecimal($item['quantity']));
-        } else {
-          $area           = 0;
-          $quantity       = $item['quantity'];
-          $item['width']  = 0;
-          $item['length'] = 0;
-        }
-
-        $saleItemId = SaleItem::add([
-          'sale'          => $reference,
-          'product'       => $product->code,
-          'price'         => $item['price'],
-          'quantity'      => $quantity,
-          'subtotal'      => (floatval($item['price']) * $quantity),
-          'json'          => json_encode([
-            'w'             => $item['width'],
-            'l'             => $item['length'],
-            'area'          => $area,
-            'sqty'          => $item['quantity'],
-            'spec'          => ($item['spec'] ?? ''),
-            'status'        => $saleData['status'],
-            'operator_id'   => ($operator ? $operator->id : ''),
-            'due_date'      => ($saleData['due_date'] ?? ''),
-            'completed_at'  => ($item['completed_at'] ?? '')
-          ]),
-          'json_data'     => json_encode([
-            'w'             => $item['width'],
-            'l'             => $item['length'],
-            'area'          => $area,
-            'sqty'          => $item['quantity'],
-            'spec'          => ($item['spec'] ?? ''),
-            'status'        => $saleData['status'],
-            'operator_id'   => ($operator ? $operator->id : ''),
-            'due_date'      => ($saleData['due_date'] ?? ''),
-            'completed_at'  => ($item['completed_at'] ?? '')
-          ])
-        ]);
-
-        if (!$saleItemId) {
-          return false;
-        }
-
-        /**
-         * Autocomplete Engine
-         */
-        if ($saleData['status'] == 'waiting_production') {
-          if (!isWeb2Print($insertId) && isset($productJS->autocomplete) && $productJS->autocomplete == 1) {
-            $saleItem = SaleItem::getRow(['id' => $saleItemId]);
-            $saleItemJS = getJSON($saleItem->json);
-
-            if (isCompleted($saleItemJS->status)) {
-              continue;
-            }
-
-            $res = SaleItem::complete((int)$saleItemId, [
-              'quantity'    => $saleItem->quantity,
-              'created_by'  => $saleItemJS->operator_id
-            ]);
-
-            if (!$res) {
-              return false;
-            }
-          }
-        }
-      }
-
-      return $affectedRow;
+      return true;
     }
+
+    setLastError(DB::error()['message']);
 
     return false;
   }

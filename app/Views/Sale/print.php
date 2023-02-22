@@ -160,7 +160,7 @@
           </div>
         </div>
         <div class="row">
-          <img class="watermark" src="<?= base_url('assets/app/images/logo-indoprinting-300.png') ?>">
+          <img class="watermark" src="<?= base_url('assets/app/images/logo-idp-new.png') ?>">
           <div class="col-md-12">
             <table class="table table-bordered table-striped text-center">
               <thead>

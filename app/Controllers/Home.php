@@ -261,7 +261,7 @@ class Home extends BaseController
 
         break;
       case 'customer':
-        $q = Customer::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
+        $q = Customer::select("phone id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
           ->limit(10);
 
         if ($term) {
@@ -304,7 +304,7 @@ class Home extends BaseController
 
         break;
       case 'user':
-        $q = User::select("id, fullname text")
+        $q = User::select("phone id, fullname text")
           ->where('active', 1)
           ->limit(10);
 
@@ -325,9 +325,10 @@ class Home extends BaseController
           $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
         }
 
-        if ($warehouse = session('login')->warehouse) {
-          $q->where('code', $warehouse);
-        }
+        // Do not filter, we need for Sale TB.
+        // if ($warehouse = session('login')->warehouse) {
+        //   $q->where('code', $warehouse);
+        // }
 
         $results = $q->get();
 

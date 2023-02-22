@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\FileUpload;
+use App\Models\User;
+use App\Models\UserGroup;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\CLIRequest;
 use CodeIgniter\HTTP\IncomingRequest;
@@ -80,10 +82,23 @@ class BaseController extends Controller
 			// Set language locale for global lang().
 			Services::language(session('login')->lang);
 
-			// Remove these line after release.
-			if (session('login')->username != 'owner') {
-				die(lang('Msg.accessDenied'));
+			// Refresh groups and permissions.
+			$login = session('login');
+
+			$user = User::getRow(['id' => $login->user_id]);
+			$login->groups = explode(',', $user->groups);
+			$login->permissions = [];
+
+			foreach ($login->groups as $group) {
+				$userGroup = UserGroup::getRow(['name' => $group]);
+
+				if ($userGroup) {
+					$login->permissions = array_merge($login->permissions, getJSON($userGroup->permissions, true));
+				}
 			}
+
+			session()->set('login', $login);
+			// End refresh groups and permissions.
 
 			$lang = [
 				'App' 		=> include(APPPATH . 'Language/' . session('login')->lang . '/App.php'),

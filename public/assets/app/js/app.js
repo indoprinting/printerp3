@@ -71,7 +71,7 @@
         if (isObject(xhr.responseJSON)) {
           toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
 
-          if (xhr.status) {
+          if (xhr.status == 401) {
             location.reload();
           }
         } else {
@@ -88,9 +88,6 @@
             if (setURL) this._setURL(data.url);
 
             initControls();
-          } else {
-            toastr.error(data.message, data.title);
-            if (data.code == 401) location.reload();
           }
         } else {
           toastr.error(data, lang.Msg.cannotLoadPage);

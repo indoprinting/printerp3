@@ -26,7 +26,7 @@ class Finance extends BaseController
 
   public function getBanks()
   {
-    checkPermission('Bank.View');
+    checkPermission('BankAccount.View');
 
     $dt = new DataTables('banks');
     $dt

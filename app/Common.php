@@ -454,6 +454,7 @@ function hasAccess($permission)
       }
     }
   }
+
   return false;
 }
 

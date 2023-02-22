@@ -18,7 +18,7 @@ use App\Models\{
   ProductPrice,
   Sale as Invoice,
   SaleItem,
-    User
+  User
 };
 
 class Sale extends BaseController
@@ -54,12 +54,14 @@ class Sale extends BaseController
   {
     checkPermission('Sale.View');
 
-    $billers    = getPost('biller');
-    $warehouses = getPost('warehouse');
-    $createdBy  = getPost('created_by');
-    $receivable = (getPost('receivable') == 1 ? 1 : 0);
-    $startDate  = (getPost('start_date') ?? date('Y-m-d', strtotime('-1 month')));
-    $endDate    = (getPost('end_date') ?? date('Y-m-d'));
+    $billers        = getPost('biller');
+    $warehouses     = getPost('warehouse');
+    $status         = getPost('status');
+    $paymentStatus  = getPost('payment_status');
+    $createdBy      = getPost('created_by');
+    $receivable     = (getPost('receivable') == 1);
+    $startDate      = (getPost('start_date') ?? date('Y-m-d', strtotime('-1 month')));
+    $endDate        = (getPost('end_date') ?? date('Y-m-d'));
 
     $dt = new DataTables('sales');
     $dt
@@ -138,15 +140,6 @@ class Sale extends BaseController
         return renderStatus($data['payment_status']);
       });
 
-    if ($biller = session('login')->biller) {
-      $billers = [];
-      $billers[] = $biller;
-    }
-
-    if ($warehouse = session('login')->warehouse) {
-      $warehouses = [];
-      $warehouses[] = $warehouse;
-    }
 
     if ($billers) {
       $dt->whereIn('sales.biller', $billers);
@@ -154,6 +147,14 @@ class Sale extends BaseController
 
     if ($warehouses) {
       $dt->whereIn('sales.warehouse', $warehouses);
+    }
+
+    if ($status) {
+      $dt->whereIn('sales.status', $status);
+    }
+
+    if ($paymentStatus) {
+      $dt->whereIn('sales.payment_status', $paymentStatus);
     }
 
     if ($createdBy) {
@@ -324,6 +325,8 @@ class Sale extends BaseController
 
   public function edit($id = null)
   {
+    checkPermission('Sale.Edit');
+
     $sale = Invoice::getRow(['id' => $id]);
 
     if (!$sale) {
@@ -410,13 +413,12 @@ class Sale extends BaseController
 
       DB::transStart();
 
-      $res = Invoice::update((int)$id, $data);
+      $res = Invoice::update((int)$id, $data, $items);
 
       if (!$res) {
         $this->response(400, ['message' => getLastError()]);
       }
 
-      
       if ($transfer) {
         $sale = Invoice::getRow(['id' => $id]);
 

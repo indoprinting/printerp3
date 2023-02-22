@@ -23,6 +23,8 @@ class Api extends BaseController
 {
   public function index()
   {
+    // Do not use authentication.
+    // checkPermission();
   }
 
   private function http_get($url, $header = [])

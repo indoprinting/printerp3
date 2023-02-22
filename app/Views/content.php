@@ -329,69 +329,71 @@
               </li>
             <?php endif; ?>
             <!-- Inventory -->
-            <li class="nav-item">
-              <a href="#" class="nav-link" data-slug="inventory">
-                <i class="nav-icon fad fa-box-open-full" style="color:#ffff00"></i>
-                <p><?= lang('App.inventory') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-cloud-arrow-down"></i>
-                    <p><?= lang('App.sync') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-hand-holding-box"></i>
-                    <p><?= lang('App.internaluse') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-boxes-packing"></i>
-                    <p><?= lang('App.category') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-cart-flatbed-boxes"></i>
-                    <p><?= lang('App.mutation') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('inventory/product') ?>" class="nav-link" data-action="link" data-slug="product">
-                    <i class="nav-icon fad fa-box-up"></i>
-                    <p><?= lang('App.product') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('inventory/stockadjustment') ?>" class="nav-link" data-action="link" data-slug="stockadjustment">
-                    <i class="nav-icon fad fa-sliders" style="color:#ffff40"></i>
-                    <p><?= lang('App.stockadjustment') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-box-check"></i>
-                    <p><?= lang('App.stockopname') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-exchange"></i>
-                    <p><?= lang('App.transfer') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-box-ballot"></i>
-                    <p><?= lang('App.usagehistory') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess(['Product.View'])) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link" data-slug="inventory">
+                  <i class="nav-icon fad fa-box-open-full" style="color:#ffff00"></i>
+                  <p><?= lang('App.inventory') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-cloud-arrow-down"></i>
+                      <p><?= lang('App.sync') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-hand-holding-box"></i>
+                      <p><?= lang('App.internaluse') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-boxes-packing"></i>
+                      <p><?= lang('App.category') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-cart-flatbed-boxes"></i>
+                      <p><?= lang('App.mutation') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="<?= base_url('inventory/product') ?>" class="nav-link" data-action="link" data-slug="product">
+                      <i class="nav-icon fad fa-box-up"></i>
+                      <p><?= lang('App.product') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="<?= base_url('inventory/stockadjustment') ?>" class="nav-link" data-action="link" data-slug="stockadjustment">
+                      <i class="nav-icon fad fa-sliders" style="color:#ffff40"></i>
+                      <p><?= lang('App.stockadjustment') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-box-check"></i>
+                      <p><?= lang('App.stockopname') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-exchange"></i>
+                      <p><?= lang('App.transfer') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-box-ballot"></i>
+                      <p><?= lang('App.usagehistory') ?></p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- Maintenance -->
             <li class="nav-item">
               <a href="#" class="nav-link">

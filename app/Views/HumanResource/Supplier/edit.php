@@ -14,13 +14,13 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.name') ?></label>
+                  <label for="name"><?= lang('App.name') ?> *</label>
                   <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="Ex. Riyan Widiyanto" value="<?= $supplier->name ?>">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="company"><?= lang('App.company') ?></label>
+                  <label for="company"><?= lang('App.company') ?> *</label>
                   <input id="company" name="company" class="form-control form-control-border form-control-sm" placeholder="Ex. PT. Ridintek Industri" value="<?= $supplier->company ?>">
                 </div>
               </div>
@@ -28,7 +28,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="phone"><?= lang('App.phone') ?></label>
+                  <label for="phone"><?= lang('App.phone') ?> *</label>
                   <input id="phone" name="phone" class="form-control form-control-border form-control-sm" placeholder="Ex. 0823116620xx" value="<?= $supplier->phone ?>">
                 </div>
               </div>

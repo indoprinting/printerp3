@@ -14,7 +14,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="group"><?= lang('App.group') ?></label>
+                  <label for="group"><?= lang('App.group') ?> *</label>
                   <select class="select" name="group" style="width:100%">
                     <?php foreach (\App\Models\CustomerGroup::get() as $group) : ?>
                       <option value="<?= $group->id ?>"><?= $group->name ?></option>
@@ -24,7 +24,7 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="pricegroup"><?= lang('App.pricegroup') ?></label>
+                  <label for="pricegroup"><?= lang('App.pricegroup') ?> *</label>
                   <select class="select" name="pricegroup" style="width:100%">
                     <?php foreach (\App\Models\PriceGroup::get() as $group) : ?>
                       <option value="<?= $group->id ?>"><?= $group->name ?></option>
@@ -36,7 +36,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.name') ?></label>
+                  <label for="name"><?= lang('App.name') ?> *</label>
                   <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.name') ?>" value="<?= $customer->name ?>">
                 </div>
               </div>
@@ -50,7 +50,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.phone') ?></label>
+                  <label for="name"><?= lang('App.phone') ?> *</label>
                   <input id="phone" name="phone" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.phone') ?>" value="<?= $customer->phone ?>">
                 </div>
               </div>

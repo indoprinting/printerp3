@@ -11,6 +11,7 @@ class Humanresource extends BaseController
 {
   public function index()
   {
+    checkPermission();
   }
 
   public function getCustomers()
@@ -614,7 +615,7 @@ class Humanresource extends BaseController
         'gender'    => getPost('gender'),
         'groups'    => getPost('groups'),
         'password'  => getPost('password'),
-        'phone'     => getPost('phone'),
+        'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
         'username'  => getPost('username'),
         'warehouse' => getPost('warehouse'),
       ];
@@ -678,7 +679,7 @@ class Humanresource extends BaseController
         'fullname'  => getPost('fullname'),
         'gender'    => getPost('gender'),
         'groups'    => getPost('groups'),
-        'phone'     => getPost('phone'),
+        'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
         'username'  => getPost('username'),
         'warehouse' => getPost('warehouse'),
       ];
@@ -760,11 +761,27 @@ class Humanresource extends BaseController
     checkPermission('Supplier.Add');
 
     if (requestMethod() == 'POST') {
+      $name     = getPost('name');
+      $company  = getPost('company');
+      $phone    = filterNumber(getPost('phone'));
+
+      if (empty($name)) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($company)) {
+        $this->response(400, ['message' => 'Company is required.']);
+      }
+
+      if (empty($phone)) {
+        $this->response(400, ['message' => 'Phone number is required.']);
+      }
+
       $supplierData = [
-        'name'    => getPost('name'),
-        'company' => getPost('company'),
+        'name'    => $name,
+        'company' => $company,
         'email'   => getPost('email'),
-        'phone'   => getPost('phone'),
+        'phone'   => $phone,
         'address' => getPost('address'),
         'city'    => getPost('city'),
         'country' => getPost('country'),
@@ -818,11 +835,27 @@ class Humanresource extends BaseController
     }
 
     if (requestMethod() == 'POST') {
+      $name     = getPost('name');
+      $company  = getPost('company');
+      $phone    = filterNumber(getPost('phone'));
+
+      if (empty($name)) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($company)) {
+        $this->response(400, ['message' => 'Company is required.']);
+      }
+
+      if (empty($phone)) {
+        $this->response(400, ['message' => 'Phone number is required.']);
+      }
+
       $supplierData = [
-        'name'    => getPost('name'),
-        'company' => getPost('company'),
+        'name'    => $name,
+        'company' => $company,
         'email'   => getPost('email'),
-        'phone'   => getPost('phone'),
+        'phone'   => $phone,
         'address' => getPost('address'),
         'city'    => getPost('city'),
         'country' => getPost('country'),
