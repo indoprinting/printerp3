@@ -183,6 +183,7 @@ return [
   'maintenancereview'     => 'Ulasan Pemeliharaan',
   'maintenanceschedule'   => 'Jadwal Pemeliharaan',
   'manual'                => 'Manual',
+  'manualvalidation'      => 'Validasi Manual',
   'markonprice'           => 'Harga Mark-On',
   'method'                => 'Metode',
   'misc'                  => 'Lain-lain',

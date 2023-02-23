@@ -184,6 +184,7 @@ return [
   'maintenancereview'     => 'Maintenance Review',
   'maintenanceschedule'   => 'Maintenance Schedule',
   'manual'                => 'Manual',
+  'manualvalidation'      => 'Manual Validation',
   'markonprice'           => 'Mark-On Price',
   'method'                => 'Method',
   'misc'                  => 'Misc',

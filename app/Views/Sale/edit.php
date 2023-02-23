@@ -177,6 +177,8 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.sale = {};
+
     $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
     $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
 
@@ -219,7 +221,7 @@
 
     editor.root.innerHTML = `<?= $sale->note ?>`;
 
-    window.saleUseRawMaterial = false;
+    erp.sale.useRawMaterial = false;
 
     $('#draft').on('change', function() {
       if (this.checked) {
@@ -231,9 +233,9 @@
 
     $('#rawmaterial').on('change', function() {
       if (this.checked) {
-        saleUseRawMaterial = true;
+        erp.sale.useRawMaterial = true;
       } else {
-        saleUseRawMaterial = false;
+        erp.sale.useRawMaterial = false;
       }
     });
 

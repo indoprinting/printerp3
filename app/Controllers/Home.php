@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\{
   Attachment,
+  Bank,
   Biller,
   Customer,
   DB,
@@ -241,16 +242,54 @@ class Home extends BaseController
     $mode     = strtolower($mode);
     $results  = [];
     $term     = getGet('term');
+    $billers  = getGet('biller');
     $types    = getGet('type');
 
     switch ($mode) {
+      case 'bank':
+        $q = Bank::select("code id, (CASE WHEN number IS NOT NULL THEN CONCAT(name, ' (', number, ')') ELSE name END) text")
+          ->where('active', 1)
+          ->limit(10);
+
+        if ($term) {
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('code', $term, 'both')
+            ->orLike('name', $term, 'both')
+            ->orLike('number', $term, 'both')
+            ->groupEnd();
+        }
+
+        if ($billers) {
+          if (!is_array($billers)) {
+            $billers = [$billers];
+          }
+
+          $q->whereIn('biller', $billers);
+        }
+
+        if ($types) {
+          if (!is_array($types)) {
+            $types = [$types];
+          }
+
+          $q->whereIn('type', $types);
+        }
+
+        $results = $q->get();
+
+        break;
       case 'biller':
         $q = Biller::select("code id, name text")
           ->where('active', 1)
           ->limit(10);
 
         if ($term) {
-          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('code', $term, 'both')
+            ->orLike('name', $term, 'both')
+            ->groupEnd();
         }
 
         if ($biller = session('login')->biller) {
@@ -265,8 +304,12 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->where('id', $term)->orLike('name', $term, 'both')
-            ->orLike('company', $term, 'both')->orLike('phone', $term, 'none');
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('name', $term, 'both')
+            ->orLike('company', $term, 'both')
+            ->orLike('phone', $term, 'none')
+            ->groupEnd();
         }
 
         $results = $q->get();
@@ -278,7 +321,11 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('code', $term, 'both')
+            ->orLike('name', $term, 'both')
+            ->groupEnd();
         }
 
         if ($types) {
@@ -297,7 +344,11 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->where('id', $term)->orLike('name', $term, 'both')->orLike('company', $term, 'both');
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('name', $term, 'both')
+            ->orLike('company', $term, 'both')
+            ->groupEnd();
         }
 
         $results = $q->get();
@@ -309,8 +360,12 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->where('id', $term)->orWhere('phone', $term)
-            ->orLike('fullname', $term, 'both')->orLike('username', $term, 'both');
+          $q->groupStart()
+            ->where('id', $term)
+            ->orWhere('phone', $term)
+            ->orLike('fullname', $term, 'both')
+            ->orLike('username', $term, 'both')
+            ->groupEnd();
         }
 
         $results = $q->get();
@@ -322,7 +377,11 @@ class Home extends BaseController
           ->limit(10);
 
         if ($term) {
-          $q->where('id', $term)->orLike('code', $term, 'both')->orLike('name', $term, 'both');
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('code', $term, 'both')
+            ->orLike('name', $term, 'both')
+            ->groupEnd();
         }
 
         // Do not filter, we need for Sale TB.

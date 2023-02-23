@@ -32,6 +32,7 @@
     const base_url = '<?= base_url(); ?>';
     const langId = '<?= session('login')->lang ?>';
     const permissions = JSON.parse(atob('<?= $permission64 ?>'));
+    window.erp = {};
     window.Table = null;
     window.show_timer = true;
   </script>

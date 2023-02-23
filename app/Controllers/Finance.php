@@ -1567,4 +1567,23 @@ class Finance extends BaseController
 
     return $this->buildPage($this->data);
   }
+
+  protected function validation_manual(string $mode, $id = null)
+  {
+    $pv = null;
+
+    if ($mode == 'sale') {
+      $pv = PaymentValidation::select('*')->where('sale_id', $id)->orderBy('id', 'DESC')->getRow();
+    } else if ($mode == 'expense') {
+      $pv = PaymentValidation::select('*')->where('expense_id', $id)->orderBy('id', 'DESC')->getRow();
+    }
+
+    if (!$pv) {
+      $this->response(404, ['message' => 'Payment Validation is not found.']);
+    }
+
+    $this->data['title'] = lang('App.manualvalidation');
+
+    $this->response(200, ['content' => view('Finance/Validation/manual', $this->data)]);
+  }
 }

@@ -366,6 +366,24 @@ function initControls() {
     $('.select-allow-clear').select2({ allowClear: true });
     $('.select-tags').select2({ tags: true });
     $('.select-allow-clear-tags').select2({ allowClear: true, tags: true });
+    $('.select-bank').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (erp?.payment?.biller) {
+            params.biller = erp.payment.biller;
+          }
+
+          if (erp?.payment?.type) {
+            params.type = erp.payment.type;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/bank'
+      }
+    });
     $('.select-biller').select2({
       allowClear: true,
       ajax: {
@@ -393,8 +411,8 @@ function initControls() {
         data: (params) => {
           params.type = ['combo', 'service'];
 
-          if (typeof saleUseRawMaterial !== 'undefined') {
-            if (saleUseRawMaterial) {
+          if (typeof erp?.sale?.useRawMaterial !== 'undefined') {
+            if (erp.sale.useRawMaterial) {
               params.type.push('standard');
             } else if (params.type.indexOf('standard') > 0) {
               params.type.pop();
@@ -586,26 +604,12 @@ function lc(str) {
  * @param {*} elm Element to change.
  * @param {*} id Id of mode.
  */
-<<<<<<< HEAD
-function preSelect2(mode, elm, id) {
-  if (isEmpty(id)) {
-    return false;
-  }
-
-  $.ajax({
-    error: (xhr) => {
-      toastr.error(xhr.responseJSON.message, xhr.status);
-    },
-    success: (data) => {
-      let opt = new Option(data.results[0].text, data.results[0].id, true, true);
-=======
 async function preSelect2(mode, elm, id) {
   return new Promise((resolve, reject) => {
     if (isEmpty(id)) {
       console.warn(`preSelect2: id for ${mode}:${elm}.`);
       reject(false);
     }
->>>>>>> d85d7bd4886731d3f42d1a11dfb598e4d0880bdd
 
     $.ajax({
       error: (xhr) => {

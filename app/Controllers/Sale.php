@@ -114,6 +114,12 @@ class Sale extends BaseController
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
               </a>
               <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('finance/validation/manual/sale/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.manualvalidation') . '
+              </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('sale/delete/' . $data['id']) . '"
                 data-action="confirm">
                 <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '

@@ -177,11 +177,13 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.sale = {};
+
     let editor = new Quill('#editor', {
       theme: 'snow'
     });
 
-    window.saleUseRawMaterial = false;
+    erp.sale.useRawMaterial = false;
 
     $('#draft').on('change', function() {
       if (this.checked) {
@@ -193,9 +195,9 @@
 
     $('#rawmaterial').on('change', function() {
       if (this.checked) {
-        saleUseRawMaterial = true;
+        erp.sale.useRawMaterial = true;
       } else {
-        saleUseRawMaterial = false;
+        erp.sale.useRawMaterial = false;
       }
     });
 

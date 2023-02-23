@@ -55,12 +55,8 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
-                  <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
+                  <select id="bank" name="bank" class="select-bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                     <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bk->biller) continue; ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
                   </select>
                 </div>
               </div>
@@ -118,6 +114,9 @@
   })();
 
   $(document).ready(function() {
+    erp.payment = {}; // Init.
+    erp.payment.biller = $('#biller').val();
+
     let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
 
     let editor = new Quill('#editor', {
@@ -126,6 +125,10 @@
 
     editor.on('text-change', (delta, oldDelta, source) => {
       $('[name="note"]').val(editor.root.innerHTML);
+    });
+
+    $('#biller').change(function() {
+      erp.payment.biller = this.value;
     });
 
     $('#bank').change(function() {
@@ -141,7 +144,19 @@
       });
     });
 
+    // Saat ubah method. Ubah juga bank.
     $('#method').change(function() {
+      erp.payment.type = this.value;
+
+      switch (this.value) {
+        case 'Cash':
+          break;
+        case 'EDC':
+          break;
+        case 'Transfer':
+          break;
+      }
+
       if (this.value == 'Transfer' && hasSkipValidation) {
         $('.payment-validation').slideDown();
       } else {
