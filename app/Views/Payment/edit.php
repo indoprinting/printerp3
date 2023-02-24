@@ -55,12 +55,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
-                  <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bk->biller) continue; ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <select id="bank" name="bank" class="select-bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -118,6 +113,9 @@
   })();
 
   $(document).ready(function() {
+    erp.bank = {}; // Init.
+    erp.bank.biller = $('#biller').val();
+
     let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
 
     let editor = new Quill('#editor', {
@@ -128,7 +126,17 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    editor.root.innerHTML = `<?= $payment->note ?>`;
+
+    $('#biller').change(function() {
+      erp.bank.biller = this.value;
+    });
+
     $('#bank').change(function() {
+      if (!this.value.length) {
+        return false;
+      }
+
       $.ajax({
         success: (data) => {
           $('#bankbalance').val(formatCurrency(data.data));
@@ -138,6 +146,10 @@
     });
 
     $('#method').change(function() {
+      erp.bank.type = this.value;
+
+      $('#bank').val('').trigger('change');
+
       if (this.value == 'Transfer' && hasSkipValidation) {
         $('.payment-validation').slideDown();
       } else {
@@ -148,13 +160,12 @@
     if (!hasSkipValidation) {
       $('#skip_validation').iCheck('disable');
     }
-    
+
+    preSelect2('bank', '#bank', '<?= $payment->bank ?>');
+
     $('#date').val('<?= dateTimeJS($payment->date) ?>');
-    $('#bank').val('<?= $payment->bank ?>').trigger('change');
     $('#biller').val('<?= $payment->biller ?>').trigger('change');
     $('#method').val('<?= $payment->method ?>').trigger('change');
-
-    editor.root.innerHTML = `<?= $payment->note ?>`;
 
     initModalForm({
       form: '#form',

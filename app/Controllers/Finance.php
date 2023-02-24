@@ -14,7 +14,8 @@ use App\Models\{
   Expense,
   Income,
   Payment,
-  PaymentValidation
+  PaymentValidation,
+  Sale
 };
 
 class Finance extends BaseController
@@ -282,7 +283,7 @@ class Finance extends BaseController
 
     $dt = new DataTables('payment_validations');
     $dt
-      ->select("payment_validations.id AS id, payment_validations.created_at,
+      ->select("payment_validations.id AS id, payment_validations.date,
       payment_validations.reference, creator.fullname, biller.name AS biller_name,
         IF(
           LENGTH(customers.company),
@@ -294,6 +295,7 @@ class Finance extends BaseController
         payment_validations.expired_at, payment_validations.transaction_at,
         payment_validations.verified_at, payment_validations.unique,
         payment_validations.note, payment_validations.status,
+        payment_validations.created_at,
         payment_validations.attachment")
       ->join('banks', 'banks.code = payment_validations.bank', 'left')
       ->join('biller', 'biller.code = payment_validations.biller', 'left')
@@ -1568,21 +1570,36 @@ class Finance extends BaseController
     return $this->buildPage($this->data);
   }
 
-  protected function validation_manual(string $mode, $id = null)
+  protected function validation_manual(string $mode = null, $id = null)
   {
     $pv = null;
 
+    if (!$mode) {
+      $this->response(400, ['message' => 'Manual validation mode must be SALE or MUTATION.']);
+    }
+
     if ($mode == 'sale') {
       $pv = PaymentValidation::select('*')->where('sale_id', $id)->orderBy('id', 'DESC')->getRow();
+      $sale = Sale::getRow(['id' => $id]);
+      $this->data['sale']       = $sale;
+      $this->data['reference']  = $sale->reference;
     } else if ($mode == 'expense') {
       $pv = PaymentValidation::select('*')->where('expense_id', $id)->orderBy('id', 'DESC')->getRow();
+      $mutation = BankMutation::getRow(['id' => $id]);
+      $this->data['mutation']   = $mutation;
+      $this->data['reference']  = $mutation->reference;
     }
 
     if (!$pv) {
       $this->response(404, ['message' => 'Payment Validation is not found.']);
     }
 
-    $this->data['title'] = lang('App.manualvalidation');
+    if ($pv->status == 'verified') {
+      $this->response(400, ['message' => 'Payment Validation is already verified.']);
+    }
+
+    $this->data['pv']     = $pv;
+    $this->data['title']  = lang('App.manualvalidation');
 
     $this->response(200, ['content' => view('Finance/Validation/manual', $this->data)]);
   }

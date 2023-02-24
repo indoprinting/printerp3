@@ -11,7 +11,7 @@
             <thead>
               <tr>
                 <th></th>
-                <th><?= lang('App.createdat'); ?></th>
+                <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
                 <th><?= lang('App.createdby'); ?></th>
                 <th><?= lang('App.biller'); ?></th>
@@ -26,6 +26,7 @@
                 <th><?= lang('App.uniquecode'); ?></th>
                 <th><?= lang('App.description'); ?></th>
                 <th><?= lang('App.status'); ?></th>
+                <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </thead>
@@ -47,6 +48,7 @@
                 <th><?= lang('App.uniquecode'); ?></th>
                 <th><?= lang('App.description'); ?></th>
                 <th><?= lang('App.status'); ?></th>
+                <th><?= lang('App.createdat'); ?></th>
                 <th><?= lang('App.attachment'); ?></th>
               </tr>
             </tfoot>
@@ -69,7 +71,7 @@
         url: base_url + '/finance/getPaymentValidations'
       },
       columnDefs: [{
-        targets: [0, 16],
+        targets: [0, 17],
         orderable: false
       }],
       fixedHeader: false,

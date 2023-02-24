@@ -463,17 +463,18 @@ class Sale extends BaseController
       ]);
 
       $items[] = [
-        'code'      => $saleItem->product,
-        'name'      => $saleItem->product_name,
-        'category'  => ProductCategory::getRow(['id' => $product->category_id])->code,
-        'width'     => floatval($saleItemJS->w),
-        'length'    => floatval($saleItemJS->l),
-        'quantity'  => floatval($saleItemJS->sqty),
-        'spec'      => $saleItemJS->spec,
-        'operator'  => intval($saleItemJS->operator_id),
-        'type'      => $saleItem->product_type,
-        'ranges'    => getJSON($product->price_ranges_value),
-        'prices'    => [
+        'code'          => $saleItem->product,
+        'name'          => $saleItem->product_name,
+        'category'      => ProductCategory::getRow(['id' => $product->category_id])->code,
+        'width'         => floatval($saleItemJS->w),
+        'length'        => floatval($saleItemJS->l),
+        'quantity'      => floatval($saleItemJS->sqty),
+        'spec'          => $saleItemJS->spec,
+        'operator'      => intval($saleItemJS->operator_id),
+        'completed_at'  => $saleItemJS->completed_at,
+        'type'          => $saleItem->product_type,
+        'ranges'        => getJSON($product->price_ranges_value),
+        'prices'        => [
           floatval($saleItem->price), floatval($productPrice->price2), floatval($productPrice->price3),
           floatval($productPrice->price4), floatval($productPrice->price5), floatval($productPrice->price6)
         ]

@@ -370,12 +370,12 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (erp?.payment?.biller) {
-            params.biller = erp.payment.biller;
+          if (erp?.bank?.biller) {
+            params.biller = erp.bank.biller;
           }
 
-          if (erp?.payment?.type) {
-            params.type = erp.payment.type;
+          if (erp?.bank?.type) {
+            params.type = erp.bank.type;
           }
 
           return params;

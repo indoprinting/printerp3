@@ -277,9 +277,13 @@ class Sale
     return DB::table('sales')->select($columns, $escape);
   }
 
+  /**
+   * Sync sales.
+   */
   public static function sync($clause = [])
   {
     $sales = [];
+    $updateCounter = 0;
 
     // $this->syncPaymentValidations(); // Cause memory crash (looping).
 
@@ -476,7 +480,9 @@ class Sale
       $saleData['json']           = json_encode($saleJS);
       $saleData['json_data']      = json_encode($saleJS);
 
-      self::update((int)$sale->id, $saleData);
+      if (self::update((int)$sale->id, $saleData)) {
+        $updateCounter++;
+      }
 
       // If any change of sale status or payment status for W2P sale then dispatch W2P sale info.
       if (isset($saleJS->source) && $saleJS->source == 'W2P') {
@@ -485,6 +491,8 @@ class Sale
         }
       }
     }
+
+    return $updateCounter;
   }
 
   /**
@@ -507,7 +515,64 @@ class Sale
       $data['warehouse_id'] = $warehouse->id;
     }
 
+    $sale = self::getRow(['id' => $id]);
+
+    if (!$sale) {
+      setLastError('Sale is not found.');
+      return false;
+    }
+
     if ($items) {
+      SaleItem::delete(['sale_id' => $id]);
+
+      foreach ($items as $item) {
+        $product = Product::getRow(['code' => $item['code']]);
+        $operator = User::getRow(['id' => $item['operator']]);
+
+        if (!empty($item['width']) && !empty($item['length'])) {
+          $area = filterDecimal($item['width']) * filterDecimal($item['length']);
+          $quantity = ($area * filterDecimal($item['quantity']));
+        } else {
+          $area           = 0;
+          $quantity       = $item['quantity'];
+          $item['width']  = 0;
+          $item['length'] = 0;
+        }
+
+        $saleItemId = SaleItem::add([
+          'sale'          => $sale->reference,
+          'product'       => $product->code,
+          'price'         => $item['price'],
+          'quantity'      => $quantity,
+          'subtotal'      => (floatval($item['price']) * $quantity),
+          'json'          => json_encode([
+            'w'             => $item['width'],
+            'l'             => $item['length'],
+            'area'          => $area,
+            'sqty'          => $item['quantity'],
+            'spec'          => ($item['spec'] ?? ''),
+            'status'        => $sale->status,
+            'operator_id'   => ($operator ? $operator->id : ''),
+            'due_date'      => ($saleData['due_date'] ?? ''),
+            'completed_at'  => ($item['completed_at'] ?? '')
+          ]),
+          'json_data'     => json_encode([
+            'w'             => $item['width'],
+            'l'             => $item['length'],
+            'area'          => $area,
+            'sqty'          => $item['quantity'],
+            'spec'          => ($item['spec'] ?? ''),
+            'status'        => $sale->status,
+            'operator_id'   => ($operator ? $operator->id : ''),
+            'due_date'      => ($saleData['due_date'] ?? ''),
+            'completed_at'  => ($item['completed_at'] ?? '')
+          ])
+        ]);
+
+        if (!$saleItemId) {
+          return false;
+        }
+      }
     }
 
     DB::table('sales')->update($data, ['id' => $id]);

@@ -56,7 +56,6 @@
                 <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
                   <select id="bank" name="bank" class="select-bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
                   </select>
                 </div>
               </div>
@@ -114,8 +113,8 @@
   })();
 
   $(document).ready(function() {
-    erp.payment = {}; // Init.
-    erp.payment.biller = $('#biller').val();
+    erp.bank = {}; // Init.
+    erp.bank.biller = $('#biller').val();
 
     let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
 
@@ -128,7 +127,7 @@
     });
 
     $('#biller').change(function() {
-      erp.payment.biller = this.value;
+      erp.bank.biller = this.value;
     });
 
     $('#bank').change(function() {
@@ -146,16 +145,9 @@
 
     // Saat ubah method. Ubah juga bank.
     $('#method').change(function() {
-      erp.payment.type = this.value;
+      erp.bank.type = this.value;
 
-      switch (this.value) {
-        case 'Cash':
-          break;
-        case 'EDC':
-          break;
-        case 'Transfer':
-          break;
-      }
+      $('#bank').val('').trigger('change');
 
       if (this.value == 'Transfer' && hasSkipValidation) {
         $('.payment-validation').slideDown();
@@ -184,7 +176,7 @@
       $('#skip_validation').iCheck('disable');
     }
 
-    $('#bank').val('<?= $bank ?>').trigger('change');
+    preSelect2('bank', '#bank', '<?= $bank ?>');
     $('#biller').val('<?= $biller ?>').trigger('change');
 
     initModalForm({

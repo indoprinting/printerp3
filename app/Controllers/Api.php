@@ -23,7 +23,7 @@ class Api extends BaseController
 {
   public function index()
   {
-    // Do not use authentication.
+    // Do not use authentication checkPermission().
     // checkPermission();
   }
 
@@ -60,6 +60,24 @@ class Api extends BaseController
     }
 
     $this->response(404, ['message' => 'Not Found']);
+  }
+
+  public function v2()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    $this->response(404, ['message' => 'Not Found']);
+  }
+
+  protected function mutasibank_v2()
+  {
   }
 
   public function mutasibank_accounts()
@@ -403,9 +421,19 @@ class Api extends BaseController
 
     DB::transStart();
 
-    Sale::update((int)$sale->id, ['discount' => $voucher->amount]);
+    $res = Sale::update((int)$sale->id, ['discount' => $voucher->amount]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
     Sale::sync(['id' => $sale->id]);
-    Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1]);
+
+    $res = Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
 
     DB::transComplete();
 

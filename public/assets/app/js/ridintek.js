@@ -435,17 +435,17 @@ export class Sale {
       }
     }
 
-    item.hash = uuid();
+    item.hash = randomString();
     item.area = item.width * item.length;
     item.price = getSalePrice(item.area * item.quantity, item.ranges, item.prices);
     item.subtotal = item.area * item.price * item.quantity;
 
-    console.log(item);
+    // console.log(item);
 
     let readOnly = (item.category != 'DPI' ? ' readonly' : '');
     let priceReadOnly = (hasAccess('Sale.EditPrice') ? '' : ' readonly');
 
-    this.tbody.append(`
+    this.tbody.prepend(`
       <tr>
         <td class="col-md-3">
           <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
@@ -453,6 +453,7 @@ export class Sale {
           <input type="hidden" name="item[type][]" value="${item.type}">
           <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
           <input type="hidden" name="item[name][]" value="${item.name}">
+          <input type="hidden" name="item[completed_at][]" value="${item.completed_at ?? ''}">
           (${item.code}) ${item.name}
         </td>
         <td>
@@ -573,7 +574,7 @@ export class StockAdjustment {
       }
     }
 
-    this.tbody.append(`
+    this.tbody.prepend(`
       <tr>
         <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
         <td>(${item.code}) ${item.name}</td>

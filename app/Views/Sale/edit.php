@@ -207,6 +207,7 @@
         quantity: item.quantity,
         spec: item.spec,
         operator: item.operator,
+        completed_at: item.completed_at,
         type: item.type,
         prices: item.prices,
         ranges: item.ranges

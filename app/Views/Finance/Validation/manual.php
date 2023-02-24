@@ -15,13 +15,13 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="reference"><?= lang('App.reference') ?></label>
-                  <input id="reference" name="reference" class="form-control form-control-border form-control-sm" value="<?= $inv->reference ?>">
+                  <input id="reference" name="reference" class="form-control form-control-border form-control-sm" value="<?= $reference ?>" readonly>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="date"><?= lang('App.date') ?> *</label>
-                  <input type="datetime-local" id="date" name="date" class="form-control form-control-border form-control-sm" placeholder="<?= lang('App.transactiondate') ?>">
+                  <input type="datetime-local" id="date" name="date" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
             </div>
@@ -29,7 +29,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="amount"><?= lang('App.amount') ?></label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm">
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= (isset($sale) ? $sale->grand_total : $mutation->amount) ?>">
                 </div>
               </div>
               <div class="col-md-6">
@@ -45,22 +45,8 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="type"><?= lang('App.type') ?></label>
-                  <select class="select-tags" name="type" style="width:100%">
-                    <?php foreach (\App\Models\DB::table('banks')->select('type')->distinct()->get() as $bank) : ?>
-                      <option value="<?= $bank->type ?>"><?= $bank->type ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="email"><?= lang('App.biller') ?> *</label>
-                  <select class="select" name="biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
+                  <label for="bank"><?= lang('App.bankaccount') ?></label>
+                  <select class="select-bank" name="bank" style="width:100%">
                   </select>
                 </div>
               </div>
