@@ -35,7 +35,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $amount ?>">
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $payment->amount ?>">
                 </div>
               </div>
               <div class="col-md-6">
@@ -51,11 +51,11 @@
                 </div>
               </div>
             </div>
-            <div class="row bank-account-to" style="display: none">
+            <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="bankto"><?= lang('App.bankaccount') ?> *</label>
-                  <select id="bankto" name="bankto" class="select-bank" data-placeholder="<?= lang('App.bankaccountto') ?>" style="width:100%">
+                  <label for="bank"><?= lang('App.bankaccount') ?> *</label>
+                  <select id="bank" name="bank" class="select-bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -126,6 +126,8 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    editor.root.innerHTML = `<?= $payment->note ?>`;
+
     $('#biller').change(function() {
       erp.bank.biller = this.value;
     });
@@ -143,7 +145,6 @@
       });
     });
 
-    // Saat ubah method. Ubah juga bank.
     $('#method').change(function() {
       erp.bank.type = this.value;
 
@@ -154,35 +155,22 @@
       } else {
         $('.payment-validation').slideUp();
       }
-
-      if (this.value != 'Transfer') {
-        $('.bank-account').slideDown();
-      } else {
-        if (!$('#skip_validation').is(':checked')) {
-          $('.bank-account').slideUp();
-        }
-      }
-    });
-
-    $('#skip_validation').change(function() {
-      if (this.checked) {
-        $('.bank-account').slideDown();
-      } else {
-        $('.bank-account').slideUp();
-      }
     });
 
     if (!hasSkipValidation) {
       $('#skip_validation').iCheck('disable');
     }
 
-    preSelect2('bank', '#bank', '<?= $bank ?>');
-    $('#biller').val('<?= $biller ?>').trigger('change');
+    preSelect2('bank', '#bank', '<?= $payment->bank ?>');
+
+    $('#date').val('<?= dateTimeJS($payment->date) ?>');
+    $('#biller').val('<?= $payment->biller ?>').trigger('change');
+    $('#method').val('<?= $payment->method ?>').trigger('change');
 
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/payment/add/<?= $mode ?>/<?= $id ?>'
+      url: base_url + '/payment/edit/<?= $payment->id ?>'
     });
   });
 </script>

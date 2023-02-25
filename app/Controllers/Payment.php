@@ -139,9 +139,8 @@ class Payment extends BaseController
         $data['expense']      = $inv->reference;
         $data['expense_id']   = $inv->id;
         $data['type']         = 'sent';
+        $this->data['inv']    = $inv;
         $this->data['amount'] = $inv->amount;
-        $this->data['biller'] = $inv->biller;
-        $this->data['bank']   = $inv->bank;
 
         if ($inv->status != 'approved') {
           $this->response(403, ['message' => 'Expense is not approved.']);
@@ -174,18 +173,17 @@ class Payment extends BaseController
         $data['purchase_id']  = $inv->id;
         $data['type']         = 'sent';
         $this->data['amount'] = ($inv->grand_total - $inv->paid - $inv->discount);
-        $this->data['biller'] = $inv->biller;
         $this->data['bank']   = $inv->bank;
         break;
       case 'sale':
         $inv = Sale::getRow(['id' => $id]);
         $modeLang = lang('App.sale');
+        $tax = ($inv->grand_total * 0.01 * $inv->tax);
         $data['sale']         = $inv->reference;
         $data['sale_id']      = $inv->id;
         $data['type']         = 'received';
-        $this->data['amount'] = ($inv->grand_total - $inv->paid - $inv->discount);
-        $this->data['biller'] = $inv->biller;
-        $this->data['bank']   = '';
+        $this->data['inv']    = $inv;
+        $this->data['amount'] = ($inv->grand_total + $tax - $inv->paid - $inv->discount);
         break;
       case 'transfer':
         $inv = ProductTransfer::getRow(['id' => $id]);
@@ -194,7 +192,6 @@ class Payment extends BaseController
         $data['transfer_id']  = $inv->id;
         $data['type']         = 'sent';
         $this->data['amount'] = ($inv->grand_total - $inv->paid);
-        $this->data['biller'] = $inv->biller;
         $this->data['bank']   = $inv->bank;
         break;
       default:
@@ -269,7 +266,11 @@ class Payment extends BaseController
     $this->data['modeLang'] = $modeLang;
     $this->data['title']    = lang('App.addpayment');
 
-    $this->response(200, ['content' => view('Payment/add', $this->data)]);
+
+    // Expense, Sale, Purchase, Transfer
+    $mode = ucfirst(strtolower($mode));
+
+    $this->response(200, ['content' => view("Payment/{$mode}/add", $this->data)]);
   }
 
   public function delete($id = null)

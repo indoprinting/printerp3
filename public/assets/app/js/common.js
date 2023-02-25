@@ -384,6 +384,42 @@ function initControls() {
         url: base_url + '/select2/bank'
       }
     });
+    $('.select-bank-from').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (erp?.bank?.biller?.from) {
+            params.biller = erp.bank.biller.from;
+          }
+
+          if (erp?.bank?.type?.from) {
+            params.type = erp.bank.type.from;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/bank'
+      }
+    });
+    $('.select-bank-to').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (erp?.bank?.biller?.to) {
+            params.biller = erp.bank.biller.to;
+          }
+
+          if (erp?.bank?.type?.to) {
+            params.type = erp.bank.type.to;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/bank'
+      }
+    });
     $('.select-biller').select2({
       allowClear: true,
       ajax: {
@@ -401,22 +437,9 @@ function initControls() {
     $('.select-product').select2({
       allowClear: true,
       ajax: {
-        delay: 1000,
-        url: base_url + '/select2/product'
-      }
-    });
-    $('.select-product-sale').select2({
-      allowClear: true,
-      ajax: {
         data: (params) => {
-          params.type = ['combo', 'service'];
-
-          if (typeof erp?.sale?.useRawMaterial !== 'undefined') {
-            if (erp.sale.useRawMaterial) {
-              params.type.push('standard');
-            } else if (params.type.indexOf('standard') > 0) {
-              params.type.pop();
-            }
+          if (typeof erp?.product?.type !== 'undefined') {
+            params.type = erp.product.type;
           }
 
           return params;
@@ -607,7 +630,7 @@ function lc(str) {
 async function preSelect2(mode, elm, id) {
   return new Promise((resolve, reject) => {
     if (isEmpty(id)) {
-      console.warn(`preSelect2: id for ${mode}:${elm}.`);
+      console.warn(`preSelect2: id for ${mode}:${elm} is empty.`);
       reject(false);
     }
 

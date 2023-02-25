@@ -65,15 +65,8 @@
                   <input type="datetime-local" id="duedate" name="duedate" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="attachment"><?= lang('App.attachment') ?></label>
-                  <div class="custom-file">
-                    <input type="file" id="attachment" name="attachment" class="custom-file-input">
-                    <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
-                  </div>
-                </div>
-              </div>
+            </div>
+            <div class="row">
               <div class="col-md-4">
                 <?php if (hasAccess('Sale.RawMaterial')) : ?>
                   <div class="form-group">
@@ -86,8 +79,6 @@
                     <input type="checkbox" id="approved" name="approved" value="1">
                     <label for="approved"><?= lang('Status.approved') ?></label>
                   </div>
-                <?php else : ?>
-                  <input type="hidden" id="approved" name="approved" value="0">
                 <?php endif; ?>
               </div>
               <div class="col-md-4">
@@ -97,21 +88,12 @@
                     <label for="transfer"><?= lang('App.transfer') ?></label>
                   </div>
                 <?php endif; ?>
-                <?php if (hasAccess('Sale.Draft') || $sale->status == 'draft') : ?>
+                <?php if (hasAccess('Sale.Draft')) : ?>
                   <div class="form-group">
                     <input type="checkbox" id="draft" name="draft" value="1">
                     <label for="draft"><?= lang('App.draft') ?></label>
                   </div>
                 <?php endif; ?>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-12">
-                <div class="form-group">
-                  <label for="editor"><?= lang('App.note') ?></label>
-                  <div id="editor"></div>
-                  <input type="hidden" name="note">
-                </div>
               </div>
             </div>
           </div>
@@ -126,7 +108,7 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="form-group">
-                  <select id="product" class="select-product-sale" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
+                  <select id="product" class="select-product" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -157,6 +139,42 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header bg-gradient-success"><?= lang('App.misc') ?></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="attachment"><?= lang('App.attachment') ?></label>
+                  <div class="custom-file">
+                    <input type="file" id="attachment" name="attachment" class="custom-file-input">
+                    <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 text-center">
+                <div class="form-group">
+                  <img class="attachment-preview" src="<?= $sale->attachment ? base_url('attachment/' . $sale->attachment) : '' ?>" style="max-width:300px">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="editor"><?= lang('App.note') ?></label>
+                  <div id="editor"></div>
+                  <input type="hidden" name="note">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
@@ -178,6 +196,8 @@
 
   $(document).ready(function() {
     erp.sale = {};
+    erp.product = {};
+    erp.product.type = ['combo', 'service'];
 
     $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
     $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
@@ -222,7 +242,17 @@
 
     editor.root.innerHTML = `<?= $sale->note ?>`;
 
-    erp.sale.useRawMaterial = false;
+    $('#attachment').change(function() {
+      let src = '';
+
+      if (this.files.length) {
+        src = URL.createObjectURL(this.files[0]);
+      } else {
+        src = base_url + '/assets/app/images/picture.png';
+      }
+
+      $('.attachment-preview').prop('src', src);
+    });
 
     $('#draft').on('change', function() {
       if (this.checked) {
@@ -234,9 +264,9 @@
 
     $('#rawmaterial').on('change', function() {
       if (this.checked) {
-        erp.sale.useRawMaterial = true;
+        erp.product.type.push('standard');
       } else {
-        erp.sale.useRawMaterial = false;
+        erp.product.type.pop();
       }
     });
 

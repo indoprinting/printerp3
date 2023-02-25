@@ -164,7 +164,7 @@ class Sale extends BaseController
     }
 
     if ($createdBy) {
-      $dt->whereIn('sales.created_by', $createdBy);
+      $dt->whereIn('pic.phone', $createdBy);
     }
 
     if ($receivable) {

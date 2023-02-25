@@ -20,26 +20,6 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $amount ?>">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
                   <label for="method"><?= lang('App.method') ?> *</label>
                   <select id="method" name="method" class="select" data-placeholder="<?= lang('App.method') ?>" style=" width:100%">
                     <option value=""></option>
@@ -51,11 +31,11 @@
                 </div>
               </div>
             </div>
-            <div class="row bank-account-to" style="display: none">
+            <div class="row bank-account" style="display: none">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="bankto"><?= lang('App.bankaccount') ?> *</label>
-                  <select id="bankto" name="bankto" class="select-bank" data-placeholder="<?= lang('App.bankaccountto') ?>" style="width:100%">
+                  <label for="bank"><?= lang('App.bankaccount') ?> *</label>
+                  <select id="bank" name="bank" class="select-bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -80,11 +60,26 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="form-group">
+                  <label for="amount"><?= lang('App.amount') ?> *</label>
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $amount ?>">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
                     <input type="file" id="attachment" name="attachment" class="custom-file-input">
                     <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
                   </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 text-center">
+                <div class="form-group">
+                  <img class="attachment-preview" src="" style="max-width:400px">
                 </div>
               </div>
             </div>
@@ -114,7 +109,7 @@
 
   $(document).ready(function() {
     erp.bank = {}; // Init.
-    erp.bank.biller = $('#biller').val();
+    erp.bank.biller = '<?= $inv->biller ?>';
 
     let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
 
@@ -126,8 +121,18 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    $('#attachment').change(function() {
+      let src = '';
+
+      if (this.files.length) {
+        src = URL.createObjectURL(this.files[0]);
+      }
+
+      $('.attachment-preview').prop('src', src);
+    });
+
     $('#biller').change(function() {
-      erp.bank.biller = this.value;
+      erp.bank.biller_to = this.value;
     });
 
     $('#bank').change(function() {
@@ -175,9 +180,6 @@
     if (!hasSkipValidation) {
       $('#skip_validation').iCheck('disable');
     }
-
-    preSelect2('bank', '#bank', '<?= $bank ?>');
-    $('#biller').val('<?= $biller ?>').trigger('change');
 
     initModalForm({
       form: '#form',

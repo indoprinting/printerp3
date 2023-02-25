@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Models\{Customer, CustomerGroup, User};
-
 /**
  * The goal of this file is to allow developers a location
  * where they can overwrite core procedural functions and
@@ -624,6 +622,24 @@ function nulling(array $data, array $keys)
   return $data;
 }
 
+/**
+ * Add 62 to phone number.
+ * @param string $phone Phone number.
+ */
+function phoneCode($phone)
+{
+  if (substr($phone, 0, 2) == '08') {
+    return '62' . substr($phone, 1);
+  }
+  if (substr($phone, 0, 3) == '+62') {
+    return substr($phone, 1);
+  }
+  if (substr($phone, 0, 2) != '62') {
+    $phone = '62' . $phone;
+  }
+  return $phone;
+}
+
 function renderAttachment(string $attachment = null)
 {
   $res = '';
@@ -711,6 +727,62 @@ function sendJSON($data, $options = [])
   header("Access-Control-Allow-Origin: {$origin}");
   header('Content-Type: application/json');
   die(json_encode($data, JSON_PRETTY_PRINT));
+}
+
+/**
+ * Send WA Message.
+ * @param string $phone Phone number.
+ * @param string $text Message to send.
+ * @param array $opt Options [ api_key, device_id(watsapid only), engine:[ rapiwha | whacenter ] ]
+ */
+function sendWA($phone, $text, $opt = [])
+{
+  $ph = phoneCode($phone);
+  $query = [];
+  $defaultEngine = 'whacenter';
+
+  $engine = (!empty($opt['engine']) ? $opt['engine'] : $defaultEngine);
+
+  if ($engine == 'rapiwha') {
+    $url = 'https://panel.rapiwha.com/send_message.php';
+    $query['apikey'] = (!empty($opt['api_key']) ? $opt['api_key'] : '55L5E5BJQ2FPNK2LNEQQ');
+    $query['text'] = $text;
+    $query['number'] = $ph;
+  } else if ($engine == 'watsap') {
+    $url = 'https://api.watsap.id/send-message';
+    $query['api-key'] = (!empty($opt['api_key']) ? $opt['api_key'] : 'a66d60ee436b0861c28353611d089dc872629d09');
+    $query['id_device'] = (!empty($opt['device_id']) ? $opt['device_id'] : 612); // INDOPRINTING;
+    $query['pesan'] = $text;
+    $query['no_hp'] = $ph;
+    $query = json_encode($query);
+  } else if ($engine == 'whacenter') {
+    $url = 'https://app.whacenter.com/api/send';
+    $query['device_id'] = (!empty($opt['api_key']) ? $opt['api_key'] : '05fb9e0b23d2ef3f0b21eef5ba3a1f89');
+    $query['message'] = $text;
+    $query['number'] = $ph;
+  }
+
+  $curlOptions = [
+    CURLOPT_CUSTOMREQUEST   => 'POST',
+    CURLOPT_HEADER          => FALSE,
+    CURLOPT_POSTFIELDS      => $query,
+    CURLOPT_RETURNTRANSFER  => TRUE,
+    CURLOPT_TIMEOUT         => 30,
+    CURLOPT_CONNECTTIMEOUT  => 30
+  ];
+
+  $curl = curl_init($url);
+
+  curl_setopt_array($curl, $curlOptions);
+
+  $res = curl_exec($curl);
+
+  if (!$res) {
+    setLastError(curl_error($curl));
+  }
+  curl_close($curl);
+
+  return $res;
 }
 
 /**

@@ -47,6 +47,8 @@ return [
   'autoassign'            => 'Auto Assign',
   'balance'               => 'Balance',
   'bankaccount'           => 'Bank Account',
+  'bankaccountfrom'       => 'From Bank Account',
+  'bankaccountto'         => 'To Bank Account',
   'bankmutation'          => 'Bank Mutation',
   'bankreconciliation'    => 'Bank Reconciliation',
   'biccode'               => 'BIC Code',

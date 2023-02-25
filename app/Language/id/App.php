@@ -47,6 +47,8 @@ return [
   'autoassign'            => 'Menetapkan Otomatis',
   'balance'               => 'Saldo',
   'bankaccount'           => 'Akun Bank',
+  'bankaccountfrom'       => 'Dari Akun Bank',
+  'bankaccountto'         => 'Ke Akun Bank',
   'bankmutation'          => 'Mutasi Bank',
   'bankreconciliation'    => 'Rekonsiliasi Bank',
   'biccode'               => 'Kode BIC',
