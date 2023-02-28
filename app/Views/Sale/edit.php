@@ -198,6 +198,10 @@
     erp.sale = {};
     erp.product = {};
     erp.product.type = ['combo', 'service'];
+    erp.user = {};
+    erp.user.biller = ['<?= $sale->biller ?>'];
+    erp.operator = {};
+    erp.operator.warehouse = ['<?= $sale->warehouse ?>'];
 
     $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
     $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
@@ -205,14 +209,18 @@
     try {
       preSelect2('biller', '#biller', '<?= $sale->biller ?>');
       preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
-      preSelect2('user', '#cashier', '<?= $saleJS->cashier_by ?>');
-      preSelect2('customer', '#customer', '<?= $sale->customer_id ?>');
+      preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])->phone ?>');
+      preSelect2('customer', '#customer', '<?= $sale->customer ?>');
     } catch (e) {
       console.warn(e);
     }
 
     if (<?= $saleJS->approved ?>) {
       $('#approved').iCheck('check');
+    }
+
+    if (<?= ($sale->status == 'draft' ? 1 : 0) ?>) {
+      $('#draft').iCheck('check');
     }
 
     let items = JSON.parse(`<?= json_encode($items) ?>`);
@@ -228,6 +236,7 @@
         spec: item.spec,
         operator: item.operator,
         completed_at: item.completed_at,
+        finished_qty: item.finished_qty,
         type: item.type,
         prices: item.prices,
         ranges: item.ranges
@@ -252,6 +261,14 @@
       }
 
       $('.attachment-preview').prop('src', src);
+    });
+
+    $('#biller').change(function() {
+      erp.user.biller = [this.value];
+    });
+
+    $('#warehouse').change(function() {
+      erp.operator.warehouse = [this.value];
     });
 
     $('#draft').on('change', function() {

@@ -181,6 +181,7 @@ class Payment extends BaseController
         $tax = ($inv->grand_total * 0.01 * $inv->tax);
         $data['sale']         = $inv->reference;
         $data['sale_id']      = $inv->id;
+        $data['biller']       = $inv->biller;
         $data['type']         = 'received';
         $this->data['inv']    = $inv;
         $this->data['amount'] = ($inv->grand_total + $tax - $inv->paid - $inv->discount);
@@ -204,7 +205,6 @@ class Payment extends BaseController
       $data['reference']      = $inv->reference;
       $data['reference_date'] = $inv->date;
       $data['bank']           = getPost('bank');
-      $data['biller']         = getPost('biller');
       $data['method']         = getPost('method'); // Cash / EDC / Transfer
       $data['note']           = getPost('note');
 
@@ -233,7 +233,7 @@ class Payment extends BaseController
         }
       } else { // Use payment validation. (Sale only)
         $res = PaymentValidation::add([
-          'mutation'    => $inv->reference,
+          'sale'        => $inv->reference,
           'amount'      => $data['amount'],
           'biller'      => $data['biller'],
           'attachment'  => ($data['attachment'] ?? NULL)
@@ -265,7 +265,6 @@ class Payment extends BaseController
     $this->data['mode']     = $mode;
     $this->data['modeLang'] = $modeLang;
     $this->data['title']    = lang('App.addpayment');
-
 
     // Expense, Sale, Purchase, Transfer
     $mode = ucfirst(strtolower($mode));

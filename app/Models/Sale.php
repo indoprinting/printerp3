@@ -77,6 +77,14 @@ class Sale
     $payment_term = filterDecimal($data['payment_term'] ?? 1);
     $payment_term = ($payment_term > 0 ? $payment_term : 1);
 
+    $saleJS = json_encode([
+      'approved'          => ($data['approved'] ?? 0),
+      'cashier_by'        => $cashier->id,
+      'source'            => ($data['source'] ?? ''),
+      'est_complete_date' => ($data['due_date'] ?? ''),
+      'payment_due_date'  => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days'))))
+    ]);
+
     $saleData = [
       'date'            => $date,
       'reference'       => $reference,
@@ -103,20 +111,8 @@ class Sale
       'payment_method'  => ($data['payment_method'] ?? null),
       'use_tb'          => $useTB,
       'active'          => 1,
-      'json'            => json_encode([
-        'approved'          => ($data['approved'] ?? 0),
-        'cashier_by'        => $cashier->id,
-        'source'            => ($data['source'] ?? ''),
-        'est_complete_date' => ($data['due_date'] ?? ''),
-        'payment_due_date'  => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days'))))
-      ]),
-      'json_data'       => json_encode([
-        'approved'          => ($data['approved'] ?? 0),
-        'cashier_by'        => $cashier->id,
-        'source'            => ($data['source'] ?? ''),
-        'est_complete_date' => ($data['due_date'] ?? ''),
-        'payment_due_date'  => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days'))))
-      ])
+      'json'            => $saleJS,
+      'json_data'       => $saleJS
     ];
 
     $saleData = setCreatedBy($saleData);
@@ -129,7 +125,7 @@ class Sale
       foreach ($items as $item) {
         $product = Product::getRow(['code' => $item['code']]);
         $productJS = getJSON($product->json_data);
-        $operator = User::getRow(['id' => $item['operator']]);
+        $operator = User::getRow(['phone' => $item['operator']]);
 
         if (!empty($item['width']) && !empty($item['length'])) {
           $area = filterDecimal($item['width']) * filterDecimal($item['length']);
@@ -154,7 +150,7 @@ class Sale
             'sqty'          => $item['quantity'],
             'spec'          => ($item['spec'] ?? ''),
             'status'        => $saleData['status'],
-            'operator_id'   => ($operator ? $operator->id : ''),
+            'operator_id'   => $operator->id,
             'due_date'      => ($saleData['due_date'] ?? ''),
             'completed_at'  => ($item['completed_at'] ?? '')
           ]),
@@ -165,7 +161,7 @@ class Sale
             'sqty'          => $item['quantity'],
             'spec'          => ($item['spec'] ?? ''),
             'status'        => $saleData['status'],
-            'operator_id'   => ($operator ? $operator->id : ''),
+            'operator_id'   => $operator->id,
             'due_date'      => ($saleData['due_date'] ?? ''),
             'completed_at'  => ($item['completed_at'] ?? '')
           ])
@@ -319,7 +315,7 @@ class Sale
       }
 
       $isDuePayment      = isDueDate($saleJS->payment_due_date ?? $sale->due_date);
-      $isW2PUser         = isW2PUser($sale->created_by); // Is sale created_by user is w2p?
+      $isW2PUser         = isW2PUser($sale->created_by); // Is sale created_by user is W2P?
       $isSpecialCustomer = isSpecialCustomer($sale->customer_id); // Special customer (Privilege, TOP)
       $payments          = Payment::get(['sale_id' => $sale->id]);
       $paymentValidation = PaymentValidation::select('*')
@@ -327,7 +323,7 @@ class Sale
         ->where('sale_id', $sale->id)
         ->getRow();
 
-      $saleItems         = SaleItem::get(['sale_id' => $sale->id]);
+      $saleItems  = SaleItem::get(['sale_id' => $sale->id]);
 
       if (empty($saleItems)) {
         setLastError("Sale::sync() Sale items empty. Sale id {$sale->id}, {$sale->reference}");
@@ -370,6 +366,10 @@ class Sale
           }
         } else {
           $saleItemStatus = 'need_payment';
+        }
+
+        if ($sale->status == 'inactive') {
+          $saleItemJS->status = 'inactive';
         }
 
         if ($saleItemJS->status == 'draft') {
@@ -475,10 +475,14 @@ class Sale
         $saleData['payment_status'] = $paymentStatus;
       }
 
-      $saleData['paid']           = $totalPaid;
-      $saleData['balance']        = $balance;
-      $saleData['json']           = json_encode($saleJS);
-      $saleData['json_data']      = json_encode($saleJS);
+      if ($sale->status == 'inactive') {
+        $saleData['status'] = 'inactive';
+      }
+
+      $saleData['paid']       = $totalPaid;
+      $saleData['balance']    = $balance;
+      $saleData['json']       = json_encode($saleJS);
+      $saleData['json_data']  = json_encode($saleJS);
 
       if (self::update((int)$sale->id, $saleData)) {
         $updateCounter++;
@@ -500,21 +504,6 @@ class Sale
    */
   public static function update(int $id, array $data, array $items = [])
   {
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
-    if (isset($data['customer'])) {
-      $customer = Customer::getRow(['id' => $data['customer']]);
-      $data['customer_id'] = $customer->id;
-    }
-
-    if (isset($data['warehouse'])) {
-      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
-      $data['warehouse_id'] = $warehouse->id;
-    }
-
     $sale = self::getRow(['id' => $id]);
 
     if (!$sale) {
@@ -522,12 +511,52 @@ class Sale
       return false;
     }
 
+    $saleJS = getJSON($sale->json);
+
+    if (isset($data['approved'])) {
+      $saleJS->approved = $data['approved'];
+
+      unset($data['approved']);
+    }
+
+    if (isset($data['biller'])) {
+      $biller = Biller::getRow(['code' => $data['biller']]);
+
+      $data['biller_id']  = $biller->id;
+    }
+
+    if (isset($data['customer'])) {
+      $customer = Customer::getRow(['phone' => $data['customer']]);
+
+      $data['customer_id']    = $customer->id;
+      $data['customer_name']  = $customer->name;
+    }
+
+    if (isset($data['cashier'])) {
+      $cashier = User::getRow(['phone' => $data['cashier']]);
+      $saleJS->cashier_by = $cashier->id;
+
+      unset($data['cashier']);
+    }
+
+    if (isset($data['source'])) {
+      $saleJS->source = $data['source'];
+      unset($data['source']);
+    }
+
+    if (isset($data['warehouse'])) {
+      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
+
+      $data['warehouse_id'] = $warehouse->id;
+    }
+
     if ($items) {
-      SaleItem::delete(['sale_id' => $id]);
+      SaleItem::delete(['sale_id' => $sale->id]);
+      Stock::delete(['sale_id' => $sale->id]);
 
       foreach ($items as $item) {
-        $product = Product::getRow(['code' => $item['code']]);
-        $operator = User::getRow(['id' => $item['operator']]);
+        $product  = Product::getRow(['code' => $item['code']]);
+        $operator = User::getRow(['phone' => $item['operator']]);
 
         if (!empty($item['width']) && !empty($item['length'])) {
           $area = filterDecimal($item['width']) * filterDecimal($item['length']);
@@ -539,34 +568,27 @@ class Sale
           $item['length'] = 0;
         }
 
+        $saleItemJS = json_encode([
+          'w'             => $item['width'],
+          'l'             => $item['length'],
+          'area'          => $area,
+          'sqty'          => $item['quantity'],
+          'spec'          => ($item['spec'] ?? ''),
+          'status'        => '',
+          'operator_id'   => $operator->id,
+          'due_date'      => ($data['due_date'] ?? ''),
+          'completed_at'  => ($item['completed_at'] ?? '')
+        ]);
+
         $saleItemId = SaleItem::add([
           'sale'          => $sale->reference,
           'product'       => $product->code,
           'price'         => $item['price'],
           'quantity'      => $quantity,
+          'finished_qty'  => ($item['finished_qty'] ?? 0),
           'subtotal'      => (floatval($item['price']) * $quantity),
-          'json'          => json_encode([
-            'w'             => $item['width'],
-            'l'             => $item['length'],
-            'area'          => $area,
-            'sqty'          => $item['quantity'],
-            'spec'          => ($item['spec'] ?? ''),
-            'status'        => $sale->status,
-            'operator_id'   => ($operator ? $operator->id : ''),
-            'due_date'      => ($saleData['due_date'] ?? ''),
-            'completed_at'  => ($item['completed_at'] ?? '')
-          ]),
-          'json_data'     => json_encode([
-            'w'             => $item['width'],
-            'l'             => $item['length'],
-            'area'          => $area,
-            'sqty'          => $item['quantity'],
-            'spec'          => ($item['spec'] ?? ''),
-            'status'        => $sale->status,
-            'operator_id'   => ($operator ? $operator->id : ''),
-            'due_date'      => ($saleData['due_date'] ?? ''),
-            'completed_at'  => ($item['completed_at'] ?? '')
-          ])
+          'json'          => $saleItemJS,
+          'json_data'     => $saleItemJS
         ]);
 
         if (!$saleItemId) {
@@ -574,6 +596,9 @@ class Sale
         }
       }
     }
+
+    $data['json']       = json_encode($saleJS);
+    $data['json_data']  = json_encode($saleJS);
 
     DB::table('sales')->update($data, ['id' => $id]);
 

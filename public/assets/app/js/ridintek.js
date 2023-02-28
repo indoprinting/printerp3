@@ -454,6 +454,7 @@ export class Sale {
           <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
           <input type="hidden" name="item[name][]" value="${item.name}">
           <input type="hidden" name="item[completed_at][]" value="${item.completed_at ?? ''}">
+          <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty ?? ''}">
           (${item.code}) ${item.name}
         </td>
         <td>
@@ -513,7 +514,7 @@ export class Sale {
                 <div class="tab-pane fade" id="tab-opr-${item.hash}">
                   <div class="form-group">
                     <label>${lang.App.operator}</label>
-                    <select id="item-opr-${item.hash}" name="item[operator][]" class="select-user" data-placeholder="${lang.App.operator}" style="width:100%">
+                    <select id="item-opr-${item.hash}" name="item[operator][]" class="select-operator" data-placeholder="${lang.App.operator}" style="width:100%">
                       <option value=""></option>
                     </select>
                   </div>
@@ -579,7 +580,7 @@ export class StockAdjustment {
         <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
         <td>(${item.code}) ${item.name}</td>
         <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
-        <td>${filterDecimal(item.current_qty)}</td>
+        <td>${formatNumber(item.current_qty)}</td>
         <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);

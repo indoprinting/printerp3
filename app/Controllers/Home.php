@@ -239,11 +239,12 @@ class Home extends BaseController
       $this->response(400, ['message' => 'Bad request.']);
     }
 
-    $mode     = strtolower($mode);
-    $results  = [];
-    $term     = getGet('term');
-    $billers  = getGet('biller');
-    $types    = getGet('type');
+    $mode       = strtolower($mode);
+    $results    = [];
+    $term       = getGet('term');
+    $billers    = getGet('biller');
+    $warehouses = getGet('warehouse');
+    $types      = getGet('type');
 
     switch ($mode) {
       case 'bank':
@@ -340,7 +341,7 @@ class Home extends BaseController
 
         break;
       case 'supplier':
-        $q = Supplier::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
+        $q = Supplier::select("phone id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
           ->limit(10);
 
         if ($term) {
@@ -366,6 +367,14 @@ class Home extends BaseController
             ->orLike('fullname', $term, 'both')
             ->orLike('username', $term, 'both')
             ->groupEnd();
+        }
+
+        if ($billers) {
+          $q->whereIn('biller', $billers);
+        }
+
+        if ($warehouses) {
+          $q->whereIn('warehouse', $warehouses);
         }
 
         $results = $q->get();

@@ -71,7 +71,7 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="form-group">
-                  <select id="product" class="select-product-standard" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
+                  <select id="product" class="select-product" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -110,6 +110,9 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.product = {};
+    erp.product.type = ['service', 'standard'];
+
     let items = JSON.parse('<?= json_encode($items) ?>');
 
     if (items) {

@@ -18,6 +18,7 @@ use App\Models\{
   ProductPrice,
   Sale as Invoice,
   SaleItem,
+  Stock,
   User
 };
 
@@ -233,15 +234,15 @@ class Sale extends BaseController
       unset($rawItems);
 
       $data = [
-        'date'      => $date,
-        'biller'    => $biller,
-        'warehouse' => $warehouse,
-        'cashier'   => $cashier,
-        'customer'  => $customer,
-        'due_date'  => $dueDate,
-        'note'      => $note,
-        'source'    => 'PrintERP',
-        'approved'  => $approved,
+        'date'          => $date,
+        'biller'        => $biller,
+        'warehouse'     => $warehouse,
+        'cashier'       => $cashier,
+        'customer'      => $customer,
+        'due_date'      => $dueDate,
+        'note'          => $note,
+        'source'        => 'PrintERP',
+        'approved'      => $approved,
       ];
 
       if ($draft) {
@@ -316,6 +317,7 @@ class Sale extends BaseController
       Attachment::delete(['hashname' => $sale->attachment]);
       Payment::delete(['sale_id' => $id]);
       PaymentValidation::delete(['sale_id' => $id]);
+      Stock::delete(['sale_id' => $id]);
 
       DB::transComplete();
 
@@ -331,9 +333,13 @@ class Sale extends BaseController
 
   public function edit($id = null)
   {
-    checkPermission('Sale.Edit');
-
     $sale = Invoice::getRow(['id' => $id]);
+
+    if ($sale->status == 'draft' && session('login')->user_id == $sale->created_by) {
+      checkPermission('Sale.Draft');
+    } else {
+      checkPermission('Sale.Edit');
+    }
 
     if (!$sale) {
       $this->response(404, ['message' => 'Invoice is not found.']);
@@ -353,7 +359,7 @@ class Sale extends BaseController
       $customer   = getPost('customer');
       $dueDate    = dateTimeJS(getPost('duedate'));
       $note       = getPost('note');
-      $approve    = (getPost('approve') == 1 ? 1 : 0);
+      $approved   = (getPost('approved') == 1 ? 1 : 0);
       $transfer   = (getPost('transfer') == 1);
       $draft      = (getPost('draft') == 1);
       $rawItems   = getPost('item');
@@ -387,13 +393,15 @@ class Sale extends BaseController
         }
 
         $items[] = [
-          'code'      => $rawItems['code'][$a],
-          'spec'      => $rawItems['spec'][$a],
-          'width'     => $rawItems['width'][$a],
-          'length'    => $rawItems['length'][$a],
-          'price'     => filterDecimal($rawItems['price'][$a]),
-          'quantity'  => $rawItems['quantity'][$a],
-          'operator'  => $rawItems['operator'][$a],
+          'code'          => $rawItems['code'][$a],
+          'spec'          => $rawItems['spec'][$a],
+          'width'         => $rawItems['width'][$a],
+          'length'        => $rawItems['length'][$a],
+          'price'         => filterDecimal($rawItems['price'][$a]),
+          'quantity'      => $rawItems['quantity'][$a],
+          'operator'      => $rawItems['operator'][$a],
+          'completed_at'  => $rawItems['completed_at'][$a],
+          'finished_qty'  => $rawItems['finished_qty'][$a],
         ];
       }
 
@@ -408,11 +416,13 @@ class Sale extends BaseController
         'due_date'  => $dueDate,
         'note'      => $note,
         'source'    => 'PrintERP',
-        'approved'  => $approve,
+        'approved'  => $approved,
       ];
 
       if ($draft) {
         $data['status'] = 'draft';
+      } else {
+        $data['status'] = 'need_payment';
       }
 
       $data = $this->useAttachment($data);
@@ -437,9 +447,9 @@ class Sale extends BaseController
         if (!$res) {
           $this->response(400, ['message' => getLastError()]);
         }
-
-        Invoice::sync(['id' => $id]);
       }
+
+      Invoice::sync(['id' => $id]);
 
       DB::transComplete();
 
@@ -456,6 +466,7 @@ class Sale extends BaseController
     foreach ($saleItems as $saleItem) {
       $product      = Product::getRow(['code' => $saleItem->product]);
       $saleItemJS   = getJSON($saleItem->json);
+      $operator     = User::getRow(['id' => $saleItemJS->operator_id]);
       $priceGroup   = PriceGroup::getRow(['id' => $customer->price_group_id ?? 1]);
       $productPrice = ProductPrice::getRow([
         'product_id'      => $product->id,
@@ -469,8 +480,9 @@ class Sale extends BaseController
         'width'         => floatval($saleItemJS->w),
         'length'        => floatval($saleItemJS->l),
         'quantity'      => floatval($saleItemJS->sqty),
+        'finished_qty'  => floatval($saleItem->finished_qty),
         'spec'          => $saleItemJS->spec,
-        'operator'      => intval($saleItemJS->operator_id),
+        'operator'      => ($operator ? $operator->phone : ''),
         'completed_at'  => $saleItemJS->completed_at,
         'type'          => $saleItem->product_type,
         'ranges'        => getJSON($product->price_ranges_value),
@@ -525,6 +537,8 @@ class Sale extends BaseController
     if (!$sale) {
       $this->response(404, ['message' => 'Invoice is not found.']);
     }
+
+    Invoice::sync(['id' => $id]);
 
     $saleItems = SaleItem::get(['sale_id' => $sale->id]);
 

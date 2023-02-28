@@ -1,6 +1,6 @@
 <?php $deliveryNote = (getGet('deliverynote') == 1) ?>
 <?php $biller = \App\Models\Biller::getRow(['code' => $sale->biller]) ?>
-<?php $customer = \App\Models\Customer::getRow(['id' => $sale->customer_id]) ?>
+<?php $customer = \App\Models\Customer::getRow(['phone' => $sale->customer]) ?>
 <?php $paymentValidation = \App\Models\PaymentValidation::getRow(['sale' => $sale->reference]) ?>
 <div class="modal-header bg-gradient-dark">
   <h5 class="modal-title"><i class="fad fa-fw fa-magnifying-glass"></i> <?= $title ?></h5>
@@ -147,6 +147,7 @@
           <table class="table table-bordered table-striped text-center">
             <thead>
               <tr>
+                <th><?= lang('App.operator') ?></th>
                 <th><?= lang('App.product') ?></th>
                 <th><?= lang('App.spec') ?></th>
                 <th><?= lang('App.width') ?></th>
@@ -161,7 +162,9 @@
             <tbody>
               <?php foreach ($saleItems as $saleItem) : ?>
                 <?php $saleItemJS = getJSON($saleItem->json) ?>
+                <?php $operator = \App\Models\User::getRow(['id' => $saleItemJS->operator_id]); ?>
                 <tr>
+                  <td><?= $operator->fullname ?></td>
                   <td><span class="float-left"><?= "({$saleItem->product_code}) $saleItem->product_name" ?></span></td>
                   <td><?= $saleItemJS->spec ?></td>
                   <td><?= filterDecimal($saleItemJS->w) ?></td>

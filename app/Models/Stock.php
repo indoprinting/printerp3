@@ -132,6 +132,8 @@ class Stock
       return $insertId;
     }
 
+    setLastError(DB::error()['message']);
+
     return false;
   }
 

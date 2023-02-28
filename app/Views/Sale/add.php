@@ -198,6 +198,7 @@
     erp.sale = {};
     erp.product = {};
     erp.product.type = ['combo', 'service'];
+    erp.user = {};
 
     let editor = new Quill('#editor', {
       theme: 'snow'
@@ -213,6 +214,14 @@
       }
 
       $('.attachment-preview').prop('src', src);
+    });
+
+    $('#biller').change(function() {
+      erp.user.biller = [this.value];
+    });
+
+    $('#warehouse').change(function() {
+      erp.user.warehouse = [this.value];
     });
 
     $('#draft').on('change', function() {

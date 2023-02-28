@@ -434,6 +434,24 @@ function initControls() {
         url: base_url + '/select2/customer'
       }
     });
+    $('.select-operator').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (typeof erp?.operator?.biller !== 'undefined') {
+            params.biller = erp.operator.biller;
+          }
+
+          if (typeof erp?.operator?.warehouse !== 'undefined') {
+            params.warehouse = erp.operator.warehouse;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/user'
+      }
+    });
     $('.select-product').select2({
       allowClear: true,
       ajax: {
@@ -470,6 +488,17 @@ function initControls() {
     $('.select-user').select2({
       allowClear: true,
       ajax: {
+        data: (params) => {
+          if (typeof erp?.user?.biller !== 'undefined') {
+            params.biller = erp.user.biller;
+          }
+
+          if (typeof erp?.user?.warehouse !== 'undefined') {
+            params.warehouse = erp.user.warehouse;
+          }
+
+          return params;
+        },
         delay: 1000,
         url: base_url + '/select2/user'
       }
