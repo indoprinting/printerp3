@@ -727,7 +727,7 @@
   <script src="<?= base_url() ?>/assets/modules/alertifyjs/alertify.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/bootstrap-validate/bootstrap-validate.js"></script>
   <script src="<?= base_url() ?>/assets/modules/bs-custom-file-input/bs-custom-file-input.min.js"></script>
-  <script src="<?= base_url() ?>/assets/modules/chart.js/chart.umd.js"></script>
+  <script src="<?= base_url() ?>/assets/modules/echarts/echarts.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/datatables/datatables.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/fullcalendar/lib/main.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/icheck/icheck.min.js"></script>

@@ -97,7 +97,7 @@ class Bank
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -111,7 +111,7 @@ class Bank
   /**
    * Sync bank balance.
    */
-  public static function sync(int $bankId = NULL)
+  public static function sync(int $bankId = null)
   {
     $banks = [];
 

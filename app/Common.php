@@ -2,6 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Models\{
+  Activity,
+  Auth,
+  Biller,
+  Customer,
+  CustomerGroup,
+  Payment,
+  PaymentValidation,
+  Sale,
+  SaleItem,
+  User,
+  Warehouse
+};
+use Config\Services;
+
 /**
  * The goal of this file is to allow developers a location
  * where they can overwrite core procedural functions and
@@ -23,8 +38,8 @@ declare(strict_types=1);
  */
 function addActivity(string $data, array $json = [])
 {
-  $ip = \Config\Services::request()->getIPAddress();
-  $ua = \Config\Services::request()->getUserAgent();
+  $ip = Services::request()->getIPAddress();
+  $ua = Services::request()->getUserAgent();
 
   $data = [
     'data'        => $data,
@@ -36,7 +51,7 @@ function addActivity(string $data, array $json = [])
     $data['json'] = json_encode($json);
   }
 
-  return \App\Models\Activity::add($data);
+  return Activity::add($data);
 }
 
 /**
@@ -45,7 +60,7 @@ function addActivity(string $data, array $json = [])
  */
 function checkPermission(string $permission = null)
 {
-  $request = \Config\Services::request();
+  $request = Services::request();
   $ajax   = $request->isAJAX();
 
   if (isLoggedIn()) {
@@ -72,7 +87,7 @@ function checkPermission(string $permission = null)
       ];
 
       if (!isLoggedIn() && getCookie('___')) {
-        if (\App\Models\Auth::loginRememberMe(getCookie('___'))) {
+        if (Auth::loginRememberMe(getCookie('___'))) {
           header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
         }
       }
@@ -126,7 +141,7 @@ function dispatchW2PSale($saleId = null)
   $key = 'g4Jlk3cILfITrbN74kwFHD1p9R3v15lmuLU_l3N9k4psUd4hD3rltAL03';
   $res = '';
 
-  if ($sale = \App\Models\Sale::getRow(['id' => $saleId])) {
+  if ($sale = Sale::getRow(['id' => $saleId])) {
     $saleJS = getJSON($sale->json_data);
 
     if ($saleJS->source != 'W2P') {
@@ -134,13 +149,13 @@ function dispatchW2PSale($saleId = null)
       return false;
     }
 
-    $saleItems = \App\Models\SaleItem::get(['sale_id' => $sale->id]);
-    $pic = \App\Models\User::getRow(['id' => $sale->created_by]);
+    $saleItems = SaleItem::get(['sale_id' => $sale->id]);
+    $pic = User::getRow(['id' => $sale->created_by]);
 
     if ($sale && $saleItems) {
-      $customer = \App\Models\Customer::getRow(['id' => $sale->customer_id]);
-      $payments = \App\Models\Payment::get(['sale_id' => $sale->id]);
-      $payment_validation = \App\Models\PaymentValidation::getRow(['sale_id' => $sale->id]);
+      $customer = Customer::getRow(['id' => $sale->customer_id]);
+      $payments = Payment::get(['sale_id' => $sale->id]);
+      $payment_validation = PaymentValidation::getRow(['sale_id' => $sale->id]);
 
       if ($customer) {
         $sale->status = lang($sale->status);
@@ -170,7 +185,7 @@ function dispatchW2PSale($saleId = null)
           'name' => $pic->fullname
         ];
 
-        $warehouse = \App\Models\Warehouse::getRow(['id' => $sale->warehouse_id]);
+        $warehouse = Warehouse::getRow(['id' => $sale->warehouse_id]);
 
         $response['data']['sale'] = [
           'no'                      => $sale->reference,
@@ -194,7 +209,7 @@ function dispatchW2PSale($saleId = null)
 
         foreach ($saleItems as $saleItem) {
           $saleItemJS   = getJSON($saleItem->json);
-          $operator     = \App\Models\User::getRow(['id' => $saleItemJS->operator_id ?? null]);
+          $operator     = User::getRow(['id' => $saleItemJS->operator_id ?? null]);
           $operatorName = ($operator ? $operator->fullname : '');
 
           $response['data']['sale_items'][] = [
@@ -320,7 +335,7 @@ function getAdjustedQty(float $oldQty, float $newQty)
  */
 function getCookie($name)
 {
-  return \Config\Services::request()->getCookie($name);
+  return Services::request()->getCookie($name);
 }
 
 /**
@@ -328,7 +343,7 @@ function getCookie($name)
  */
 function getGet($name)
 {
-  return \Config\Services::request()->getGet($name);
+  return Services::request()->getGet($name);
 }
 
 /**
@@ -336,7 +351,7 @@ function getGet($name)
  */
 function getPost($name)
 {
-  return \Config\Services::request()->getPost($name);
+  return Services::request()->getPost($name);
 }
 
 /**
@@ -379,7 +394,7 @@ function getQueueDateTime($dateTime)
  */
 function getRawInput()
 {
-  return \Config\Services::request()->getRawInput();
+  return Services::request()->getRawInput();
 }
 
 /**
@@ -506,7 +521,7 @@ function htmlRemove($html)
  */
 function isAJAX()
 {
-  return \Config\Services::request()->isAJAX();
+  return Services::request()->isAJAX();
 }
 
 /**
@@ -559,23 +574,27 @@ function isLoggedIn()
  */
 function isSpecialCustomer($customerId)
 {
-  $customer = \App\Models\Customer::getRow(['id' => $customerId]);
+  $customer = Customer::getRow(['id' => $customerId]);
 
   if (!$customer) {
     return false;
   }
 
-  $csGroup = \App\Models\CustomerGroup::getRow(['id' => $customer->customer_group_id]);
+  $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
     return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? true : false);
   }
+
   return false;
 }
 
+/**
+ * Determine if Sale is TB by biller code and warehouse code.
+ */
 function isTBSale(string $biller, string $warehouse)
 {
-  return (strcasecmp(\App\Models\Biller::getRow(['code' => $biller])->name, \App\Models\Warehouse::getRow(['code' => $warehouse])->name) != 0);
+  return (strcasecmp(Biller::getRow(['code' => $biller])->name, Warehouse::getRow(['code' => $warehouse])->name) != 0);
 }
 
 /**
@@ -583,7 +602,7 @@ function isTBSale(string $biller, string $warehouse)
  */
 function isW2PUser($user_id)
 {
-  $user = \App\Models\User::getRow(['id' => $user_id]);
+  $user = User::getRow(['id' => $user_id]);
 
   if ($user) {
     return (strcasecmp($user->username, 'W2P') === 0 ? true : false);
@@ -596,7 +615,7 @@ function isW2PUser($user_id)
  */
 function isWeb2Print($sale_id)
 {
-  $sale = \App\Models\Sale::getRow(['id' => $sale_id]);
+  $sale = Sale::getRow(['id' => $sale_id]);
 
   if ($sale) {
     $saleJS = getJSON($sale->json);

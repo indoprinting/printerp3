@@ -156,7 +156,8 @@ class Api extends BaseController
       $validationOptions['attachment_id'] = $uploader->store();
     }
 
-    if (PaymentValidation::validate($response, $validationOptions)) {
+    // FIXME
+    if (PaymentValidation::validate(['manual' => true])) {
       sendJSON(['error' => 0, 'msg' => 'Payment has been validated successfully.']);
     }
     sendJSON(['error' => 1, 'msg' => 'Failed to validate payment.']);
@@ -179,9 +180,7 @@ class Api extends BaseController
       die();
     }
 
-    $response = file_get_contents('php://input');
-
-    if ($total = PaymentValidation::validate($response)) { // Segala pengecekan dan validasi data di sini.
+    if ($total = PaymentValidation::validate()) { // Segala pengecekan dan validasi data di sini.
       $this->response(200, ['message' => 'Validated', 'data' => ['validated' => $total]]);
     } else {
       $this->response(406, ['message' => 'Not Validated']);

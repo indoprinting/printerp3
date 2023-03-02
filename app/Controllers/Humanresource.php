@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\{DataTables, FileUpload};
-use App\Models\{Attachment, Customer, CustomerGroup, Supplier, User, UserGroup};
+use App\Models\{Attachment, Customer, CustomerGroup, DB, Supplier, User, UserGroup};
 
 class Humanresource extends BaseController
 {
@@ -321,7 +321,17 @@ class Humanresource extends BaseController
         'json'              => json_encode([])
       ];
 
-      if (Customer::add($customerData)) {
+      DB::transStart();
+
+      $insertId = Customer::add($customerData);
+
+      if (!$insertId) {
+        $this->response(400, ['message' =>  getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(201, ['message' => sprintf(lang('Msg.customerAddOK'), $customerData['name'])]);
       }
 
@@ -341,7 +351,17 @@ class Humanresource extends BaseController
       $this->response(405, ['message' => 'Method is not allowed.']);
     }
 
-    if (Customer::delete(['id' => $customerId])) {
+    DB::transStart();
+
+    $res = Customer::delete(['id' => $customerId]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
       $this->response(200, ['message' => lang('Msg.customerDeleteOK')]);
     }
 
@@ -371,7 +391,17 @@ class Humanresource extends BaseController
         'json'              => json_encode([])
       ];
 
-      if (Customer::update((int)$customerId, $customerData)) {
+      DB::transStart();
+
+      $res = Customer::update((int)$customerId, $customerData);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(200, ['message' => sprintf(lang('Msg.customerEditOK'), $customer->name)]);
       }
 
@@ -420,7 +450,17 @@ class Humanresource extends BaseController
         'allow_production'  => (getPost('production') == 1 ? 1 : 0)
       ];
 
-      if (CustomerGroup::add($customerGroupData)) {
+      DB::transStart();
+
+      $insertId = CustomerGroup::add($customerGroupData);
+
+      if (!$insertId) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(201, ['message' => sprintf(lang('Msg.customerGroupAddOK'), $customerGroupData['name'])]);
       }
 
@@ -440,7 +480,17 @@ class Humanresource extends BaseController
       $this->response(405, ['message' => 'Method is not allowed.']);
     }
 
-    if (CustomerGroup::delete(['id' => $customerGroupId])) {
+    DB::transStart();
+
+    $res = CustomerGroup::delete(['id' => $customerGroupId]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
       $this->response(200, ['message' => lang('Msg.customerGroupDeleteOK')]);
     }
 
@@ -464,7 +514,17 @@ class Humanresource extends BaseController
         'allow_production'  => (getPost('production') == 1 ? 1 : 0)
       ];
 
-      if (CustomerGroup::update((int)$customerGroupId, $customerGroupData)) {
+      DB::transStart();
+
+      $res = CustomerGroup::update((int)$customerGroupId, $customerGroupData);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(200, ['message' => sprintf(lang('Msg.customerGroupEditOK'), $customerGroup->name)]);
       }
 
@@ -525,7 +585,17 @@ class Humanresource extends BaseController
         'permissions' => json_encode(getPost('permission') ?? [])
       ];
 
-      if (UserGroup::add($userGroupData)) {
+      DB::transStart();
+
+      $insertId = UserGroup::add($userGroupData);
+
+      if (!$insertId) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(201, ['message' => 'User group has been added.']);
       }
 
@@ -542,7 +612,17 @@ class Humanresource extends BaseController
     checkPermission('UserGroup.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      if (UserGroup::delete(['id' => $userGroupId])) {
+      DB::transStart();
+
+      $res = UserGroup::delete(['id' => $userGroupId]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(200, ['message' => 'User group has been deleted.']);
       }
 
@@ -634,7 +714,17 @@ class Humanresource extends BaseController
         $data['avatar'] = ($data['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
       }
 
-      if (User::add($data)) {
+      DB::transStart();
+
+      $insertId = User::add($data);
+
+      if (!$insertId) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(201, ['message' => sprintf(lang('Msg.userAddOK'), $data['username'])]);
       }
 
@@ -708,7 +798,17 @@ class Humanresource extends BaseController
         $userData['avatar'] = ($userData['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
       }
 
-      if (User::update((int)$userId, $userData)) {
+      DB::transStart();
+
+      $res = User::update((int)$userId, $userData);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(200, ['message' => sprintf(lang('Msg.userEditOK'), $user->fullname)]);
       }
 
@@ -797,7 +897,17 @@ class Humanresource extends BaseController
         ])
       ];
 
-      if (Supplier::add($supplierData)) {
+      DB::transStart();
+
+      $insertId = Supplier::add($supplierData);
+
+      if (!$insertId) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
         $this->response(201, ['message' => sprintf(lang('Msg.supplierAddOK'), $supplierData['name'])]);
       }
 
@@ -816,6 +926,16 @@ class Humanresource extends BaseController
     if (requestMethod() != 'POST') {
       $this->response(405, ['message' => 'Method is not allowed.']);
     }
+
+    DB::transStart();
+
+    $res = Supplier::delete(['id' => $supplierId]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
 
     if (Supplier::delete(['id' => $supplierId])) {
       $this->response(200, ['message' => lang('Msg.supplierDeleteOK')]);

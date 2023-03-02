@@ -75,15 +75,15 @@ class Home extends BaseController
         $data = $this->getTargetRevenue();
     }
 
-    $this->response(200, ['data' => $data]);
+    $this->response(200, ['data' => $data, 'module' => 'echarts']);
   }
 
   protected function getMonthlySales()
   {
     $labels       = [];
-    $grandTotals  = [];
+    $revenues     = [];
     $paids        = [];
-    $balances     = [];
+    $receivables  = [];
 
     $res = cache('monthlySales');
 
@@ -96,40 +96,40 @@ class Home extends BaseController
       $dateMonth = date('Y-m', strtotime('-' . $a . ' month', strtotime(date('Y-m-') . '01')));
 
       $row = DB::table('sales')
-        ->select("COALESCE(SUM(grand_total), 0) AS total, COALESCE(SUM(paid), 0) AS total_paid, COALESCE(SUM(balance), 0) AS total_balance")
+        ->select("COALESCE(SUM(grand_total), 0) AS revenue, COALESCE(SUM(paid), 0) AS paid, COALESCE(SUM(balance), 0) AS receivable")
         ->where("date LIKE '{$dateMonth}%'")
         ->getRow();
 
       if ($row) {
-        $total          = $row->total;
-        $total_paid     = $row->total_paid;
-        $total_balance  = $row->total_balance;
-
         $labels[]       = date('Y M', strtotime($dateMonth));
-        $grandTotals[]  = $total;
-        $paids[]        = $total_paid;
-        $balances[]     = $total_balance;
+        $revenues[]     = floatval($row->revenue);
+        $paids[]        = floatval($row->paid);
+        $receivables[]  = floatval($row->receivable > 0 ? $row->receivable * -1 : $row->receivable);
       }
     }
 
     $res = [
-      'labels' => $labels,
-      'datasets' => [
+      'legend' => [
+        'data' => [
+          lang('App.revenue'), lang('Status.paid'), lang('App.receivable')
+        ]
+      ],
+      'series' => [
         [
-          'label' => 'Grand Total',
-          'backgroundColor' => '#0000ff',
-          'data' => $grandTotals
+          'name' => lang('App.revenue'),
+          'data' => $revenues
         ],
         [
-          'label' => 'Paid',
-          'backgroundColor' => '#00ff00',
+          'name' => lang('Status.paid'),
           'data' => $paids
         ],
         [
-          'label' => 'Balance',
-          'backgroundColor' => '#ff0000',
-          'data' => $balances
+          'name' => lang('App.receivable'),
+          'data' => $receivables
         ],
+      ],
+      'xAxis' => [
+        'data' => $labels
       ]
     ];
 
@@ -173,29 +173,33 @@ class Home extends BaseController
       }
 
       $labels[]   = $biller->name;
-      $targets[]  = $billerJS->target;
-      $revenues[] = $inv->revenue;
-      $paids[]    = $inv->paid;
+      $targets[]  = floatval($billerJS->target);
+      $revenues[] = floatval($inv->revenue);
+      $paids[]    = floatval($inv->paid);
     }
 
     $res = [
-      'labels' => $labels,
-      'datasets' => [
+      'legend' => [
+        'data' => [
+          lang('App.targetrevenue'), lang('App.revenue'), lang('Status.paid')
+        ]
+      ],
+      'series' => [
         [
-          'label' => 'Target',
-          'backgroundColor' => '#0080ff',
+          'name' => lang('App.targetrevenue'),
           'data' => $targets
         ],
         [
-          'label' => 'Revenue',
-          'backgroundColor' => '#ff8000',
+          'name' => lang('App.revenue'),
           'data' => $revenues
         ],
         [
-          'label' => 'Paid',
-          'backgroundColor' => '#00ff00',
+          'name' => lang('Status.paid'),
           'data' => $paids
         ],
+      ],
+      'xAxis' => [
+        'data' => $labels
       ]
     ];
 

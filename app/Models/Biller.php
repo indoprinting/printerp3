@@ -58,7 +58,7 @@ class Biller
     if ($rows = self::get($clause)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**

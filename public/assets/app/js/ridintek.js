@@ -448,13 +448,14 @@ export class Sale {
     this.tbody.prepend(`
       <tr>
         <td class="col-md-3">
-          <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
-          <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
-          <input type="hidden" name="item[type][]" value="${item.type}">
           <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
           <input type="hidden" name="item[name][]" value="${item.name}">
           <input type="hidden" name="item[completed_at][]" value="${item.completed_at ?? ''}">
           <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty ?? ''}">
+          <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
+          <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
+          <input type="hidden" name="item[status][]" value="${item.status ?? ''}">
+          <input type="hidden" name="item[type][]" value="${item.type}">
           (${item.code}) ${item.name}
         </td>
         <td>

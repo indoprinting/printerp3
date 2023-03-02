@@ -297,6 +297,7 @@ class Payment extends BaseController
       } else if (!empty($payment->mutation)) {
       } else if (!empty($payment->purchase)) {
       } else if (!empty($payment->sale)) {
+        Sale::sync(['id' => $payment->sale_id]);
       } else if (!empty($payment->transfer)) {
       }
 

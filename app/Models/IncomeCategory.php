@@ -54,7 +54,7 @@ class IncomeCategory
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**

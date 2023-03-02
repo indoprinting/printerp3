@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-class PriceGroup
+class MutasiBank
 {
   /**
-   * Add new PriceGroup.
+   * Add new MutasiBank.
    */
   public static function add(array $data)
   {
-    DB::table('pricegroup')->insert($data);
+    DB::table('mutasibank')->insert($data);
 
     if (DB::error()['code'] == 0) {
       return DB::insertID();
@@ -23,11 +23,11 @@ class PriceGroup
   }
 
   /**
-   * Delete PriceGroup.
+   * Delete MutasiBank.
    */
   public static function delete(array $where)
   {
-    DB::table('pricegroup')->delete($where);
+    DB::table('mutasibank')->delete($where);
 
     if (DB::error()['code'] == 0) {
       return DB::affectedRows();
@@ -39,15 +39,15 @@ class PriceGroup
   }
 
   /**
-   * Get PriceGroup collections.
+   * Get MutasiBank collections.
    */
   public static function get($where = [])
   {
-    return DB::table('pricegroup')->get($where);
+    return DB::table('mutasibank')->get($where);
   }
 
   /**
-   * Get PriceGroup row.
+   * Get MutasiBank row.
    */
   public static function getRow($where = [])
   {
@@ -58,19 +58,19 @@ class PriceGroup
   }
 
   /**
-   * Select PriceGroup.
+   * Select MutasiBank.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
-    return DB::table('pricegroup')->select($columns, $escape);
+    return DB::table('mutasibank')->select($columns, $escape);
   }
 
   /**
-   * Update PriceGroup.
+   * Update MutasiBank.
    */
   public static function update(int $id, array $data)
   {
-    DB::table('pricegroup')->update($data, ['id' => $id]);
+    DB::table('mutasibank')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
       return DB::affectedRows();

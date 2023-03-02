@@ -254,6 +254,7 @@ return [
   'registration'          => 'Pendaftaran',
   'regular'               => 'Reguler',
   'report'                => 'Laporan',
+  'revenue'               => 'Pendapatan',
   'review'                => 'Tinjauan',
   'sale'                  => 'Penjualan',
   'saletb'                => 'Penjualan TB',

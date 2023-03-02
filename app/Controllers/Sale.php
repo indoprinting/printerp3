@@ -185,6 +185,7 @@ class Sale extends BaseController
       $warehouse  = getPost('warehouse');
       $cashier    = getPost('cashier');
       $customer   = getPost('customer');
+      $discount   = getPost('discount');
       $dueDate    = dateTimeJS(getPost('duedate'));
       $note       = getPost('note');
       $approved   = (getPost('approved') == 1 ? 1 : 0);
@@ -244,6 +245,10 @@ class Sale extends BaseController
         'source'        => 'PrintERP',
         'approved'      => $approved,
       ];
+
+      if ($discount) {
+        $data['discount'] = floatval($discount);
+      }
 
       if ($draft) {
         $data['status'] = 'draft';
@@ -318,6 +323,7 @@ class Sale extends BaseController
       Payment::delete(['sale_id' => $id]);
       PaymentValidation::delete(['sale_id' => $id]);
       Stock::delete(['sale_id' => $id]);
+      Invoice::sync(['id' => $id]);
 
       DB::transComplete();
 
@@ -394,13 +400,14 @@ class Sale extends BaseController
 
         $items[] = [
           'code'          => $rawItems['code'][$a],
-          'spec'          => $rawItems['spec'][$a],
           'width'         => $rawItems['width'][$a],
           'length'        => $rawItems['length'][$a],
+          'spec'          => $rawItems['spec'][$a],
           'price'         => filterDecimal($rawItems['price'][$a]),
           'quantity'      => $rawItems['quantity'][$a],
-          'operator'      => $rawItems['operator'][$a],
           'completed_at'  => $rawItems['completed_at'][$a],
+          'operator'      => $rawItems['operator'][$a],
+          'status'        => $rawItems['status'][$a],
           'finished_qty'  => $rawItems['finished_qty'][$a],
         ];
       }
@@ -467,11 +474,11 @@ class Sale extends BaseController
       $product      = Product::getRow(['code' => $saleItem->product]);
       $saleItemJS   = getJSON($saleItem->json);
       $operator     = User::getRow(['id' => $saleItemJS->operator_id]);
-      $priceGroup   = PriceGroup::getRow(['id' => $customer->price_group_id ?? 1]);
-      $productPrice = ProductPrice::getRow([
-        'product_id'      => $product->id,
-        'price_group_id'  => $priceGroup->id
-      ]);
+      // $priceGroup   = PriceGroup::getRow(['id' => $customer->price_group_id ?? 1]);
+      // $productPrice = ProductPrice::getRow([
+      //   'product_id'      => $product->id,
+      //   'price_group_id'  => $priceGroup->id
+      // ]);
 
       $items[] = [
         'code'          => $saleItem->product,
@@ -482,13 +489,14 @@ class Sale extends BaseController
         'quantity'      => floatval($saleItemJS->sqty),
         'finished_qty'  => floatval($saleItem->finished_qty),
         'spec'          => $saleItemJS->spec,
-        'operator'      => ($operator ? $operator->phone : ''),
         'completed_at'  => $saleItemJS->completed_at,
+        'operator'      => ($operator ? $operator->phone : ''),
+        'status'        => $saleItemJS->status,
         'type'          => $saleItem->product_type,
         'ranges'        => getJSON($product->price_ranges_value),
         'prices'        => [
-          floatval($saleItem->price), floatval($productPrice->price2), floatval($productPrice->price3),
-          floatval($productPrice->price4), floatval($productPrice->price5), floatval($productPrice->price6)
+          floatval($saleItem->price), floatval($saleItem->price), floatval($saleItem->price),
+          floatval($saleItem->price), floatval($saleItem->price), floatval($saleItem->price)
         ]
       ];
     }

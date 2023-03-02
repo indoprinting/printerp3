@@ -27,7 +27,7 @@ class WarehouseProduct
   public static function decreaseQuantity(int $productId, int $warehouseId, float $quantity)
   {
     $whp = self::getRow(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
-    self::update((int)$whp->id, ['quantity' => $whp->quantity - $quantity]);
+    return self::update((int)$whp->id, ['quantity' => $whp->quantity - $quantity]);
   }
 
   /**
@@ -65,13 +65,13 @@ class WarehouseProduct
     if ($rows = self::get($clause)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   public static function increaseQuantity(int $productId, int $warehouseId, float $quantity)
   {
     $whp = self::getRow(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
-    self::update((int)$whp->id, ['quantity' => $whp->quantity + $quantity]);
+    return self::update((int)$whp->id, ['quantity' => $whp->quantity + $quantity]);
   }
 
   /**

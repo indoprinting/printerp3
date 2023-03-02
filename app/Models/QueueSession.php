@@ -69,7 +69,7 @@ class QueueSession
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   public static function getTodayQueueSession(int $userId)

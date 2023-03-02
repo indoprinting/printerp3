@@ -68,6 +68,14 @@
             </div>
             <div class="row">
               <div class="col-md-4">
+                <?php if (hasAccess('Sale.Discount')) : ?>
+                  <div class="form-group">
+                    <label for="discount"><?= lang('App.discount') ?></label>
+                    <input type="number" id="discount" name="discount" class="form-control form-control-border form-control-sm" min="0" value="0">
+                  </div>
+                <?php endif; ?>
+              </div>
+              <div class="col-md-4">
                 <?php if (hasAccess('Sale.RawMaterial')) : ?>
                   <div class="form-group">
                     <input type="checkbox" id="rawmaterial" name="rawmaterial">
@@ -158,7 +166,7 @@
             <div class="row">
               <div class="col-md-12 text-center">
                 <div class="form-group">
-                  <img class="attachment-preview" src="<?= $sale->attachment ? base_url('attachment/' . $sale->attachment) : '' ?>" style="max-width:300px">
+                  <img class="attachment-preview" src="<?= $sale->attachment ? base_url('attachment/' . $sale->attachment) : '' ?>" style="max-width:300px; width:100%">
                 </div>
               </div>
             </div>
@@ -205,11 +213,12 @@
 
     $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
     $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
+    $('#discount').val('<?= filterDecimal($sale->discount) ?>');
 
     try {
       preSelect2('biller', '#biller', '<?= $sale->biller ?>');
       preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
-      preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])->phone ?>');
+      preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>');
       preSelect2('customer', '#customer', '<?= $sale->customer ?>');
     } catch (e) {
       console.warn(e);
@@ -230,16 +239,17 @@
         code: item.code,
         name: item.name,
         category: item.category,
-        width: item.width,
-        length: item.length,
-        quantity: item.quantity,
-        spec: item.spec,
-        operator: item.operator,
         completed_at: item.completed_at,
         finished_qty: item.finished_qty,
-        type: item.type,
+        length: item.length,
+        operator: item.operator,
         prices: item.prices,
-        ranges: item.ranges
+        quantity: item.quantity,
+        spec: item.spec,
+        status: item.status,
+        type: item.type,
+        ranges: item.ranges,
+        width: item.width
       }, true);
 
       initControls();

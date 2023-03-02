@@ -54,7 +54,7 @@ class BankReconciliation
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -101,7 +101,7 @@ class BankReconciliation
     $banks = Bank::get(['active' => 1]);
 
     foreach ($bankGroup as $row) { // Grouped by bank number.
-      $mutasi_bank = NULL;
+      $mutasi_bank = null;
       $totalBalance = 0;
 
       foreach ($banks as $bank) { // Collect balance.

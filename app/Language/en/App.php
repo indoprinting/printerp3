@@ -255,6 +255,7 @@ return [
   'registration'          => 'Registration',
   'regular'               => 'Regular',
   'report'                => 'Report',
+  'revenue'               => 'Revenue',
   'review'                => 'Review',
   'sale'                  => 'Sale',
   'saletb'                => 'Sale TB',

@@ -34,6 +34,15 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
+                  <label for="bank"><?= lang('App.bankaccount') ?></label>
+                  <select class="select-bank" name="bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
                     <input type="file" id="attachment" name="attachment" class="custom-file-input">
@@ -43,25 +52,18 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-6">
+              <div class="col-md-12 text-center">
                 <div class="form-group">
-                  <label for="bank"><?= lang('App.bankaccount') ?></label>
-                  <select class="select-bank" name="bank" style="width:100%">
-                  </select>
+                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300px; width:100%">
                 </div>
               </div>
             </div>
             <div class="row">
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <div class="form-group">
-                  <label for="bic"><?= lang('App.biccode') ?></label>
-                  <input id="bic" name="bic" class="form-control form-control-border form-control-sm" placeholder="Ex. CENAIDJA">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <input type="checkbox" id="active" name="active" value="1" checked>
-                  <label for="active"><?= lang('App.active') ?></label>
+                  <label for="editor"><?= lang('App.note') ?></label>
+                  <div id="editor"></div>
+                  <input type="hidden" name="note">
                 </div>
               </div>
             </div>
@@ -81,10 +83,33 @@
   })();
 
   $(document).ready(function() {
+    erp.bank = {};
+    erp.bank.biller = ['<?= $pv->biller ?>'];
+
+    let editor = new Quill('#editor', {
+      theme: 'snow'
+    });
+
+    editor.on('text-change', (delta, oldDelta, source) => {
+      $('[name="note"]').val(editor.root.innerHTML);
+    });
+
+    $('#attachment').change(function() {
+      let src = '';
+
+      if (this.files.length) {
+        src = URL.createObjectURL(this.files[0]);
+      } else {
+        src = base_url + '/assets/app/images/picture.png';
+      }
+
+      $('.attachment-preview').prop('src', src);
+    });
+
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/finance/validation/manual'
+      url: base_url + '/finance/validation/manual/<?= $mode ?>/<?= $id ?>'
     });
   });
 </script>

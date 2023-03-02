@@ -68,6 +68,14 @@
             </div>
             <div class="row">
               <div class="col-md-4">
+                <?php if (hasAccess('Sale.Discount')) : ?>
+                  <div class="form-group">
+                    <label for="discount"><?= lang('App.discount') ?></label>
+                    <input type="number" id="discount" name="discount" class="form-control form-control-border form-control-sm" min="0" value="0">
+                  </div>
+                <?php endif; ?>
+              </div>
+              <div class="col-md-4">
                 <?php if (hasAccess('Sale.RawMaterial')) : ?>
                   <div class="form-group">
                     <input type="checkbox" id="rawmaterial" name="rawmaterial">
@@ -158,7 +166,7 @@
             <div class="row">
               <div class="col-md-12 text-center">
                 <div class="form-group">
-                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300px">
+                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300px; width:100%">
                 </div>
               </div>
             </div>
@@ -204,6 +212,10 @@
       theme: 'snow'
     });
 
+    editor.on('text-change', (delta, oldDelta, source) => {
+      $('[name="note"]').val(editor.root.innerHTML);
+    });
+
     $('#attachment').change(function() {
       let src = '';
 
@@ -238,10 +250,6 @@
       } else {
         erp.product.type.pop();
       }
-    });
-
-    editor.on('text-change', (delta, oldDelta, source) => {
-      $('[name="note"]').val(editor.root.innerHTML);
     });
 
     $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
@@ -279,13 +287,13 @@
             code: data.data.code,
             name: data.data.name,
             category: data.data.category,
-            width: 1,
             length: 1,
+            prices: data.data.prices,
             quantity: 1,
+            ranges: data.data.ranges,
             spec: '',
             type: data.data.type,
-            prices: data.data.prices,
-            ranges: data.data.ranges
+            width: 1
           }, true);
 
           initControls();

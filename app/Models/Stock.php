@@ -124,10 +124,11 @@ class Stock
     if (DB::error()['code'] == 0) {
       $insertId = DB::insertID();
 
-      if ($data['status'] == 'received')
+      if ($data['status'] == 'received') {
         WarehouseProduct::increaseQuantity((int)$product->id, (int)$warehouse->id, (float)$data['quantity']);
-      if ($data['status'] == 'sent')
+      } else if ($data['status'] == 'sent') {
         WarehouseProduct::decreaseQuantity((int)$product->id, (int)$warehouse->id, (float)$data['quantity']);
+      }
 
       return $insertId;
     }

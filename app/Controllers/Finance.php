@@ -1572,9 +1572,11 @@ class Finance extends BaseController
 
   protected function validation_manual(string $mode = null, $id = null)
   {
+    checkPermission('PaymentValidation.Manual');
+
     $pv = null;
 
-    if (!$mode) {
+    if (!$mode || ($mode != 'sale' && $mode != 'mutation')) {
       $this->response(400, ['message' => 'Manual validation mode must be SALE or MUTATION.']);
     }
 
@@ -1598,7 +1600,51 @@ class Finance extends BaseController
       $this->response(400, ['message' => 'Payment Validation is already verified.']);
     }
 
+    if (requestMethod() == 'POST' && isAJAX()) {
+      $date   = dateTimeJS(getPost('date'));
+      $amount = filterDecimal(getPost('amount'));
+      $bank   = getPost('bank');
+
+      if (empty($amount)) {
+        $this->response(400, ['message' => 'Amount is empty.']);
+      }
+
+      if (empty($bank)) {
+        $this->response(400, ['message' => 'Bank is empty.']);
+      }
+
+      $option = [
+        'date'      => $date,
+        'reference' => $pv->reference,
+        'bank'      => $bank,
+        'biller'    => $pv->biller,
+        'amount'    => $amount,
+        'note'      => stripTags(getPost('note')),
+        'manual'    => true // Required.
+      ];
+
+      DB::transStart();
+
+      $option = $this->useAttachment($option);
+
+      $res = PaymentValidation::validate($option);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Payment has been validated.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
+    }
+
     $this->data['pv']     = $pv;
+    $this->data['mode']   = $mode;
+    $this->data['id']     = $id;
     $this->data['title']  = lang('App.manualvalidation');
 
     $this->response(200, ['content' => view('Finance/Validation/manual', $this->data)]);
