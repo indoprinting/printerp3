@@ -147,6 +147,23 @@ class Sale extends BaseController
         return renderStatus($data['payment_status']);
       });
 
+    $userJS = getJSON(session('login')?->json);
+
+    if (isset($userJS->billers) && !empty($userJS->billers)) {
+      if ($billers) {
+        $billers = array_merge($billers, $userJS->billers);
+      } else {
+        $billers = $userJS->billers;
+      }
+    }
+
+    if (session('login')->biller) {
+      if ($billers) {
+        $billers[] = session('login')->biller;
+      } else {
+        $billers = [session('login')->biller];
+      }
+    }
 
     if ($billers) {
       $dt->whereIn('sales.biller', $billers);
@@ -242,7 +259,7 @@ class Sale extends BaseController
         'customer'      => $customer,
         'due_date'      => $dueDate,
         'note'          => $note,
-        'source'        => 'PrintERP',
+        'source'        => 'PrintERP3',
         'approved'      => $approved,
       ];
 

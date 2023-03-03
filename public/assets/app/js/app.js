@@ -49,9 +49,14 @@
   }
 
   App.prototype._setTitle = function (title) {
-    let className = this._icon[0].className.replace('nav-icon', '');
+    if (this._icon.length) {
+      let className = this._icon[0].className.replace('nav-icon', '');
+      this._title.html(`<i class="${className} mr-2"></i>${title}`);
+    } else {
+      this._title.html(`${title}`);
+    }
+
     document.title = title;
-    this._title.html(`<i class="${className} mr-2"></i>${title}`);
     return this;
   }
 
@@ -218,8 +223,8 @@ $(document).ready(function () {
               title: lang.App.success
             });
 
-            if (typeof Table !== 'undefined') Table.draw(false);
-            if (typeof ModalTable !== 'undefined') ModalTable.draw(false);
+            if (typeof erp.table !== 'undefined') erp.table.draw(false);
+            if (typeof erp.modalTable !== 'undefined') erp.modalTable.draw(false);
           },
           url: url
         });
@@ -293,7 +298,7 @@ $(document).ready(function () {
         $(fa).removeClass(faClassProgress).addClass(faClass);
         delete this.dataset.progress;
 
-        if (typeof Table !== 'undefined') Table.draw(false);
+        if (typeof erp.table !== 'undefined') erp.table.draw(false);
       },
       url: url
     })
@@ -340,7 +345,7 @@ $(document).ready(function () {
         $(fa).removeClass(faClassProgress).addClass(faClass);
         delete this.dataset.progress;
 
-        if (typeof Table !== 'undefined') Table.draw(false);
+        if (typeof erp.table !== 'undefined') erp.table.draw(false);
       },
       url: url
     })
@@ -417,7 +422,7 @@ $(document).ready(function () {
 
     if ($('.modal:visible').length) $('body').addClass('modal-open');
 
-    window.modal.pop();
+    erp.modal.pop();
   });
 
   $(document).on('show.bs.modal', '.modal', function () {
@@ -433,9 +438,9 @@ $(document).ready(function () {
 
   $(document).on('shown.bs.modal', '.modal', function () {
     let remote = (this.dataset.remote ?? null);
-    if (typeof window.modal == 'undefined') window.modal = []; // Stackable Modal
+    if (typeof erp.modal == 'undefined') erp.modal = []; // Stackable Modal
 
-    window.modal.push(this);
+    erp.modal.push(this);
 
     $.ajax({
       error: (xhr) => {

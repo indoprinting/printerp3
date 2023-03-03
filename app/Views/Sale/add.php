@@ -22,7 +22,6 @@
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
                   <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%" placeholder="<?= lang('App.biller') ?>">
-                    <option value=""></option>
                   </select>
                 </div>
               </div>
@@ -30,7 +29,6 @@
                 <div class="form-group">
                   <label for="warehouse"><?= lang('App.warehouse') ?> *</label>
                   <select id="warehouse" name="warehouse" class="select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" placeholder="<?= lang('App.warehouse') ?>">
-                    <option value=""></option>
                   </select>
                 </div>
               </div>
@@ -166,7 +164,7 @@
             <div class="row">
               <div class="col-md-12 text-center">
                 <div class="form-group">
-                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300px; width:100%">
+                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300px">
                 </div>
               </div>
             </div>
@@ -203,10 +201,9 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
-    erp.sale = {};
-    erp.product = {};
-    erp.product.type = ['combo', 'service'];
-    erp.user = {};
+    erp.select2.product.type = ['combo', 'service'];
+    erp.select2.user.biller = ['<?= session('login')->biller ?>'];
+    erp.select2.operator.warehouse = ['<?= session('login')->warehouse ?>'];
 
     let editor = new Quill('#editor', {
       theme: 'snow'
@@ -229,11 +226,11 @@
     });
 
     $('#biller').change(function() {
-      erp.user.biller = [this.value];
+      erp.select2.user.biller = [this.value];
     });
 
     $('#warehouse').change(function() {
-      erp.user.warehouse = [this.value];
+      erp.select2.operator.warehouse = [this.value];
     });
 
     $('#draft').on('change', function() {
@@ -246,13 +243,11 @@
 
     $('#rawmaterial').on('change', function() {
       if (this.checked) {
-        erp.product.type.push('standard');
+        erp.select2.product.type.push('standard');
       } else {
-        erp.product.type.pop();
+        erp.select2.product.type.pop();
       }
     });
-
-    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
 
     $('#product').change(function() {
       if (!this.value) return false;
@@ -303,6 +298,19 @@
         url: base_url + '/api/v1/product'
       });
     });
+
+    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
+
+    try {
+      preSelect2('biller', '#biller', erp.biller);
+      preSelect2('warehouse', '#warehouse', erp.warehouse);
+
+      if (erp.sale.customer) {
+        preSelect2('customer', '#customer', erp.sale.customer);
+      }
+    } catch (e) {
+      console.warn(e);
+    }
 
     initModalForm({
       form: '#form',

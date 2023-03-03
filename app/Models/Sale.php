@@ -214,12 +214,13 @@ class Sale
     $sale = self::getRow(['id' => $saleId]);
 
     $insertId = Payment::add([
-      'sale'            => $sale->reference,
-      'bank'            => $data['bank'],
-      'biller'          => $sale->biller,
-      'amount'          => $data['amount'],
-      'type'            => 'received',
-      'attachment'      => ($data['attachment'] ?? null)
+      'sale'        => $sale->reference,
+      'bank'        => $data['bank'],
+      'biller'      => $sale->biller,
+      'amount'      => $data['amount'],
+      'type'        => 'received',
+      'method'      => ($data['method'] ?? 'Transfer'),
+      'attachment'  => ($data['attachment'] ?? null)
     ]);
 
     if (!$insertId) {

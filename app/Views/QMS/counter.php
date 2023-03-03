@@ -492,7 +492,7 @@
           }
         }
 
-        if (window.show_timer && QueueConfig.get('counter_status') != 'idle') {
+        if (erp.qms.counter.showTimer && QueueConfig.get('counter_status') != 'idle') {
           PopupTimer = alertify.warning('');
           PopupTimer.ondismiss = function() {
             return false;
@@ -515,7 +515,7 @@
             </div>`);
           }, 500);
 
-          window.show_timer = false;
+          erp.qms.counter.showTimer = false;
         }
       } // if offline
 

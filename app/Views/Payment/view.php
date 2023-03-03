@@ -47,7 +47,7 @@
 
     tableData.<?= csrf_token() ?> = '<?= csrf_hash() ?>';
 
-    window.ModalTable = $('#ModalTable').DataTable({
+    erp.tableModal = $('#ModalTable').DataTable({
       ajax: {
         data: tableData,
         method: 'POST',

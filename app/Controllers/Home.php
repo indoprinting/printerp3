@@ -256,12 +256,19 @@ class Home extends BaseController
           ->where('active', 1)
           ->limit(10);
 
-        if ($term) {
+        if ($term && is_string($term)) {
           $q->groupStart()
             ->where('id', $term)
             ->orLike('code', $term, 'both')
             ->orLike('name', $term, 'both')
             ->orLike('number', $term, 'both')
+            ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('code', $term)
+            ->orWhereIn('name', $term)
+            ->orWhereIn('number', $term)
             ->groupEnd();
         }
 
@@ -289,16 +296,18 @@ class Home extends BaseController
           ->where('active', 1)
           ->limit(10);
 
-        if ($term) {
+        if ($term && is_string($term)) {
           $q->groupStart()
             ->where('id', $term)
             ->orLike('code', $term, 'both')
             ->orLike('name', $term, 'both')
             ->groupEnd();
-        }
-
-        if ($biller = session('login')->biller) {
-          $q->where('code', $biller);
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('code', $term)
+            ->orWhereIn('name', $term)
+            ->groupEnd();
         }
 
         $results = $q->get();
@@ -308,12 +317,19 @@ class Home extends BaseController
         $q = Customer::select("phone id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
           ->limit(10);
 
-        if ($term) {
+        if ($term && is_string($term)) {
           $q->groupStart()
             ->where('id', $term)
             ->orLike('name', $term, 'both')
             ->orLike('company', $term, 'both')
             ->orLike('phone', $term, 'none')
+            ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('name', $term)
+            ->orWhereIn('company', $term)
+            ->orWhereIn('phone', $term)
             ->groupEnd();
         }
 
@@ -325,11 +341,17 @@ class Home extends BaseController
           ->where('active', 1)
           ->limit(10);
 
-        if ($term) {
+        if ($term && is_string($term)) {
           $q->groupStart()
             ->where('id', $term)
             ->orLike('code', $term, 'both')
             ->orLike('name', $term, 'both')
+            ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('code', $term)
+            ->orWhereIn('name', $term)
             ->groupEnd();
         }
 
@@ -348,11 +370,17 @@ class Home extends BaseController
         $q = Supplier::select("phone id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
           ->limit(10);
 
-        if ($term) {
+        if ($term && is_string($term)) {
           $q->groupStart()
             ->where('id', $term)
             ->orLike('name', $term, 'both')
             ->orLike('company', $term, 'both')
+            ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('name', $term)
+            ->orWhereIn('company', $term)
             ->groupEnd();
         }
 
@@ -364,12 +392,19 @@ class Home extends BaseController
           ->where('active', 1)
           ->limit(10);
 
-        if ($term) {
+        if ($term && is_string($term)) {
           $q->groupStart()
             ->where('id', $term)
             ->orWhere('phone', $term)
             ->orLike('fullname', $term, 'both')
             ->orLike('username', $term, 'both')
+            ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('phone', $term)
+            ->orWhereIn('fullname', $term)
+            ->orWhereIn('username', $term)
             ->groupEnd();
         }
 
@@ -389,18 +424,19 @@ class Home extends BaseController
           ->where('active', 1)
           ->limit(10);
 
-        if ($term) {
+        if ($term && is_string($term)) {
           $q->groupStart()
             ->where('id', $term)
             ->orLike('code', $term, 'both')
             ->orLike('name', $term, 'both')
             ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('code', $term)
+            ->orWhereIn('name', $term)
+            ->groupEnd();
         }
-
-        // Do not filter, we need for Sale TB.
-        // if ($warehouse = session('login')->warehouse) {
-        //   $q->where('code', $warehouse);
-        // }
 
         $results = $q->get();
 

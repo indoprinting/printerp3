@@ -113,8 +113,7 @@
   })();
 
   $(document).ready(function() {
-    erp.bank = {}; // Init.
-    erp.bank.biller = $('#biller').val();
+    erp.select2.bank.biller = $('#biller').val();
 
     let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
 
@@ -129,7 +128,7 @@
     editor.root.innerHTML = `<?= $payment->note ?>`;
 
     $('#biller').change(function() {
-      erp.bank.biller = this.value;
+      erp.select2.bank.biller = this.value;
     });
 
     $('#bank').change(function() {
@@ -146,7 +145,7 @@
     });
 
     $('#method').change(function() {
-      erp.bank.type = this.value;
+      erp.select2.bank.type = this.value;
 
       $('#bank').val('').trigger('change');
 

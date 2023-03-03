@@ -488,7 +488,7 @@ function html2Note($html)
  */
 function htmlDecode($html)
 {
-  return html_entity_decode(trim($html), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
+  return html_entity_decode(trim($html ?? ''), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
 }
 
 /**

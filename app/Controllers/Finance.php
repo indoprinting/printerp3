@@ -861,8 +861,11 @@ class Finance extends BaseController
 
       if (DB::transStatus()) {
         $newExpense = Expense::getRow(['id' => $id]);
-        $newAttachment = Expense::getRow(['hashname' => $newExpense->attachment]);
-        $newPayment = Expense::getRow(['expense_id' => $id]);
+        $newAttachment = Attachment::getRow(['hashname' => $newExpense->attachment]);
+        $newPayment = Payment::getRow(['expense_id' => $id]);
+
+        $attachment->data = base64_encode($attachment->data);
+        $newAttachment->data = base64_encode($newAttachment->data);
 
         addActivity("Edit expense {$expense->reference}.", [
           'data' => [

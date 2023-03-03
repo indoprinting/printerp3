@@ -180,11 +180,22 @@ class Api extends BaseController
       die();
     }
 
-    if ($total = PaymentValidation::validate()) { // Segala pengecekan dan validasi data di sini.
-      $this->response(200, ['message' => 'Validated', 'data' => ['validated' => $total]]);
-    } else {
-      $this->response(406, ['message' => 'Not Validated']);
+    DB::transStart();
+
+    // Segala pengecekan dan validasi data di sini.
+    $total = PaymentValidation::validate();
+
+    if (!$total) {
+      $this->response(406, ['message' => getLastError()]);
     }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Validated', 'data' => ['validated' => $total]]);
+    }
+
+    $this->response(406, ['message' => getLastError()]);
   }
 
   protected function v1_product($mode = NULL)

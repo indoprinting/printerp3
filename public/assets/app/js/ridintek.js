@@ -460,7 +460,7 @@ export class Sale {
         </td>
         <td>
           <div class="card card-dark card-tabs">
-            <div class="card-header bg-gradient-indigo p-0 pt-1">
+            <div class="card-header bg-gradient-dark p-0 pt-1">
               <ul class="nav nav-tabs">
                 <li class="nav-item">
                   <a href="#tab-size-${item.hash}" class="nav-link active" data-toggle="pill">${lang.App.size}</a>
@@ -600,8 +600,8 @@ export class TableFilter {
           }
         }
 
-        if (typeof Table != 'undefined') {
-          Table.draw(false);
+        if (typeof erp.table != 'undefined') {
+          erp.table.draw(false);
         }
 
         controlSidebar('collapse');
@@ -616,8 +616,8 @@ export class TableFilter {
           }
         }
 
-        if (typeof Table != 'undefined') {
-          Table.draw(false);
+        if (typeof erp.table != 'undefined') {
+          erp.table.draw(false);
         }
 
         controlSidebar('collapse');

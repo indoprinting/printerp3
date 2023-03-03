@@ -81,13 +81,22 @@
                   </select>
                 </div>
               </div>
-              <div class="col-md-6">
+            </div>
+            <div class="row">
+              <div class="col-md-12">
                 <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
                     <input type="file" id="attachment" name="attachment" class="custom-file-input">
                     <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
                   </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 text-center">
+                <div class="form-group">
+                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300xp">
                 </div>
               </div>
             </div>
@@ -122,6 +131,18 @@
 
     editor.on('text-change', (delta, oldDelta, source) => {
       $('[name="note"]').val(editor.root.innerHTML);
+    });
+
+    $('#attachment').change(function() {
+      let src = '';
+
+      if (this.files.length) {
+        src = URL.createObjectURL(this.files[0]);
+      } else {
+        src = base_url + '/assets/app/images/picture.png';
+      }
+
+      $('.attachment-preview').prop('src', src);
     });
 
     $('#bank').change(function() {

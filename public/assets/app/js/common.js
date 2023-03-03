@@ -33,7 +33,7 @@ function appendZero(number) { // Return as string, you can convert to number wit
 function calculateSale() {
   let table = $('#table-sale');
 
-  if (!table) {
+  if (!table.length) {
     return false;
   }
 
@@ -338,6 +338,10 @@ function initControls() {
     console.error('%cjQuery', 'font-weight:bold', ' is not installed');
   }
 
+  if (isFunction('$.fn.tooltip')) {
+    $('[data-toggle="tooltip"]').tooltip();
+  }
+
   if (isFunction('$.fn.overlayScrollbars')) {
     $('body').overlayScrollbars({
       scrollbars: {
@@ -370,12 +374,12 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (erp?.bank?.biller) {
-            params.biller = erp.bank.biller;
+          if (erp?.select2?.bank?.biller) {
+            params.biller = erp.select2.bank.biller;
           }
 
-          if (erp?.bank?.type) {
-            params.type = erp.bank.type;
+          if (erp?.select2?.bank?.type) {
+            params.type = erp.select2.bank.type;
           }
 
           return params;
@@ -388,12 +392,12 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (erp?.bank?.biller?.from) {
-            params.biller = erp.bank.biller.from;
+          if (typeof erp?.select2.bankfrom?.biller !== 'undefined') {
+            params.biller = erp.select2.bankfrom.biller;
           }
 
-          if (erp?.bank?.type?.from) {
-            params.type = erp.bank.type.from;
+          if (typeof erp?.select2?.bankfrom?.type !== 'undefined') {
+            params.type = erp.select2.bankfrom.type;
           }
 
           return params;
@@ -406,12 +410,12 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (erp?.bank?.biller?.to) {
-            params.biller = erp.bank.biller.to;
+          if (typeof erp?.select2.bankto?.biller !== 'undefined') {
+            params.biller = erp.select2.bankto.biller;
           }
 
-          if (erp?.bank?.type?.to) {
-            params.type = erp.bank.type.to;
+          if (typeof erp?.select2.bankto?.type !== 'undefined') {
+            params.type = erp.select2.bankto.type;
           }
 
           return params;
@@ -438,12 +442,12 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.operator?.biller !== 'undefined') {
-            params.biller = erp.operator.biller;
+          if (typeof erp?.select2?.operator?.biller !== 'undefined') {
+            params.biller = erp.select2.operator.biller;
           }
 
-          if (typeof erp?.operator?.warehouse !== 'undefined') {
-            params.warehouse = erp.operator.warehouse;
+          if (typeof erp?.select2?.operator?.warehouse !== 'undefined') {
+            params.warehouse = erp.select2.operator.warehouse;
           }
 
           return params;
@@ -456,8 +460,8 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.product?.type !== 'undefined') {
-            params.type = erp.product.type;
+          if (typeof erp?.select2?.product?.type !== 'undefined') {
+            params.type = erp.select2.product.type;
           }
 
           return params;
@@ -489,12 +493,12 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.user?.biller !== 'undefined') {
-            params.biller = erp.user.biller;
+          if (typeof erp?.select2?.user?.biller !== 'undefined') {
+            params.biller = erp.select2.user.biller;
           }
 
-          if (typeof erp?.user?.warehouse !== 'undefined') {
-            params.warehouse = erp.user.warehouse;
+          if (typeof erp?.select2?.user?.warehouse !== 'undefined') {
+            params.warehouse = erp.select2.user.warehouse;
           }
 
           return params;
@@ -596,12 +600,18 @@ function initModalForm(opt = {}) {
 
           // Pre-select customer after add from add customer button.
           if ($('#customer').length && $('#phone').length) {
-            preSelect2('customer', '#customer', $('#phone').val());
+            try {
+              preSelect2('customer', '#customer', $('#phone').val());
+            } catch (e) {
+              console.warn(e);
+            }
           }
 
           reDrawDataTable();
 
-          $(window.modal[window.modal.length - 1]).modal('hide');
+          if (erp.modal && isArray(erp.modal)) {
+            $(erp.modal[erp.modal.length - 1]).modal('hide');
+          }
         }
 
         $(opt.submit).prop('disabled', false);
@@ -660,23 +670,43 @@ async function preSelect2(mode, elm, id) {
   return new Promise((resolve, reject) => {
     if (isEmpty(id)) {
       console.warn(`preSelect2: id for ${mode}:${elm} is empty.`);
-      reject(false);
+      return false;
+    }
+
+    let params = '';
+
+    if (isArray(id)) {
+      for (let i of id) {
+        params += 'term[]=' + i + '&';
+      }
+    } else {
+      params = 'term=' + id;
+    }
+
+    if (params.slice(-1) == '&') {
+      params = params.slice(0, -1);
     }
 
     $.ajax({
       error: (xhr) => {
         toastr.error(xhr.responseJSON.message, xhr.status);
-
         reject(false);
       },
       success: (data) => {
-        let opt = new Option(data.results[0].text, data.results[0].id, true, true);
+        if (!data.results.length) {
+          console.warn('preSelect2: results are empty.');
+          return false;
+        }
 
-        $(elm).html('').append(opt).trigger('change');
+        $(elm).html('');
+
+        for (let a = 0; a < data.results.length; a++) {
+          $(elm).append(new Option(data.results[a].text, data.results[a].id, true, true)).trigger('change');
+        }
 
         resolve(true);
       },
-      url: base_url + `/select2/${mode}?term=${id}`
+      url: base_url + `/select2/${mode}?${params}`
     });
   });
 }
@@ -694,11 +724,12 @@ function randomString(length = 8) {
 
 /**
  * Redraw Table from DataTable instance.
- * @param {object} table DataTable instance. If omitted, it will use window.Table variable.
+ * @param {object} table DataTable instance. If omitted, it will use window.erp.Table variable.
  */
 function reDrawDataTable(table = null) {
   if (isFunction(table?.draw)) table.draw(false);
-  if (isFunction(window?.Table?.draw)) window.Table.draw(false);
+  if (isFunction(erp?.table?.draw)) erp.table.draw(false);
+  if (isFunction(erp?.tableModal?.draw)) erp.tableModal.draw(false);
 }
 
 function separateChar(char) {

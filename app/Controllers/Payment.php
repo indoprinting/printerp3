@@ -292,7 +292,11 @@ class Payment extends BaseController
       }
 
       if (!empty($payment->expense)) {
-        Expense::update((int)$payment->expense_id, ['payment_date' => null, 'payment_status' => 'pending']);
+        $res = Expense::update((int)$payment->expense_id, ['payment_date' => null, 'payment_status' => 'pending']);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
       } else if (!empty($payment->income)) {
       } else if (!empty($payment->mutation)) {
       } else if (!empty($payment->purchase)) {

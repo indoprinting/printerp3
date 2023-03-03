@@ -687,6 +687,13 @@ class Humanresource extends BaseController
     checkPermission('User.Add');
 
     if (requestMethod() == 'POST') {
+      $json = json_encode([
+        'acc_no'      => getPost('accno'),
+        'billers'     => getPost('billers'),
+        'warehouses'  => getPost('warehouses'),
+        'so_cycle'    => getPost('socycle'),
+      ]);
+
       $data = [
         'active'    => getPost('active'),
         'biller'    => getPost('biller'),
@@ -698,6 +705,8 @@ class Humanresource extends BaseController
         'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
         'username'  => getPost('username'),
         'warehouse' => getPost('warehouse'),
+        'json'      => $json,
+        'json_data' => $json
       ];
 
       // $this->response(400, ['message' => is_array($data['groups'])]);
@@ -762,7 +771,14 @@ class Humanresource extends BaseController
     }
 
     if (requestMethod() == 'POST') {
-      $userData = [
+      $json = json_encode([
+        'acc_no'      => getPost('accno'),
+        'billers'     => getPost('billers'),
+        'warehouses'  => getPost('warehouses'),
+        'so_cycle'    => getPost('socycle'),
+      ]);
+
+      $data = [
         'active'    => getPost('active'),
         'biller'    => getPost('biller'),
         'company'   => getPost('division'),
@@ -772,10 +788,12 @@ class Humanresource extends BaseController
         'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
         'username'  => getPost('username'),
         'warehouse' => getPost('warehouse'),
+        'json'      => $json,
+        'json_data' => $json
       ];
 
       if ($pass = getPost('password')) {
-        $userData['password'] = $pass;
+        $data['password'] = $pass;
       }
 
       $upload = new FileUpload();
@@ -791,16 +809,16 @@ class Humanresource extends BaseController
           if ($avatar && $avatar->hashname != 'avatarmale' && $avatar->hashname != 'avatarfemale') {
             $upload->store(NULL, $avatar->hashname); // Update current record.
           } else {
-            $userData['avatar'] = Attachment::getRow(['id' => $upload->storeRandom()])->hashname;
+            $data['avatar'] = Attachment::getRow(['id' => $upload->storeRandom()])->hashname;
           }
         }
       } else {
-        $userData['avatar'] = ($userData['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
+        $data['avatar'] = ($data['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
       }
 
       DB::transStart();
 
-      $res = User::update((int)$userId, $userData);
+      $res = User::update((int)$userId, $data);
 
       if (!$res) {
         $this->response(400, ['message' => getLastError()]);
@@ -815,8 +833,9 @@ class Humanresource extends BaseController
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
     }
 
-    $this->data['title'] = lang('App.edituser');
-    $this->data['user'] = $user;
+    $this->data['title']  = lang('App.edituser');
+    $this->data['user']   = $user;
+    $this->data['userJS'] = getJSON($user->json);
 
     $this->response(200, ['content' => view('HumanResource/User/edit', $this->data)]);
   }

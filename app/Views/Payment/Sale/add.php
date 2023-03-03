@@ -102,8 +102,7 @@
   })();
 
   $(document).ready(function() {
-    erp.bank = {}; // Init.
-    erp.bank.biller = '<?= $inv->biller ?>';
+    erp.select2.bank.biller = '<?= $inv->biller ?>';
 
     let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
 
@@ -128,7 +127,7 @@
     });
 
     $('#biller').change(function() {
-      erp.bank.biller_to = this.value;
+      erp.select2.bank.biller = this.value;
     });
 
     $('#bank').change(function() {
@@ -146,7 +145,7 @@
 
     // Saat ubah method. Ubah juga bank.
     $('#method').change(function() {
-      erp.bank.type = this.value;
+      erp.select2.bank.type = this.value;
 
       $('#bank').val('').trigger('change');
 

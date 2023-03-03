@@ -101,6 +101,25 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-gradient-warning"><?= lang('App.misc') ?></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="billers"><?= lang('App.billeraccess') ?></label>
+              <select id="billers" name="billers[]" class="select-biller" style="width:100%" multiple>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="warehouses"><?= lang('App.warehouseaccess') ?></label>
+              <select id="warehouses" name="warehouses[]" class="select-warehouse" style="width:100%" multiple>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
@@ -138,6 +157,8 @@
     $('#gender').val('<?= $user->gender ?>').trigger('change');
     $('#groups').val('<?= $user->groups ?>'.split(',')).trigger('change');
     $('#warehouse').val('<?= $user->warehouse ?>').trigger('change');
+    preSelect2('biller', '#billers', <?= isset($userJS->billers) ? json_encode($userJS?->billers) : '[]' ?>);
+    preSelect2('warehouse', '#warehouses', <?= isset($userJS->warehouses) ? json_encode($userJS?->warehouses) : '[]' ?>);
 
     initModalForm({
       form: '#form',

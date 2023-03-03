@@ -117,7 +117,7 @@ class DB
   }
 
   /**
-   * Ends a query group
+   * Ends a query group.
    */
   public function groupEnd()
   {
@@ -253,6 +253,15 @@ class DB
   }
 
   /**
+   * Starts a query group, but ORs the group.
+   */
+  public function orGroupStart()
+  {
+    self::$qb->orGroupStart();
+    return self::$instance;
+  }
+
+  /**
    * Separates multiple calls with 'OR'.
    *
    * @param array|RawSql|string $key
@@ -300,6 +309,34 @@ class DB
   public function orWhere($key, $value = null, bool $escape = null)
   {
     self::$qb->orWhere($key, $value, $escape);
+    return self::$instance;
+  }
+
+  /**
+   * Generates a WHERE field IN('item', 'item') SQL query,
+   * joined with 'OR' if appropriate.
+   *
+   * @param array|RawSql|string $key
+   * @param mixed               $value
+   * @param bool                $escape
+   */
+  public function orWhereIn($key, $value = null, bool $escape = null)
+  {
+    self::$qb->orWhereIn($key, $value, $escape);
+    return self::$instance;
+  }
+
+  /**
+   * Generates a WHERE field NOT IN('item', 'item') SQL query,
+   * joined with 'OR' if appropriate.
+   *
+   * @param array|RawSql|string $key
+   * @param mixed               $value
+   * @param bool                $escape
+   */
+  public function orWhereNotIn($key, $value = null, bool $escape = null)
+  {
+    self::$qb->orWhereNotIn($key, $value, $escape);
     return self::$instance;
   }
 

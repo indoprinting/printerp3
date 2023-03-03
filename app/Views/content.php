@@ -32,9 +32,33 @@
     const base_url = '<?= base_url(); ?>';
     const langId = '<?= session('login')->lang ?>';
     const permissions = JSON.parse(atob('<?= $permission64 ?>'));
-    window.erp = {};
-    window.Table = null;
-    window.show_timer = true;
+    // ERP namespace.
+    window.erp = {
+      biller: '<?= session('login')->biller ?>',
+      modal: [], // Stackable modal.
+      sale: {
+        customer: null
+      },
+      table: null,
+      tableModal: null,
+      qms: {
+        counter: {
+          showTimer: true
+        }
+      },
+      select2: {
+        bank: {},
+        bankfrom: {},
+        bankto: {},
+        biller: {},
+        operator: {},
+        product: {},
+        user: {},
+        warehouse: {}
+      },
+      table: null,
+      warehouse: '<?= session('login')->warehouse ?>',
+    };
   </script>
 </head>
 
@@ -119,7 +143,7 @@
     <!-- Main Sidebar Container -->
     <aside class="main-sidebar elevation-4<?= session('login')->dark_mode ? ' sidebar-dark-primary' : ' sidebar-light-primary' ?>">
       <!-- Brand Logo -->
-      <a href="#" class="brand-link">
+      <a href="<?= base_url() ?>" class="brand-link" data-action="link">
         <img src="<?= base_url() ?>/assets/dist/img/AdminLTELogo.png" alt="PrintERP 3" class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light">PrintERP 3</span>
       </a>
@@ -396,200 +420,238 @@
               </li>
             <?php endif; ?>
             <!-- Maintenance -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fad fa-cog"></i>
-                <p><?= lang('App.maintenance') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-check-to-slot"></i>
-                    <p><?= lang('App.equipmentcheck') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-th"></i>
-                    <p><?= lang('App.maintenancelog') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-calendar"></i>
-                    <p><?= lang('App.maintenanceschedule') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess(['Maintenance.View', 'MaintenanceReview.View', 'MaintenanceSchedule.View'])) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon fad fa-cog"></i>
+                  <p><?= lang('App.maintenance') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('Maintenance.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-check-to-slot"></i>
+                        <p><?= lang('App.equipmentcheck') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('MaintenanceReview.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-th"></i>
+                        <p><?= lang('App.maintenancelog') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('MaintenanceSchedule.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-calendar"></i>
+                        <p><?= lang('App.maintenanceschedule') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- Procurement -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fad fa-shopping-cart"></i>
-                <p><?= lang('App.procurement') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-cart-plus"></i>
-                    <p><?= lang('App.purchase') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess('ProductPurchase.View')) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon fad fa-shopping-cart"></i>
+                  <p><?= lang('App.procurement') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('ProductPurchase.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-cart-plus"></i>
+                        <p><?= lang('App.purchase') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- Production -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fad fa-scissors"></i>
-                <p><?= lang('App.production') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-file-invoice"></i>
-                    <p><?= lang('App.invoice') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess('Sale.Complete')) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon fad fa-scissors"></i>
+                  <p><?= lang('App.production') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('Sale.Complete')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-file-invoice"></i>
+                        <p><?= lang('App.invoice') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- QMS -->
-            <li class="nav-item">
-              <a href="#" class="nav-link" data-slug="qms">
-                <i class="nav-icon fad fa-users-class" style="color:#ff80ff"></i>
-                <p>QMS <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="<?= base_url('qms') ?>" class="nav-link" data-action="link" data-slug="queue">
-                    <i class="nav-icon fad fa-list" style="color:#40ffff"></i>
-                    <p><?= lang('App.queue') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('qms/counter') ?>" class="nav-link" data-action="link" data-slug="counter">
-                    <i class="nav-icon fad fa-user-headset" style="color:#ffff80"></i>
-                    <p>Counter</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('qms/display?active=1') ?>" class="nav-link" target="_blank">
-                    <i class="nav-icon fad fa-desktop" style="color:#ff8080"></i>
-                    <p><?= lang('App.display') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?= base_url('qms/registration') ?>" class="nav-link" target="_blank">
-                    <i class="nav-icon fad fa-file-alt" style="color:#80ff40"></i>
-                    <p><?= lang('App.registration') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess('QMS.View')) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link" data-slug="qms">
+                  <i class="nav-icon fad fa-users-class" style="color:#ff80ff"></i>
+                  <p>QMS <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('QMS.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('qms') ?>" class="nav-link" data-action="link" data-slug="queue">
+                        <i class="nav-icon fad fa-list" style="color:#40ffff"></i>
+                        <p><?= lang('App.queue') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('QMS.Counter')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('qms/counter') ?>" class="nav-link" data-action="link" data-slug="counter">
+                        <i class="nav-icon fad fa-user-headset" style="color:#ffff80"></i>
+                        <p>Counter</p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('QMS.Display')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('qms/display?active=1') ?>" class="nav-link" target="_blank">
+                        <i class="nav-icon fad fa-desktop" style="color:#ff8080"></i>
+                        <p><?= lang('App.display') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('QMS.Registration')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('qms/registration') ?>" class="nav-link" target="_blank">
+                        <i class="nav-icon fad fa-file-alt" style="color:#80ff40"></i>
+                        <p><?= lang('App.registration') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- Report -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fad fa-file-chart-pie"></i>
-                <p><?= lang('App.report') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-chart-mixed"></i>
-                    <p><?= lang('App.dailyperformance') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-receipt"></i>
-                    <p><?= lang('App.debt') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-money-bill-trend-up"></i>
-                    <p><?= lang('App.incomestatement') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-box-dollar"></i>
-                    <p><?= lang('App.inventorybalance') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-screwdriver-wrench"></i>
-                    <p><?= lang('App.maintenance') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-money-bill-wave"></i>
-                    <p><?= lang('App.payment') ?></p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-file-invoice-dollar"></i>
-                    <p><?= lang('App.receivable') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <!-- Sales -->
-            <li class="nav-item">
-              <a href="#" class="nav-link" data-slug="sale">
-                <i class="nav-icon fad fa-cash-register" style="color:#40ffff"></i>
-                <p><?= lang('App.sale') ?> <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="<?= base_url('sale') ?>" class="nav-link" data-action="link" data-slug="invoice">
-                    <i class="nav-icon fad fa-file-invoice" style="color:#ff8040"></i>
-                    <p><?= lang('App.invoice') ?></p>
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <!-- Setting -->
-            <li class="nav-item">
-              <a href="<?= base_url('setting') ?>" class="nav-link" data-slug="setting">
-                <i class="nav-icon fad fa-cogs"></i>
-                <p><?= lang('App.setting') ?> <i class="fad fa-angle-right right"></i></p>
-              </a>
-              <ul class="nav nav-treeview">
-                <?php if (hasAccess('All')) : ?>
+            <?php if (hasAccess(['Report.DailyPerformance', 'Report.Debt', 'Report.IncomeStatement', 'Report.InventoryBalance', 'Report.Maintenance', 'Report.Payment', 'Report.Receivable'])) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon fad fa-file-chart-pie"></i>
+                  <p><?= lang('App.report') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="<?= base_url('setting/permission') ?>" class="nav-link" data-action="link" data-slug="permission">
-                      <i class="nav-icon fad fa-user-lock"></i>
-                      <p><?= lang('App.permission') ?></p>
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-chart-mixed"></i>
+                      <p><?= lang('App.dailyperformance') ?></p>
                     </a>
                   </li>
-                <?php endif; ?>
-              </ul>
-            </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-receipt"></i>
+                      <p><?= lang('App.debt') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-money-bill-trend-up"></i>
+                      <p><?= lang('App.incomestatement') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-box-dollar"></i>
+                      <p><?= lang('App.inventorybalance') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-screwdriver-wrench"></i>
+                      <p><?= lang('App.maintenance') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-money-bill-wave"></i>
+                      <p><?= lang('App.payment') ?></p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">
+                      <i class="nav-icon fad fa-file-invoice-dollar"></i>
+                      <p><?= lang('App.receivable') ?></p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            <?php endif; ?>
+            <!-- Sales -->
+            <?php if (hasAccess('Sale.View')) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link" data-slug="sale">
+                  <i class="nav-icon fad fa-cash-register" style="color:#40ffff"></i>
+                  <p><?= lang('App.sale') ?> <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('Sale.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('sale') ?>" class="nav-link" data-action="link" data-slug="invoice">
+                        <i class="nav-icon fad fa-file-invoice" style="color:#ff8040"></i>
+                        <p><?= lang('App.invoice') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
+            <!-- Setting -->
+            <?php if (hasAccess('Setting.Edit')) : ?>
+              <li class="nav-item">
+                <a href="<?= base_url('setting') ?>" class="nav-link" data-slug="setting">
+                  <i class="nav-icon fad fa-cogs"></i>
+                  <p><?= lang('App.setting') ?> <i class="fad fa-angle-right right"></i></p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('All')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('setting/permission') ?>" class="nav-link" data-action="link" data-slug="permission">
+                        <i class="nav-icon fad fa-user-lock"></i>
+                        <p><?= lang('App.permission') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
             <!-- TrackingPOD -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fad fa-chart-network"></i>
-                <p>TrackingPOD <i class="fad fa-angle-right right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="#" class="nav-link">
-                    <i class="nav-icon fad fa-list"></i>
-                    <p>TrackingPOD</p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+            <?php if (hasAccess('TrackingPOD.View')) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon fad fa-chart-network"></i>
+                  <p>TrackingPOD <i class="fad fa-angle-right right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <?php if (hasAccess('TrackingPOD.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-list"></i>
+                        <p>TrackingPOD</p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </li>
+            <?php endif; ?>
           </ul>
         </nav>
         <!-- /.sidebar-menu -->

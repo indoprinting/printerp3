@@ -43,7 +43,6 @@
           </div>
         </div>
       </div>
-
       <div class="col-md-6">
         <div class="card">
           <div class="card-header bg-gradient-primary"><?= lang('App.account') ?></div>
@@ -95,6 +94,25 @@
                   <?php foreach (\App\Models\Warehouse::get(['active' => 1]) as $wh) : ?>
                 <option value="<?= $wh->code ?>"><?= $wh->name ?></option>
               <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-gradient-warning"><?= lang('App.misc') ?></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="billers"><?= lang('App.billeraccess') ?></label>
+              <select name="billers[]" class="select-biller" style="width:100%" multiple>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="warehouses"><?= lang('App.warehouseaccess') ?></label>
+              <select name="warehouses[]" class="select-warehouse" style="width:100%" multiple>
               </select>
             </div>
           </div>

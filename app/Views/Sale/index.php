@@ -4,7 +4,7 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-            <a class="btn btn-tool bg-gradient-warning" href="#" data-widget="control-sidebar" data-slide="true">
+            <a class="btn btn-tool bg-gradient-warning" href="#" data-widget="control-sidebar" data-toggle="tooltip" title="Filter" data-slide="true">
               <i class="fad fa-filter"></i>
             </a>
             <a class="btn btn-tool bg-gradient-success" href="<?= base_url('sale/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -206,7 +206,7 @@
   $(document).ready(function() {
     "use strict";
 
-    window.Table = $('#Table').DataTable({
+    erp.table = $('#Table').DataTable({
       ajax: {
         data: (data) => {
           data.__ = __;

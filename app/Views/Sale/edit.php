@@ -166,7 +166,7 @@
             <div class="row">
               <div class="col-md-12 text-center">
                 <div class="form-group">
-                  <img class="attachment-preview" src="<?= $sale->attachment ? base_url('attachment/' . $sale->attachment) : '' ?>" style="max-width:300px; width:100%">
+                  <img class="attachment-preview" src="<?= $sale->attachment ? base_url('attachment/' . $sale->attachment) : '' ?>" style="max-width:300px">
                 </div>
               </div>
             </div>
@@ -203,26 +203,9 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
-    erp.sale = {};
-    erp.product = {};
-    erp.product.type = ['combo', 'service'];
-    erp.user = {};
-    erp.user.biller = ['<?= $sale->biller ?>'];
-    erp.operator = {};
-    erp.operator.warehouse = ['<?= $sale->warehouse ?>'];
-
-    $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
-    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
-    $('#discount').val('<?= filterDecimal($sale->discount) ?>');
-
-    try {
-      preSelect2('biller', '#biller', '<?= $sale->biller ?>');
-      preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
-      preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>');
-      preSelect2('customer', '#customer', '<?= $sale->customer ?>');
-    } catch (e) {
-      console.warn(e);
-    }
+    erp.select2.product.type = ['combo', 'service'];
+    erp.select2.user.biller = ['<?= $sale->biller ?>'];
+    erp.select2.operator.warehouse = ['<?= $sale->warehouse ?>'];
 
     if (<?= $saleJS->approved ?>) {
       $('#approved').iCheck('check');
@@ -350,6 +333,19 @@
         url: base_url + '/api/v1/product'
       });
     });
+
+    $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
+    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
+    $('#discount').val('<?= filterDecimal($sale->discount) ?>');
+
+    try {
+      preSelect2('biller', '#biller', '<?= $sale->biller ?>');
+      preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
+      preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>');
+      preSelect2('customer', '#customer', '<?= $sale->customer ?>');
+    } catch (e) {
+      console.warn(e);
+    }
 
     initModalForm({
       form: '#form',
