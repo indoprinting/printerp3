@@ -62,9 +62,15 @@ class BaseController extends Controller
 		// E.g.: $this->session = \Config\Services::session();
 
 		/**
-		 * Reset last error.
+		 * Reset last error. This is global error message if error occurred.
+		 * Use getLastError() to get last error message.
 		 */
 		setLastError();
+
+		// Force to HTTPS connection.
+		if (!isSecure()) {
+			redirect()->to('https://' . $_SERVER['HTTP_HOST']);
+		}
 
 		/**
 		 * Resource Versioning

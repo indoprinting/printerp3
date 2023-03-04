@@ -3,12 +3,15 @@
     <div class="col-md-12">
       <div class="card">
         <div class="card-header bg-gradient-dark">
-          <h5 class="card-title"><?= lang('App.monthlysales') ?></h5>
+          <h5 class="card-title"><?= lang('App.revenue') . ' ' . lang('App.and') . ' ' . lang('App.forecast') ?></h5>
+          <div class="card-tools" style="max-width:150px;width:100%">
+            <input id="period" class="form-control form-control-border form-control-sm" type="month">
+          </div>
         </div>
         <div class="card-body">
-          <div id="monthly-sales-chart" style="height:400px; width:100%"></div>
+          <div id="revenue-forecast-chart" style="height:400px; width:100%"></div>
         </div>
-        <div class="overlay dark" id="monthly-sales-loader">
+        <div class="overlay dark" id="revenue-forecase-loader">
           <i class="fad fa-sync fa-spin fa-4x"></i>
         </div>
       </div>
@@ -18,12 +21,16 @@
     <div class="col-md-12">
       <div class="card">
         <div class="card-header bg-gradient-dark">
-          <h5 class="card-title"><?= lang('App.targetrevenue') ?></h5>
+          <h5 class="card-title"><?= lang('App.dailyperformance') ?></h5>
+          <div class="card-tools" style="max-width:150px;width:100%">
+            <select id="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
+            </select>
+          </div>
         </div>
         <div class="card-body">
-          <div id="target-revenue-chart" style="height:400px; width:100%"></div>
+          <div id="daily-performance-chart" style="height:400px; width:100%"></div>
         </div>
-        <div class="overlay dark" id="target-revenue-loader">
+        <div class="overlay dark" id="daily-performance-loader">
           <i class="fad fa-sync fa-spin fa-4x"></i>
         </div>
       </div>
@@ -32,10 +39,10 @@
 </div>
 <script>
   $(function() {
-    erp.chart.monthlySales = echarts.init(document.querySelector('#monthly-sales-chart'));
-    erp.chart.targetRevenue = echarts.init(document.querySelector('#target-revenue-chart'));
+    erp.chart.revenueForecast = echarts.init(document.querySelector('#revenue-forecast-chart'));
+    erp.chart.dailyPerformance = echarts.init(document.querySelector('#daily-performance-chart'));
 
-    erp.chart.monthlySales.setOption({
+    erp.chart.revenueForecast.setOption({
       tooltip: {
         trigger: 'axis',
         axisPointer: {
@@ -43,7 +50,7 @@
         }
       },
       legend: {
-        data: ['<?= lang('App.revenue') ?>', '<?= lang('Status.paid') ?>', '<?= lang('App.receivable') ?>'],
+        data: [],
         textStyle: {
           color: '#888'
         }
@@ -65,6 +72,14 @@
         type: 'value'
       }],
       series: [{
+          name: '<?= lang('App.targetrevenue') ?>',
+          type: 'bar',
+          emphasis: {
+            focus: 'series'
+          },
+          data: []
+        },
+        {
           name: '<?= lang('App.revenue') ?>',
           type: 'bar',
           emphasis: {
@@ -73,18 +88,16 @@
           data: []
         },
         {
-          name: '<?= lang('Status.paid') ?>',
+          name: '<?= lang('App.averagerevenue') ?>',
           type: 'bar',
-          stack: 'Total',
           emphasis: {
             focus: 'series'
           },
           data: []
         },
         {
-          name: '<?= lang('App.receivable') ?>',
+          name: '<?= lang('App.forecast') ?>',
           type: 'bar',
-          stack: 'Total',
           emphasis: {
             focus: 'series'
           },
@@ -93,7 +106,7 @@
       ]
     });
 
-    erp.chart.targetRevenue.setOption({
+    erp.chart.dailyPerformance.setOption({
       tooltip: {
         trigger: 'axis',
         axisPointer: {
@@ -101,7 +114,7 @@
         }
       },
       legend: {
-        data: ['<?= lang('App.revenue') ?>', '<?= lang('Status.paid') ?>', '<?= lang('App.receivable') ?>'],
+        data: [],
         textStyle: {
           color: '#888'
         }
@@ -123,24 +136,23 @@
         type: 'value'
       }],
       series: [{
-          name: '<?= lang('App.target') ?>',
-          type: 'bar',
-          emphasis: {
-            focus: 'series'
-          },
-          data: []
-        },
-        {
           name: '<?= lang('App.revenue') ?>',
-          type: 'bar',
+          type: 'line',
+          emphasis: {
+            focus: 'series'
+          },
+          data: []
+        }, {
+          name: '<?= lang('App.stockvalue') ?>',
+          type: 'line',
           emphasis: {
             focus: 'series'
           },
           data: []
         },
         {
-          name: '<?= lang('Status.paid') ?>',
-          type: 'bar',
+          name: '<?= lang('App.receivable') ?>',
+          type: 'line',
           emphasis: {
             focus: 'series'
           },
@@ -151,46 +163,60 @@
   });
 
   $(document).ready(function() {
-    fetch(base_url + '/chart/monthlySales', {
-      method: 'GET'
-    }).then(response => response.json()).then((response) => {
-      $('#monthly-sales-loader').fadeOut();
+    $('#period').val('<?= date('Y-m') ?>');
 
-      erp.chart.monthlySales.setOption(response.data);
+    $('#period').change(function() {
+      $('#revenue-forecase-loader').fadeIn();
+
+      fetch(base_url + '/chart/revenueForecast?period=' + this.value, {
+        method: 'GET'
+      }).then(response => response.json()).then((response) => {
+        $('#revenue-forecase-loader').fadeOut();
+
+        erp.chart.revenueForecast.setOption(response.data);
+      });
     });
 
-    fetch(base_url + '/chart/targetRevenue', {
+    fetch(base_url + '/chart/revenueForecast', {
       method: 'GET'
     }).then(response => response.json()).then((response) => {
-      $('#target-revenue-loader').fadeOut();
+      $('#revenue-forecase-loader').fadeOut();
 
-      erp.chart.targetRevenue.setOption(response.data);
+      erp.chart.revenueForecast.setOption(response.data);
+    });
+
+    fetch(base_url + '/chart/dailyPerformance', {
+      method: 'GET'
+    }).then(response => response.json()).then((response) => {
+      $('#daily-performance-loader').fadeOut();
+
+      erp.chart.dailyPerformance.setOption(response.data);
     });
 
     let hChart = setInterval(async () => {
-      if ($('#monthly-sales-chart').length == 0) {
+      if ($('#revenue-forecast-chart').length == 0) {
         console.log('Auto update chart is disabled.');
         clearInterval(hChart);
         return false;
       }
 
-      $('#monthly-sales-loader').fadeIn();
-      $('#target-revenue-loader').fadeIn();
+      $('#revenue-forecase-loader').fadeIn();
+      $('#daily-performance-loader').fadeIn();
 
-      fetch(base_url + '/chart/monthlySales', {
+      fetch(base_url + '/chart/revenueForecast', {
         method: 'GET'
       }).then(response => response.json()).then((response) => {
-        $('#monthly-sales-loader').fadeOut();
+        $('#revenue-forecase-loader').fadeOut();
 
-        erp.chart.monthlySales.setOption(response.data);
+        erp.chart.revenueForecast.setOption(response.data);
       });
 
-      fetch(base_url + '/chart/targetRevenue', {
+      fetch(base_url + '/chart/dailyPerformance', {
         method: 'GET'
       }).then(response => response.json()).then((response) => {
-        $('#target-revenue-loader').fadeOut();
+        $('#daily-performance-loader').fadeOut();
 
-        erp.chart.targetRevenue.setOption(response.data);
+        erp.chart.dailyPerformance.setOption(response.data);
       });
     }, 1000 * 60);
   });

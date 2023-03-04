@@ -8,6 +8,7 @@ use App\Models\{
   Biller,
   Customer,
   CustomerGroup,
+  DB,
   Payment,
   PaymentValidation,
   Sale,
@@ -339,6 +340,30 @@ function getCookie($name)
 }
 
 /**
+ * Get current month period.
+ * @param array $period [ start_date, end_date ]
+ * @return array ['start_date', 'end_date']
+ */
+function getCurrentMonthPeriod($period = [])
+{
+  $period['start_date'] = ($period['start_date'] ?? date('Y-m-') . '01');
+  $period['end_date']   = ($period['end_date']   ?? date('Y-m-d'));
+
+  return $period;
+}
+
+/**
+ * Get total days in a month.
+ * @param int $year Year.
+ * @param int $month Month.
+ * @example 1 getDaysInMonth(2021, 2); // Return 28
+ */
+function getDaysInMonth($year, $month)
+{
+  return cal_days_in_month(CAL_GREGORIAN, intval($month), intval($year));
+}
+
+/**
  * Fetch an item from GET data.
  */
 function getGet($name)
@@ -418,6 +443,61 @@ function getJSON($json, bool $assoc = false)
 function getLastError()
 {
   return (session()->has('lastErrMsg') ? session('lastErrMsg') : null);
+}
+
+/**
+ * Get Warehouse stock value.
+ * @param int $warehouseId Warehouse ID.
+ * @param array $opt [ start_date, end_date ]
+ */
+function getWarehouseStockValue(int $warehouseId, array $opt = [])
+{
+  $currentDate  = new DateTime();
+  $startDate    = new DateTime($opt['start_date'] ?? date('Y-m-') . '01');
+  $endDate      = new DateTime($opt['end_date'] ?? date('Y-m-t'));
+  $warehouse    = Warehouse::getRow(['id' => $warehouseId]);
+
+  if (!$warehouse) {
+    setLastError("getWarehouseStockValue(): Cannot find warehouse [id:{$warehouseId}]");
+    return NULL;
+  }
+
+  // If end date is more than current date then 0.
+  if ($currentDate->diff($endDate)->format('%R') == '+') {
+    return 0;
+  }
+
+  if ($warehouse->code == 'LUC') { // Lucretai mode.
+    $value = DB::table('products')->selectSum('products.cost * (recv.total - sent.total)', 'total')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+        WHERE status LIKE 'received' AND warehouse_id = {$warehouse->id}
+        AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+        GROUP BY product_id) recv", 'recv.product_id = products.id', 'left')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+      WHERE status LIKE 'sent' AND warehouse_id = {$warehouse->id}
+      AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+      GROUP BY product_id) sent", 'sent.product_id = products.id', 'left')
+      ->whereIn('products.type', ['standard']) // Standard only
+      ->whereNotIn('products.category_id', [2, 14, 16, 17, 18]) // Not Assets and Sub-Assets.
+      ->getRow();
+
+    return floatval($value->total);
+  } else {
+    $value = DB::table('products')->selectSum('products.markon_price * (recv.total - sent.total)', 'total')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+        WHERE status LIKE 'received' AND warehouse_id = {$warehouse->id}
+        AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+        GROUP BY product_id) recv", 'recv.product_id = products.id', 'left')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+      WHERE status LIKE 'sent' AND warehouse_id = {$warehouse->id}
+      AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+      GROUP BY product_id) sent", 'sent.product_id = products.id', 'left')
+      ->whereIn('products.type', ['standard']) // Standard only
+      ->whereNotIn('products.category_id', [2, 14, 16, 17, 18]) // Not Assets and Sub-Assets.
+      ->getRow();
+
+    return floatval($value->total);
+  }
 }
 
 /**
@@ -569,6 +649,14 @@ function isLoggedIn()
 }
 
 /**
+ * Determine is HTTP connection is secure.
+ */
+function isSecure()
+{
+  return (!isCLI() && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on');
+}
+
+/**
  * Determine special customer (Privilege or TOP) by customer id.
  * @param int $customerId Customer ID.
  */
@@ -657,6 +745,15 @@ function phoneCode($phone)
     $phone = '62' . $phone;
   }
   return $phone;
+}
+
+/**
+ * Prepend zero for number.
+ * @param int $num Number to prepend with zero.
+ */
+function prependZero($num)
+{
+  return ($num < 10 ? '0' . $num : $num);
 }
 
 function renderAttachment(string $attachment = null)

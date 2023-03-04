@@ -65,27 +65,267 @@ class Home extends BaseController
       $this->response(400, ['message' => 'Bad request.']);
     }
 
-    $data = [];
+    $data   = [];
+    $option = [];
+
+    if ($biller = getGet('biller')) {
+      $option['biller'] = $biller;
+    }
+
+    if ($period = getGet('period')) {
+      $option['period'] = $period;
+    }
 
     switch ($mode) {
+      case 'dailyPerformance':
+        $data = $this->chartDailyPerformance($option);
+        break;
       case 'monthlySales':
-        $data = $this->getMonthlySales();
+        $data = $this->chartMonthlySales();
+        break;
+      case 'revenueForecast':
+        $data = $this->chartRevenueForecast($option);
         break;
       case 'targetRevenue':
-        $data = $this->getTargetRevenue();
+        $data = $this->chartTargetRevenue();
     }
 
     $this->response(200, ['data' => $data, 'module' => 'echarts']);
   }
 
-  protected function getMonthlySales()
+  protected function chartDailyPerformance($option = [])
+  {
+    $receivables  = [];
+    $revenues     = [];
+    $stockValues  = [];
+    $labels       = [];
+    $dailyData    = [];
+
+    $res = cache('chartDailyPerformance');
+
+    if ($res) {
+      return $res;
+    }
+
+    if (isset($option['period'])) {
+      $option['start_date'] = date('Y-m-', strtotime($option['period'])) . '01';
+      $option['end_date']   = date('Y-m-d', strtotime($option['period']));
+    }
+
+    $option = getCurrentMonthPeriod($option);
+    $beginDate = new \DateTime('2022-01-01 00:00:00');
+    $billers = Biller::get(['active' => 1]);
+    $ymPeriod = date('Y-m', strtotime($option['start_date']));
+
+    for ($a = 1; $a < date('j', strtotime($option['end_date'])); $a++) {
+      $dt = prependZero($a);
+      $dtDaily = new \DateTime("{$ymPeriod}-{$dt}");
+      $overTime = ((new \DateTime())->diff($dtDaily)->format('%R') == '+' ? true : false);
+
+      foreach ($billers as $biller) {
+        $billerJS = getJSON($biller->json);
+        $warehouse = Warehouse::getRow(['code' => $biller->code]);
+
+        if (empty($billerJS->target)) {
+          continue;
+        }
+
+        if ($biller->code == 'LUC') {
+          if (!$overTime) {
+            $dailyRevenue = round(floatval(DB::table('product_transfer')
+              ->selectSum('grand_total', 'total')
+              ->where('warehouse_id_from', $warehouse->id)
+              ->where("created_at LIKE '{$ymPeriod}-{$dt}%'")
+              ->getRow()->total) ?? 0);
+
+            $receivable = round(floatval(DB::table('product_transfer')
+              ->selectSum('(grand_total - paid)', 'total')
+              ->where('warehouse_id_from', $warehouse->id)
+              ->where("created_at BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+              ->getRow()->total) ?? 0);
+          } else {
+            $dailyRevenue = 0;
+            $receivable   = 0;
+          }
+
+          if ($warehouse) {
+            $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+              'start_date'  => $beginDate->format('Y-m-d'),
+              'end_date'    => "{$ymPeriod}-{$dt}"
+            ]);
+          } else {
+            $stockValue = 0;
+          }
+        } else {
+          if (!$overTime) {
+            $dailyRevenue = round(floatval(DB::table('sales')
+              ->selectSum('grand_total', 'total')
+              ->notLike('status', 'need_payment')
+              ->where('biller_id', $biller->id)
+              ->where("date LIKE '{$ymPeriod}-{$dt}%'")
+              ->getRow()->total) ?? 0);
+
+            $receivable = round(floatval(DB::table('sales')
+              ->selectSum('balance', 'total')
+              ->where('biller_id', $biller->id)
+              ->where("date BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+              ->getRow()->total) ?? 0);
+          } else {
+            $dailyRevenue = 0;
+            $receivable   = 0;
+          }
+
+          if ($warehouse) {
+            $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+              'start_date'  => $beginDate->format('Y-m-d'),
+              'end_date'    => "{$ymPeriod}-{$dt}"
+            ]);
+          } else {
+            $stockValue = 0;
+          }
+        }
+
+        $dailyData[] = [
+          'revenue'     => $dailyRevenue,
+          'stock_value' => $stockValue,
+          'receivable'  => $receivable
+        ];
+
+        $labels[] = lang('App.day') . ' ' . $dt;
+      }
+    }
+
+    $res = [
+      'legend' => [
+        'data' => [
+          lang('App.revenue'), lang('App.stockvalue'), lang('App.receivable')
+        ]
+      ],
+      'series' => [
+        [
+          'name' => lang('App.revenue'),
+          'data' => $revenues
+        ],
+        [
+          'name' => lang('App.stockvalue'),
+          'data' => $stockValues
+        ],
+        [
+          'name' => lang('App.receivable'),
+          'data' => $receivables
+        ]
+      ],
+      'xAxis' => [
+        'data' => $labels
+      ]
+    ];
+
+    // cache()->save('chartDailyPerformance', $res);
+
+    return $res;
+  }
+
+  protected function chartRevenueForecast($option = [])
+  {
+    $avgRevenues  = [];
+    $revenues     = [];
+    $targets      = [];
+    $forecasts    = [];
+    $labels       = [];
+
+    $res = cache('chartRevenueForecast');
+
+    if ($res) {
+      return $res;
+    }
+
+    if (isset($option['period'])) {
+      $period = new \DateTime($option['period'] . '-01');
+      unset($option['period']);
+    } else {
+      $period = new \DateTime(date('Y-m-') . '01');
+    }
+
+    $startDate  = new \DateTime($period->format('Y-m-d'));
+    $endDate    = new \DateTime($period->format('Y-m-t'));
+
+    $option       = getCurrentMonthPeriod($option);
+    $currentDate  = new \DateTime();
+    $activeDays   = $startDate->diff($currentDate)->format('%a');
+    $billers      = Biller::get(['active' => 1]);
+    $daysInMonth  = getDaysInMonth($startDate->format('Y'), $startDate->format('n'));
+
+    foreach ($billers as $biller) {
+      $billerJS = getJSON($biller->json);
+
+      if (empty($billerJS->target)) {
+        continue;
+      }
+
+      if ($biller->code == 'LUC') {
+        $revenue = (DB::table('product_transfer')->selectSum('grand_total', 'total')
+          ->where("date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'")
+          ->getRow()->total ?? 0);
+      } else {
+        $revenue = (DB::table('sales')->selectSum('grand_total', 'total')
+          ->where("date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'")
+          ->where('biller', $biller->code)
+          ->notLike('status', 'need_payment')
+          ->getRow()->total ?? 0);
+      }
+
+      $avgRevenue = ($revenue / $activeDays);
+
+      $labels[]       = $biller->name;
+      $targets[]      = floatval($billerJS->target);
+      $revenues[]     = floatval($revenue);
+      $avgRevenues[]  = round($avgRevenue);
+      $forecasts[]    = round($avgRevenue * $daysInMonth);
+    }
+
+
+    $res = [
+      'legend' => [
+        'data' => [
+          lang('App.targetrevenue'), lang('App.revenue'), lang('App.averagerevenue'), lang('App.forecast')
+        ]
+      ],
+      'series' => [
+        [
+          'name' => lang('App.targetrevenue'),
+          'data' => $targets
+        ],
+        [
+          'name' => lang('App.revenue'),
+          'data' => $revenues
+        ],
+        [
+          'name' => lang('App.averagerevenue'),
+          'data' => $avgRevenues
+        ],
+        [
+          'name' => lang('App.forecast'),
+          'data' => $forecasts
+        ],
+      ],
+      'xAxis' => [
+        'data' => $labels
+      ]
+    ];
+
+    // cache()->save('chartRevenueForecast', $res);
+
+    return $res;
+  }
+
+  protected function chartMonthlySales()
   {
     $labels       = [];
     $revenues     = [];
     $paids        = [];
     $receivables  = [];
 
-    $res = cache('monthlySales');
+    $res = cache('chartMonthlySales');
 
     if ($res) {
       return $res;
@@ -133,12 +373,12 @@ class Home extends BaseController
       ]
     ];
 
-    cache()->save('monthlySales', $res);
+    cache()->save('chartMonthlySales', $res);
 
     return $res;
   }
 
-  protected function getTargetRevenue()
+  protected function chartTargetRevenue()
   {
     $labels   = [];
     $targets  = [];
@@ -147,7 +387,7 @@ class Home extends BaseController
     $startDate  = date('Y-m-') . '01';
     $endDate    = date('Y-m-d');
 
-    $res = cache('targetRevenue');
+    $res = cache('chartTargetRevenue');
 
     if ($res) {
       return $res;
@@ -203,7 +443,7 @@ class Home extends BaseController
       ]
     ];
 
-    cache()->save('targetRevenue', $res);
+    cache()->save('chartTargetRevenue', $res);
 
     return $res;
   }

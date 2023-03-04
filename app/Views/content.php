@@ -35,6 +35,7 @@
     // ERP namespace.
     window.erp = {
       biller: '<?= session('login')->biller ?>',
+      chart: {},
       modal: [], // Stackable modal.
       sale: {
         customer: null
@@ -542,14 +543,14 @@
             <!-- Report -->
             <?php if (hasAccess(['Report.DailyPerformance', 'Report.Debt', 'Report.IncomeStatement', 'Report.InventoryBalance', 'Report.Maintenance', 'Report.Payment', 'Report.Receivable'])) : ?>
               <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon fad fa-file-chart-pie"></i>
+                <a href="#" class="nav-link" data-slug="report">
+                  <i class="nav-icon fad fa-file-chart-pie" style="color:#80ff40"></i>
                   <p><?= lang('App.report') ?> <i class="fad fa-angle-right right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="<?= base_url('report/dailyperformance') ?>" class="nav-link" data-action="link" data-slug="dailyperformance">
                       <i class="nav-icon fad fa-chart-mixed"></i>
                       <p><?= lang('App.dailyperformance') ?></p>
                     </a>

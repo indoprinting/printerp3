@@ -556,4 +556,16 @@ class DB
     self::$qb->whereIn($key, $value, $escape);
     return self::$instance;
   }
+
+  /**
+   * Generates a WHERE field NOT IN('item', 'item') SQL query,
+   * joined with 'AND' if appropriate.
+   *
+   * @param array|BaseBuilder|Closure|string $values The values searched on, or anonymous function with subquery
+   */
+  public function whereNotIn($key, $value = null, bool $escape = null)
+  {
+    self::$qb->whereNotIn($key, $value, $escape);
+    return self::$instance;
+  }
 }
