@@ -2,7 +2,21 @@
 
 declare(strict_types=1);
 
-use App\Models\{Customer, CustomerGroup, User};
+use App\Models\{
+  Activity,
+  Auth,
+  Biller,
+  Customer,
+  CustomerGroup,
+  DB,
+  Payment,
+  PaymentValidation,
+  Sale,
+  SaleItem,
+  User,
+  Warehouse
+};
+use Config\Services;
 
 /**
  * The goal of this file is to allow developers a location
@@ -25,8 +39,8 @@ use App\Models\{Customer, CustomerGroup, User};
  */
 function addActivity(string $data, array $json = [])
 {
-  $ip = \Config\Services::request()->getIPAddress();
-  $ua = \Config\Services::request()->getUserAgent();
+  $ip = Services::request()->getIPAddress();
+  $ua = Services::request()->getUserAgent();
 
   $data = [
     'data'        => $data,
@@ -38,7 +52,7 @@ function addActivity(string $data, array $json = [])
     $data['json'] = json_encode($json);
   }
 
-  return \App\Models\Activity::add($data);
+  return Activity::add($data);
 }
 
 /**
@@ -47,7 +61,7 @@ function addActivity(string $data, array $json = [])
  */
 function checkPermission(string $permission = null)
 {
-  $request = \Config\Services::request();
+  $request = Services::request();
   $ajax   = $request->isAJAX();
 
   if (isLoggedIn()) {
@@ -74,7 +88,7 @@ function checkPermission(string $permission = null)
       ];
 
       if (!isLoggedIn() && getCookie('___')) {
-        if (\App\Models\Auth::loginRememberMe(getCookie('___'))) {
+        if (Auth::loginRememberMe(getCookie('___'))) {
           header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
         }
       }
@@ -87,18 +101,24 @@ function checkPermission(string $permission = null)
 
 /**
  * Convert JS time to PHP time or vice versa.
+ * @param string $dateTime dateTime.
+ * @param int $currentDate Return current date if dateTime is empty.
  */
-function dateTimeJS(string $datetime)
+function dateTimeJS(string $dateTime, bool $currentDate = true)
 {
-  if (strlen($datetime) && strpos($datetime, 'T') !== false) {
-    return str_replace('T', ' ', $datetime);
+  if ($currentDate && empty($dateTime)) {
+    $dateTime = date('Y-m-d H:i:s');
   }
 
-  if (empty($datetime)) {
-    return date('Y-m-d H:i:s');
+  if (empty($dateTime)) {
+    return null;
   }
 
-  return str_replace(' ', 'T', $datetime);
+  if (strlen($dateTime) && strpos($dateTime, 'T') !== false) {
+    return str_replace('T', ' ', $dateTime);
+  }
+
+  return str_replace(' ', 'T', $dateTime);
 }
 
 /**
@@ -122,7 +142,7 @@ function dispatchW2PSale($saleId = null)
   $key = 'g4Jlk3cILfITrbN74kwFHD1p9R3v15lmuLU_l3N9k4psUd4hD3rltAL03';
   $res = '';
 
-  if ($sale = \App\Models\Sale::getRow(['id' => $saleId])) {
+  if ($sale = Sale::getRow(['id' => $saleId])) {
     $saleJS = getJSON($sale->json_data);
 
     if ($saleJS->source != 'W2P') {
@@ -130,13 +150,13 @@ function dispatchW2PSale($saleId = null)
       return false;
     }
 
-    $saleItems = \App\Models\SaleItem::get(['sale_id' => $sale->id]);
-    $pic = \App\Models\User::getRow(['id' => $sale->created_by]);
+    $saleItems = SaleItem::get(['sale_id' => $sale->id]);
+    $pic = User::getRow(['id' => $sale->created_by]);
 
     if ($sale && $saleItems) {
-      $customer = \App\Models\Customer::getRow(['id' => $sale->customer_id]);
-      $payments = \App\Models\Payment::get(['sale_id' => $sale->id]);
-      $payment_validation = \App\Models\PaymentValidation::getRow(['sale_id' => $sale->id]);
+      $customer = Customer::getRow(['id' => $sale->customer_id]);
+      $payments = Payment::get(['sale_id' => $sale->id]);
+      $payment_validation = PaymentValidation::getRow(['sale_id' => $sale->id]);
 
       if ($customer) {
         $sale->status = lang($sale->status);
@@ -166,7 +186,7 @@ function dispatchW2PSale($saleId = null)
           'name' => $pic->fullname
         ];
 
-        $warehouse = \App\Models\Warehouse::getRow(['id' => $sale->warehouse_id]);
+        $warehouse = Warehouse::getRow(['id' => $sale->warehouse_id]);
 
         $response['data']['sale'] = [
           'no'                      => $sale->reference,
@@ -190,7 +210,7 @@ function dispatchW2PSale($saleId = null)
 
         foreach ($saleItems as $saleItem) {
           $saleItemJS   = getJSON($saleItem->json);
-          $operator     = \App\Models\User::getRow(['id' => $saleItemJS->operator_id ?? null]);
+          $operator     = User::getRow(['id' => $saleItemJS->operator_id ?? null]);
           $operatorName = ($operator ? $operator->fullname : '');
 
           $response['data']['sale_items'][] = [
@@ -280,7 +300,8 @@ function filterNumber($num)
  */
 function formatCurrency($num)
 {
-  return 'Rp ' . number_format(filterDecimal($num), 0, ',', '.');
+  // return 'Rp ' . number_format(filterDecimal($num), 0, ',', '.');
+  return 'Rp ' . number_format(filterDecimal($num), 0);
 }
 
 /**
@@ -316,7 +337,227 @@ function getAdjustedQty(float $oldQty, float $newQty)
  */
 function getCookie($name)
 {
-  return \Config\Services::request()->getCookie($name);
+  return Services::request()->getCookie($name);
+}
+
+/**
+ * Get current month period.
+ * @param array $period [ start_date, end_date ]
+ * @return array ['start_date', 'end_date']
+ */
+function getCurrentMonthPeriod($period = [])
+{
+  $period['start_date'] = ($period['start_date'] ?? date('Y-m-') . '01');
+  $period['end_date']   = ($period['end_date']   ?? date('Y-m-d'));
+
+  return $period;
+}
+
+/**
+ * Get daily performance report. biller_id MUST BE Array (PROGRESS). period = yyyy-mm
+ * @param array $opt [ biller_id[], period ]
+ * @return array Return daily performance data.
+ */
+function getDailyPerformanceReport($opt)
+{
+  // We need biller to warehouse because ONLY warehouse has 'active' column.
+  $dailyPerformanceData = [];
+  $billers    = [];
+  $warehouses = [];
+
+  if (!empty($opt['biller_id']) && is_array($opt['biller_id'])) {
+    foreach ($opt['biller_id'] as $billerId) {
+      $billers[] = Biller::getRow(['id' => $billerId, 'active' => '1']);
+    }
+
+    if ($warehouseIds = billerToWarehouse($opt['biller_id'])) {
+      foreach ($warehouseIds as $warehouseId) {
+        $warehouses[] = Warehouse::getRow(['id' => $warehouseId, 'active' => '1']);
+      }
+    }
+  } else if (empty($opt['biller_id'])) {
+    $billers    = Biller::get(['active' => '1']);
+    $warehouses = Warehouse::get(['active' => '1']);
+  }
+
+  if ($opt['period']) {
+    $period = new DateTime($opt['period'] . '-01');
+    unset($opt['period']);
+  } else {
+    $period = new DateTime(date('Y-m-') . '01'); // Current month and date.
+  }
+
+  $currentDate  = new DateTime();
+  $beginDate    = new DateTime('2022-01-01 00:00:00'); // First data date of begin date.
+  $startDate    = new DateTime($period->format('Y-m-d')); // First date of current period.
+  $endDate      = new DateTime($period->format('Y-m-t')); // Date must be end of month. (28 to 31)
+  $activeDays   = intval($startDate->diff($currentDate)->format('%a'));
+
+  $firstDate  = 1; // First date of month.
+  $lastDate   = intval($endDate->format('j')); // Date only. COUNTABLE
+  $ymPeriod   = $period->format('Y-m'); // 2022-11
+
+  foreach ($billers as $biller) {
+    if ($biller->active != 1) continue;
+    // Hide FUCKED IDS
+    // if ($biller->code == 'BALINN') continue;
+    if ($biller->code == 'IDSUNG') continue;
+    if ($biller->code == 'IDSLOS') continue;
+    if ($biller->code == 'BALINT') continue;
+
+    $dailyData = [];
+
+    $billerJS = getJSON($biller->json);
+    $warehouse = Warehouse::getRow(['code' => $biller->code]);
+
+    if ($biller->code == 'LUC') { // Lucretia method is different.
+      $revenue = round(floatval(DB::table('product_transfer')
+        ->selectSum('grand_total', 'total')
+        ->where('warehouse_id_from', $warehouse->id)
+        ->where("created_at BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'")
+        ->getRow()->total) ?? 0);
+
+      for ($a = $firstDate; $a <= $lastDate; $a++) {
+        $dt       = prependZero($a);
+        $dtDaily  = new DateTime("{$ymPeriod}-{$dt}");
+
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+
+        if (!$overTime) {
+          $dailyRevenue = round(floatval(DB::table('product_transfer')
+            ->selectSum('grand_total', 'total')
+            ->where('warehouse_id_from', $warehouse->id)
+            ->where("created_at LIKE '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $dailyRevenue = 0;
+        }
+
+        $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+          'start_date'  => $beginDate->format('Y-m-d'),
+          'end_date'    => "{$ymPeriod}-{$dt}"
+        ]); // sql
+
+        if (!$overTime) {
+          $piutang  = round(floatval(DB::table('product_transfer')
+            ->selectSum('(grand_total - paid)', 'total')
+            ->where('warehouse_id_from', $warehouse->id)
+            ->where("created_at BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $piutang = 0;
+        }
+
+        $dailyData[] = [
+          'revenue'     => $dailyRevenue,
+          'stock_value' => $stockValue,
+          'piutang'     => $piutang
+        ];
+      }
+    } else { // All warehouses except Lucretia.
+      $sale = DB::table('sales')
+        ->selectSum('grand_total', 'total')
+        ->where('biller_id', $biller->id)
+        ->where("date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'");
+
+      // I/O MANIP: Tanggal lebih dari 2023-01-01 00:00:00, maka jangan include sale.status = need_payment.
+      if (strtotime($startDate->format('Y-m-d')) >= strtotime('2023-01-01 00:00:00') || strtotime($endDate->format('Y-m-d')) >= strtotime('2023-01-01 00:00:00')) {
+        $sale->notLike('status', 'need_payment', 'none');
+      }
+
+      $revenue = round(floatval($sale->getRow()->total) ?? 0);
+
+      for ($a = $firstDate; $a <= $lastDate; $a++) {
+        $dt = prependZero($a);
+        $dtDaily = new DateTime("{$ymPeriod}-{$dt}");
+
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+
+        if (!$overTime) {
+          $dailyRevenue = round(floatval(DB::table('sales')
+            ->selectSum('grand_total', 'total')
+            ->notLike('status', 'need_payment')
+            ->where('biller_id', $biller->id)
+            ->where("date LIKE '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $dailyRevenue = 0;
+        }
+
+        if ($warehouse) {
+          $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+            'start_date'  => $beginDate->format('Y-m-d'),
+            'end_date'    => "{$ymPeriod}-{$dt}"
+          ]); // sql
+        } else {
+          $stockValue = 0;
+        }
+
+        if (!$overTime) {
+          $piutang  = round(floatval(DB::table('sales')
+            ->selectSum('balance', 'total')
+            ->notLike('payment_status', 'paid')
+            ->where('biller_id', $biller->id)
+            ->whereIn('status', ['waiting_production', 'completed_partial', 'completed'])
+            ->where("date BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $piutang = 0;
+        }
+
+        $dailyData[] = [
+          'revenue'     => $dailyRevenue,
+          'stock_value' => $stockValue,
+          'piutang'     => $piutang
+        ];
+      }
+    }
+
+    // $activeDays     = intval($startDate->diff($currentDate)->format('%d'));
+    $daysInMonth    = getDaysInMonth($startDate->format('Y'), $startDate->format('n'));
+    $averageRevenue = ($revenue / $activeDays);
+
+    $dailyPerformanceData[] = [
+      'biller_id'   => $biller->id,
+      'biller'      => $biller->name,
+      'avg_revenue' => round($averageRevenue),
+      'forecast'    => round($averageRevenue * $daysInMonth),
+      'revenue'     => round($revenue), // total sales even not paid.
+      'target'      => ($billerJS->target ?? 0), // set on biller
+      'daily_data'  => $dailyData // [['revenue' => 100, 'stock_value' => 200, 'piutang' => 300]]
+    ];
+  }
+
+  return $dailyPerformanceData;
+}
+
+/**
+ * Get total days in a month.
+ * @param int $year Year.
+ * @param int $month Month.
+ * @example 1 getDaysInMonth(2021, 2); // Return 28
+ */
+function getDaysInMonth($year, $month)
+{
+  return cal_days_in_month(CAL_GREGORIAN, intval($month), intval($year));
+}
+
+/**
+ * Get excerpt text.
+ * @param string $text Text to excerpt.
+ * @param int $length Return text length include '...'. Default: 20
+ */
+function getExcerpt($text, int $length = 20)
+{
+  $text_len = strlen($text);
+
+  if ($length < 3 || !$length) $length = 3;
+
+  if ($text_len <= ($length - 3)) {
+    return $text;
+  }
+
+  return substr($text, 0, $length - 3) . '...';
 }
 
 /**
@@ -324,7 +565,7 @@ function getCookie($name)
  */
 function getGet($name)
 {
-  return \Config\Services::request()->getGet($name);
+  return Services::request()->getGet($name);
 }
 
 /**
@@ -332,7 +573,7 @@ function getGet($name)
  */
 function getPost($name)
 {
-  return \Config\Services::request()->getPost($name);
+  return Services::request()->getPost($name);
 }
 
 /**
@@ -375,7 +616,7 @@ function getQueueDateTime($dateTime)
  */
 function getRawInput()
 {
-  return \Config\Services::request()->getRawInput();
+  return Services::request()->getRawInput();
 }
 
 /**
@@ -399,6 +640,61 @@ function getJSON($json, bool $assoc = false)
 function getLastError()
 {
   return (session()->has('lastErrMsg') ? session('lastErrMsg') : null);
+}
+
+/**
+ * Get Warehouse stock value.
+ * @param int $warehouseId Warehouse ID.
+ * @param array $opt [ start_date, end_date ]
+ */
+function getWarehouseStockValue(int $warehouseId, array $opt = [])
+{
+  $currentDate  = new DateTime();
+  $startDate    = new DateTime($opt['start_date'] ?? date('Y-m-') . '01');
+  $endDate      = new DateTime($opt['end_date'] ?? date('Y-m-t'));
+  $warehouse    = Warehouse::getRow(['id' => $warehouseId]);
+
+  if (!$warehouse) {
+    setLastError("getWarehouseStockValue(): Cannot find warehouse [id:{$warehouseId}]");
+    return NULL;
+  }
+
+  // If end date is more than current date then 0.
+  if ($currentDate->diff($endDate)->format('%R') == '+') {
+    return 0;
+  }
+
+  if ($warehouse->code == 'LUC') { // Lucretai mode.
+    $value = DB::table('products')->selectSum('products.cost * (recv.total - sent.total)', 'total')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+        WHERE status LIKE 'received' AND warehouse_id = {$warehouse->id}
+        AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+        GROUP BY product_id) recv", 'recv.product_id = products.id', 'left')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+      WHERE status LIKE 'sent' AND warehouse_id = {$warehouse->id}
+      AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+      GROUP BY product_id) sent", 'sent.product_id = products.id', 'left')
+      ->whereIn('products.type', ['standard']) // Standard only
+      ->whereNotIn('products.category_id', [2, 14, 16, 17, 18]) // Not Assets and Sub-Assets.
+      ->getRow();
+
+    return floatval($value->total);
+  } else {
+    $value = DB::table('products')->selectSum('products.markon_price * (recv.total - sent.total)', 'total')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+        WHERE status LIKE 'received' AND warehouse_id = {$warehouse->id}
+        AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+        GROUP BY product_id) recv", 'recv.product_id = products.id', 'left')
+      ->join("(SELECT product_id, SUM(quantity) AS total FROM stocks
+      WHERE status LIKE 'sent' AND warehouse_id = {$warehouse->id}
+      AND date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'
+      GROUP BY product_id) sent", 'sent.product_id = products.id', 'left')
+      ->whereIn('products.type', ['standard']) // Standard only
+      ->whereNotIn('products.category_id', [2, 14, 16, 17, 18]) // Not Assets and Sub-Assets.
+      ->getRow();
+
+    return floatval($value->total);
+  }
 }
 
 /**
@@ -448,6 +744,7 @@ function hasAccess($permission)
       }
     }
   }
+
   return false;
 }
 
@@ -468,7 +765,7 @@ function html2Note($html)
  */
 function htmlDecode($html)
 {
-  return html_entity_decode(trim($html), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
+  return html_entity_decode(trim($html ?? ''), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
 }
 
 /**
@@ -501,7 +798,7 @@ function htmlRemove($html)
  */
 function isAJAX()
 {
-  return \Config\Services::request()->isAJAX();
+  return Services::request()->isAJAX();
 }
 
 /**
@@ -549,28 +846,40 @@ function isLoggedIn()
 }
 
 /**
+ * Determine is HTTP connection is secure.
+ */
+function isSecure()
+{
+  return (!isCLI() && isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on');
+}
+
+/**
  * Determine special customer (Privilege or TOP) by customer id.
  * @param int $customerId Customer ID.
  */
 function isSpecialCustomer($customerId)
 {
-  $customer = \App\Models\Customer::getRow(['id' => $customerId]);
+  $customer = Customer::getRow(['id' => $customerId]);
 
   if (!$customer) {
     return false;
   }
 
-  $csGroup = \App\Models\CustomerGroup::getRow(['id' => $customer->customer_group_id]);
+  $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
     return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? true : false);
   }
+
   return false;
 }
 
+/**
+ * Determine if Sale is TB by biller code and warehouse code.
+ */
 function isTBSale(string $biller, string $warehouse)
 {
-  return (strcasecmp(\App\Models\Biller::getRow(['code' => $biller])->name, \App\Models\Warehouse::getRow(['code' => $warehouse])->name) != 0);
+  return (strcasecmp(Biller::getRow(['code' => $biller])->name, Warehouse::getRow(['code' => $warehouse])->name) != 0);
 }
 
 /**
@@ -578,7 +887,7 @@ function isTBSale(string $biller, string $warehouse)
  */
 function isW2PUser($user_id)
 {
-  $user = \App\Models\User::getRow(['id' => $user_id]);
+  $user = User::getRow(['id' => $user_id]);
 
   if ($user) {
     return (strcasecmp($user->username, 'W2P') === 0 ? true : false);
@@ -591,7 +900,7 @@ function isW2PUser($user_id)
  */
 function isWeb2Print($sale_id)
 {
-  $sale = \App\Models\Sale::getRow(['id' => $sale_id]);
+  $sale = Sale::getRow(['id' => $sale_id]);
 
   if ($sale) {
     $saleJS = getJSON($sale->json);
@@ -615,6 +924,33 @@ function nulling(array $data, array $keys)
   }
 
   return $data;
+}
+
+/**
+ * Add 62 to phone number.
+ * @param string $phone Phone number.
+ */
+function phoneCode($phone)
+{
+  if (substr($phone, 0, 2) == '08') {
+    return '62' . substr($phone, 1);
+  }
+  if (substr($phone, 0, 3) == '+62') {
+    return substr($phone, 1);
+  }
+  if (substr($phone, 0, 2) != '62') {
+    $phone = '62' . $phone;
+  }
+  return $phone;
+}
+
+/**
+ * Prepend zero for number.
+ * @param int $num Number to prepend with zero.
+ */
+function prependZero($num)
+{
+  return ($num < 10 ? '0' . $num : $num);
 }
 
 function renderAttachment(string $attachment = null)
@@ -648,12 +984,12 @@ function renderStatus(string $status)
     'installed_partial', 'ordered', 'partial', 'preparing', 'received', 'received_partial', 'serving'
   ];
   $success = [
-    'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
+    'active', 'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
     'sent', 'served', 'verified'
   ];
   $warning = [
-    'called', 'cancelled', 'checked', 'draft', 'packing', 'pending', 'slow', 'trouble', 'waiting',
-    'waiting_production', 'waiting_transfer'
+    'called', 'cancelled', 'checked', 'draft', 'inactive', 'packing', 'pending', 'slow',
+    'trouble', 'waiting', 'waiting_production', 'waiting_transfer'
   ];
 
   if (array_search($st, $danger) !== false) {
@@ -707,17 +1043,80 @@ function sendJSON($data, $options = [])
 }
 
 /**
+ * Send WA Message.
+ * @param string $phone Phone number.
+ * @param string $text Message to send.
+ * @param array $opt Options [ api_key, device_id(watsapid only), engine:[ rapiwha | whacenter ] ]
+ */
+function sendWA($phone, $text, $opt = [])
+{
+  $ph = phoneCode($phone);
+  $query = [];
+  $defaultEngine = 'whacenter';
+
+  $engine = (!empty($opt['engine']) ? $opt['engine'] : $defaultEngine);
+
+  if ($engine == 'rapiwha') {
+    $url = 'https://panel.rapiwha.com/send_message.php';
+    $query['apikey'] = (!empty($opt['api_key']) ? $opt['api_key'] : '55L5E5BJQ2FPNK2LNEQQ');
+    $query['text'] = $text;
+    $query['number'] = $ph;
+  } else if ($engine == 'watsap') {
+    $url = 'https://api.watsap.id/send-message';
+    $query['api-key'] = (!empty($opt['api_key']) ? $opt['api_key'] : 'a66d60ee436b0861c28353611d089dc872629d09');
+    $query['id_device'] = (!empty($opt['device_id']) ? $opt['device_id'] : 612); // INDOPRINTING;
+    $query['pesan'] = $text;
+    $query['no_hp'] = $ph;
+    $query = json_encode($query);
+  } else if ($engine == 'whacenter') {
+    $url = 'https://app.whacenter.com/api/send';
+    $query['device_id'] = (!empty($opt['api_key']) ? $opt['api_key'] : '05fb9e0b23d2ef3f0b21eef5ba3a1f89');
+    $query['message'] = $text;
+    $query['number'] = $ph;
+  }
+
+  $curlOptions = [
+    CURLOPT_CUSTOMREQUEST   => 'POST',
+    CURLOPT_HEADER          => FALSE,
+    CURLOPT_POSTFIELDS      => $query,
+    CURLOPT_RETURNTRANSFER  => TRUE,
+    CURLOPT_TIMEOUT         => 30,
+    CURLOPT_CONNECTTIMEOUT  => 30
+  ];
+
+  $curl = curl_init($url);
+
+  curl_setopt_array($curl, $curlOptions);
+
+  $res = curl_exec($curl);
+
+  if (!$res) {
+    setLastError(curl_error($curl));
+  }
+  curl_close($curl);
+
+  return $res;
+}
+
+/**
  * Set created_by based on user id and created_at. Used for Model data.
  * @param array $data
  */
 function setCreatedBy(array $data)
 {
-  $data['created_at'] = ($data['created_at'] ?? date('Y-m-d H:i:s'));
+  $createdAt = new DateTime($data['created_at'] ?? date('Y-m-d H:i:s'));
 
   if (empty($data['created_by']) && isLoggedIn()) {
     $data['created_by'] = session('login')->user_id;
   } else if (empty($data['created_by'])) {
     $data['created_by'] = 119; // System.
+  }
+
+  $data['created_at'] = $createdAt->format('Y-m-d H:i:s');
+
+  // Zero date protection.
+  if (isset($data['date']) && empty($data['date'])) {
+    $data['date'] = $data['created_at'];
   }
 
   return $data;
@@ -730,7 +1129,7 @@ function setExpired(array $data)
 {
   if (empty($data['expired_at'])) {
     $data['expired_at']   = date('Y-m-d H:i:s', strtotime('+1 day', time()));
-    $data['expired_date'] = date('Y-m-d H:i:s', strtotime('+1 day', time())); // Compatibility
+    $data['expired_date'] = $data['expired_at']; // Compatibility
   }
 
   return $data;

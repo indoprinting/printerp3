@@ -21,12 +21,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style=" width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
+                  <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style=" width:100%">
                   </select>
                 </div>
               </div>
@@ -71,11 +66,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bankfrom"><?= lang('App.from') ?> *</label>
-                  <select id="bankfrom" name="bankfrom" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <select id="bankfrom" name="bankfrom" class="select-bank-from" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -90,11 +81,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bankto"><?= lang('App.to') ?> *</label>
-                  <select id="bankto" name="bankto" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <select id="bankto" name="bankto" class="select-bank-to" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -122,8 +109,8 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {
@@ -143,6 +130,8 @@
     });
 
     $('#bankfrom').change(function() {
+      if (!this.value) return false;
+
       let bankTo = $('#bankto').val();
 
       if (bankTo) {
@@ -163,6 +152,8 @@
     });
 
     $('#bankto').change(function() {
+      if (!this.value) return false;
+
       let bankFrom = $('#bankfrom').val();
 
       if (bankFrom) {
@@ -181,6 +172,10 @@
         url: base_url + '/finance/bank/balance/' + this.value
       })
     });
+
+    if (erp.biller.id) {
+      preSelect2('biller', '#biller', erp.biller.id);
+    }
 
     initModalForm({
       form: '#form',

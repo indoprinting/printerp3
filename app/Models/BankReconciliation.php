@@ -13,8 +13,8 @@ class BankReconciliation
   {
     DB::table('bank_reconciliations')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -29,8 +29,8 @@ class BankReconciliation
   {
     DB::table('bank_reconciliations')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -54,7 +54,7 @@ class BankReconciliation
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -101,7 +101,7 @@ class BankReconciliation
     $banks = Bank::get(['active' => 1]);
 
     foreach ($bankGroup as $row) { // Grouped by bank number.
-      $mutasi_bank = NULL;
+      $mutasi_bank = null;
       $totalBalance = 0;
 
       foreach ($banks as $bank) { // Collect balance.
@@ -162,8 +162,8 @@ class BankReconciliation
   {
     DB::table('bank_reconciliations')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

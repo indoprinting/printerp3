@@ -25,6 +25,10 @@ table.dataTable tbody tr {
   z-index: 1;
 }
 
+.dark-mode .page-loader-wrapper {
+  background-color: #343a40;
+}
+
 .dark-mode option {
   background: #343a40;
 }

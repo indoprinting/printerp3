@@ -4,19 +4,107 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\PaymentValidation;
+use App\Models\{DB, Test1, Test2};
 
 class Debug extends BaseController
 {
-  public function debug()
+  public function datetime2()
   {
-    $a = 0;
+    $dt = new \DateTime(''); // Return current date.
+    echo $dt->format('Y-m-d H:i:s');
 
-    if ($b = $a) {
-      echo 'b:' . $b . '<br>';
+    // $dt = new \DateTime('xvsdklf'); // Throw an exception.
+    // echo $dt->format('Y-m-d H:i:s');
+  }
+
+  public function fix_duplicate_sales()
+  {
+    $duplicates = DB::table('sales')
+      ->select('id, reference, count(reference) duplicate')
+      ->groupBy('reference')
+      ->having('duplicate > 1')
+      ->get();
+
+    $lastReference = '';
+    $counter = 1;
+    $msg = '';
+
+    foreach ($duplicates as $duplicate) {
+      $sales = DB::table('sales')->where('reference', $duplicate->reference)->get();
+
+      foreach ($sales as $sale) {
+        if (strcmp($lastReference, $sale->reference) != 0) {
+          $lastReference = $sale->reference;
+          $msg .= "Real {$sale->id}: {$lastReference}<br>";
+          $counter = 1;
+        } else {
+          $msg .= "Update {$sale->id}: {$lastReference} to {$lastReference}_{$counter}<br>";
+          // DB::table('sales')->update(['reference' => $lastReference . "_{$counter}"], ['id' => $sale->id]);
+          $counter++;
+        }
+      }
     }
 
-    echo 'a:' . $a;
+    echo $msg;
+  }
+
+  public function fix_suppliers()
+  {
+    $suppliers = DB::table('suppliers')->get();
+    $msg = '';
+
+    foreach ($suppliers as $supplier) {
+      if (strpos($supplier->phone, ' ') !== false) {
+        $phone = explode(' ', $supplier->phone)[0];
+
+        $msg .= "Supplier {$supplier->id}: {$supplier->phone} => {$phone}<br>";
+
+        try {
+          DB::table('suppliers')->update(['phone' => $phone], ['id' => $supplier->id]);
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+          echo $e->getMessage();
+        }
+      }
+
+      if (substr($supplier->name, 0, 1) == ' ') {
+        $supplierName = trim($supplier->name);
+
+        $msg .= "Supplier {$supplier->id}: {$supplier->name} => {$supplierName}<br>";
+
+        try {
+          DB::table('suppliers')->update(['name' => $supplierName], ['id' => $supplier->id]);
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+          echo $e->getMessage();
+        }
+      }
+    }
+
+    echo $msg;
+  }
+
+  public function dbtrans()
+  {
+    DB::transStart();
+
+    $insertId = Test1::add(['name' => 'RIYAN']);
+
+    if (!$insertId) {
+      $this->response(400, ['message' => 'error 1: ' . getLastError()]);
+    }
+
+    $insertId2 = Test2::add(['test1_id' => $insertId, 'name' => 'WIDIYANTO']);
+
+    if (!$insertId2) {
+      $this->response(400, ['message' => 'error 2: ' . getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      echo "Success";
+    } else {
+      echo "FAILED: {$insertId}:{$insertId2} => " . DB::error()['message'];
+    }
   }
 
   public function invoice()

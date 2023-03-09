@@ -11,91 +11,68 @@ class Payment
    */
   public static function add(array $data)
   {
-    if (isset($data['expense'])) {
-      $inv = Expense::getRow(['reference' => $data['expense']]);
-      $data['expense_id']     = $inv->id;
-      $data['reference']      = $inv->reference;
-      $data['reference_date'] = $inv->date;
+    $inv = null;
+
+    if (isset($data['expense_id'])) {
+      $inv = Expense::getRow(['id' => $data['expense_id']]);
     }
 
-    if (isset($data['income'])) {
-      $inv = Income::getRow(['reference' => $data['income']]);
-      $data['income_id']  = $inv->id;
-      $data['reference']  = $inv->reference;
-      $data['reference_date'] = $inv->date;
+    if (isset($data['income_id'])) {
+      $inv = Income::getRow(['id' => $data['income_id']]);
     }
 
-    if (isset($data['mutation'])) {
-      $inv = BankMutation::getRow(['reference' => $data['mutation']]);
-      $data['mutation_id']  = $inv->id;
-      $data['reference']    = $inv->reference;
-      $data['reference_date'] = $inv->date;
+    if (isset($data['mutation_id'])) {
+      $inv = BankMutation::getRow(['id' => $data['mutation_id']]);
     }
 
-    if (isset($data['purchase'])) {
-      $inv = ProductPurchase::getRow(['reference' => $data['purchase']]);
-      $data['purchase_id']    = $inv->id;
-      $data['reference']      = $inv->reference;
-      $data['reference_date'] = $inv->date;
+    if (isset($data['purchase_id'])) {
+      $inv = ProductPurchase::getRow(['id' => $data['purchase_id']]);
     }
 
-    if (isset($data['sale'])) {
-      $inv = Sale::getRow(['reference' => $data['sale']]);
-      $data['sale_id']        = $inv->id;
-      $data['reference']      = $inv->reference;
-      $data['reference_date'] = $inv->date;
+    if (isset($data['sale_id'])) {
+      $inv = Sale::getRow(['id' => $data['sale_id']]);
     }
 
-    if (isset($data['transfer'])) {
-      $inv = ProductTransfer::getRow(['reference' => $data['transfer']]);
-      $data['transfer_id']    = $inv->id;
-      $data['reference']      = $inv->reference;
-      $data['reference_date'] = $inv->date;
+    if (isset($data['transfer_id'])) {
+      $inv = ProductTransfer::getRow(['id' => $data['transfer_id']]);
     }
 
-    if (isset($data['bank'])) {
-      $bank = Bank::getRow(['code' => $data['bank']]);
-      $data['bank_id']  = $bank->id;
-    } else {
+    if (!$inv) {
+      setLastError('At least one invoice must be selected.');
+      return false;
+    }
+
+    $data['reference']  = $inv->reference;
+
+    if (!isset($data['bank_id'])) {
       setLastError('Bank is not set.');
-      return FALSE;
+      return false;
     }
 
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id']  = $biller->id;
-    } else {
+    if (!isset($data['biller_id'])) {
       setLastError('Biller is not set.');
-      return FALSE;
+      return false;
     }
 
     if (empty($data['amount'])) {
       setLastError('Amount is empty or zero');
-      return FALSE;
+      return false;
     }
 
     if (empty($data['type'])) {
       setLastError('Type is empty and must be received or sent.');
-      return FALSE;
+      return false;
     }
 
     $data = setCreatedBy($data);
 
     DB::table('payments')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      if ($data['type'] == 'received') {
-        Bank::amountIncrease((int)$bank->id, floatval($data['amount']));
-      } else if ($data['type'] == 'sent') {
-        Bank::amountDecrease((int)$bank->id, floatval($data['amount']));
-      } else {
-        setLastError('Type is unknown.');
-      }
-
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
-    return FALSE;
+    return false;
   }
 
   /**
@@ -103,10 +80,12 @@ class Payment
    */
   public static function delete(array $where)
   {
+    $payments = self::get($where);
+
     DB::table('payments')->delete($where);
-    
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -131,13 +110,13 @@ class Payment
       return $rows[0];
     }
 
-    return NULL;
+    return null;
   }
 
   /**
    * Select Payment.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('payments')->select($columns, $escape);
   }
@@ -147,70 +126,54 @@ class Payment
    */
   public static function update(int $id, array $data)
   {
-    if (isset($data['expense'])) {
-      $inv = Expense::getRow(['reference' => $data['expense']]);
-      $data['expense_id'] = $inv->id;
+    $inv = null;
+
+    if (isset($data['expense_id'])) {
+      $inv = Expense::getRow(['id' => $data['expense_id']]);
+    }
+
+    if (isset($data['income_id'])) {
+      $inv = Income::getRow(['id' => $data['income_id']]);
+    }
+
+    if (isset($data['mutation_id'])) {
+      $inv = BankMutation::getRow(['id' => $data['mutation_id']]);
+    }
+
+    if (isset($data['purchase_id'])) {
+      $inv = ProductPurchase::getRow(['id' => $data['purchase_id']]);
+    }
+
+    if (isset($data['sale_id'])) {
+      $inv = Sale::getRow(['id' => $data['sale_id']]);
+    }
+
+    if (isset($data['transfer_id'])) {
+      $inv = ProductTransfer::getRow(['id' => $data['transfer_id']]);
+    }
+
+    if ($inv) {
       $data['reference']  = $inv->reference;
-    }
-
-    if (isset($data['income'])) {
-      $inv = Income::getRow(['reference' => $data['income']]);
-      $data['income_id']  = $inv->id;
-      $data['reference']  = $inv->reference;
-    }
-
-    if (isset($data['mutation'])) {
-      $inv = BankMutation::getRow(['reference' => $data['mutation']]);
-      $data['mutation_id']  = $inv->id;
-      $data['reference']    = $inv->reference;
-    }
-
-    if (isset($data['purchase'])) {
-      $inv = ProductPurchase::getRow(['reference' => $data['purchase']]);
-      $data['purchase_id']  = $inv->id;
-      $data['reference']    = $inv->reference;
-    }
-
-    if (isset($data['sale'])) {
-      $inv = Sale::getRow(['reference' => $data['sale']]);
-      $data['sale_id']    = $inv->id;
-      $data['reference']  = $inv->reference;
-    }
-
-    if (isset($data['transfer'])) {
-      $inv = ProductTransfer::getRow(['reference' => $data['transfer']]);
-      $data['transfer_id']  = $inv->id;
-      $data['reference']    = $inv->reference;
-    }
-
-    if (isset($data['bank'])) {
-      $bank = Bank::getRow(['code' => $data['bank']]);
-      $data['bank_id']  = $bank->id;
-    }
-
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id']  = $biller->id;
     }
 
     if (isset($data['amount']) && empty($data['amount'])) {
       setLastError('Amount is empty or zero');
-      return FALSE;
+      return false;
     }
 
     if (isset($data['type'])) {
       if (!in_array($data['type'], ['received', 'sent'])) {
         setLastError('Type must be received or sent.');
       }
-      return FALSE;
+      return false;
     }
 
     $data = setUpdatedBy($data);
 
     DB::table('payments')->update($data, ['id' => $id]);
-    
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

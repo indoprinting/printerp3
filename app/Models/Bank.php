@@ -11,15 +11,10 @@ class Bank
    */
   public static function add(array $data)
   {
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
     DB::table('banks')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -62,7 +57,7 @@ class Bank
       return $res->balance;
     }
 
-    return FALSE;
+    return false;
   }
 
   /**
@@ -72,8 +67,8 @@ class Bank
   {
     DB::table('banks')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -97,13 +92,13 @@ class Bank
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
    * Select Bank.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('banks')->select($columns, $escape);
   }
@@ -111,7 +106,7 @@ class Bank
   /**
    * Sync bank balance.
    */
-  public static function sync(int $bankId = NULL)
+  public static function sync(int $bankId = null)
   {
     $banks = [];
 
@@ -123,13 +118,12 @@ class Bank
 
     if ($banks) {
       foreach ($banks as $bank) {
-        $bank->balance = self::balance((int)$bank->id);
-        self::update((int)$bank->id, ['amount' => $bank->balance]);
+        self::update((int)$bank->id, ['amount' => self::balance((int)$bank->id)]);
       }
 
-      return TRUE;
+      return true;
     }
-    return FALSE;
+    return false;
   }
 
   /**
@@ -137,15 +131,10 @@ class Bank
    */
   public static function update(int $id, array $data)
   {
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
     DB::table('banks')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

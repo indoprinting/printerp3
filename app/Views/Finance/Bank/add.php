@@ -43,21 +43,14 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="type"><?= lang('App.type') ?></label>
-                  <select class="select-tags" name="type" style="width:100%">
-                    <?php foreach (\App\Models\DB::table('banks')->select('type')->distinct()->get() as $bank) : ?>
-                      <option value="<?= $bank->type ?>"><?= $bank->type ?></option>
-                    <?php endforeach; ?>
+                  <select name="type" class="select-bank-type" data-placeholder="<?= lang('App.type') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="email"><?= lang('App.biller') ?> *</label>
-                  <select class="select" name="biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
+                  <label for="biller"><?= lang('App.biller') ?> *</label>
+                  <select name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -83,8 +76,8 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {

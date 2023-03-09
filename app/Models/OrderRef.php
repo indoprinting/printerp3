@@ -70,7 +70,12 @@ class OrderRef
         'sale'        => 1,
         'transfer'    => 1
       ], ['ref_id' => $order->ref_id]);
-      return true;
+
+      if (DB::error()['code'] == 0) {
+        return DB::affectedRows();
+      }
+
+      setLastError(DB::error()['message']);
     }
 
     return false;
@@ -87,8 +92,8 @@ class OrderRef
     if (property_exists($order, $name) && isset(self::$prefix[$name])) {
       DB::table('order_ref')->update([$name => [$order->{$name} + 1]], ['ref_id' => $order->ref_id]);
 
-      if ($affectedRows = DB::affectedRows()) {
-        return $affectedRows;
+      if (DB::error()['code'] == 0) {
+        return DB::affectedRows();
       }
 
       setLastError(DB::error()['message']);

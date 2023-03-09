@@ -49,9 +49,14 @@
   }
 
   App.prototype._setTitle = function (title) {
-    let className = this._icon[0].className.replace('nav-icon', '');
+    if (this._icon.length) {
+      let className = this._icon[0].className.replace('nav-icon', '');
+      this._title.html(`<i class="${className} mr-2"></i>${title}`);
+    } else {
+      this._title.html(`${title}`);
+    }
+
     document.title = title;
-    this._title.html(`<i class="${className} mr-2"></i>${title}`);
     return this;
   }
 
@@ -71,7 +76,7 @@
         if (isObject(xhr.responseJSON)) {
           toastr.error(xhr.responseJSON.message, xhr.responseJSON.title);
 
-          if (xhr.status) {
+          if (xhr.status == 401) {
             location.reload();
           }
         } else {
@@ -88,9 +93,6 @@
             if (setURL) this._setURL(data.url);
 
             initControls();
-          } else {
-            toastr.error(data.message, data.title);
-            if (data.code == 401) location.reload();
           }
         } else {
           toastr.error(data, lang.Msg.cannotLoadPage);
@@ -194,6 +196,13 @@ $(document).ready(function () {
     e.preventDefault();
 
     let url = this.href;
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
 
     Swal.fire({
       icon: 'warning',
@@ -202,6 +211,10 @@ $(document).ready(function () {
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
+        this.dataset.progress = 'true';
+
+        $(fa).removeClass(faClass).addClass(faClassProgress);
+
         $.ajax({
           data: {
             __: __
@@ -212,6 +225,8 @@ $(document).ready(function () {
               text: xhr.responseJSON.message,
               title: lang.App.failed
             });
+
+            $(fa).removeClass(faClassProgress).addClass(faClass);
           },
           method: 'POST',
           success: (data) => {
@@ -221,8 +236,10 @@ $(document).ready(function () {
               title: lang.App.success
             });
 
-            if (typeof Table !== 'undefined') Table.draw(false);
-            if (typeof ModalTable !== 'undefined') ModalTable.draw(false);
+            $(fa).removeClass(faClassProgress).addClass(faClass);
+
+            if (typeof erp.table !== 'undefined') erp.table.draw(false);
+            if (typeof erp.modalTable !== 'undefined') erp.modalTable.draw(false);
           },
           url: url
         });
@@ -296,7 +313,7 @@ $(document).ready(function () {
         $(fa).removeClass(faClassProgress).addClass(faClass);
         delete this.dataset.progress;
 
-        if (typeof Table !== 'undefined') Table.draw(false);
+        if (typeof erp.table !== 'undefined') erp.table.draw(false);
       },
       url: url
     })
@@ -343,7 +360,7 @@ $(document).ready(function () {
         $(fa).removeClass(faClassProgress).addClass(faClass);
         delete this.dataset.progress;
 
-        if (typeof Table !== 'undefined') Table.draw(false);
+        if (typeof erp.table !== 'undefined') erp.table.draw(false);
       },
       url: url
     })
@@ -366,6 +383,10 @@ $(document).ready(function () {
       },
       url: base_url + '/auth/logout'
     });
+  });
+
+  $(document).on('click', '[data-action="notification"]', function () {
+
   });
 
   $(document).on('click', '.change-locale', function (e) {
@@ -420,7 +441,7 @@ $(document).ready(function () {
 
     if ($('.modal:visible').length) $('body').addClass('modal-open');
 
-    window.modal.pop();
+    erp.modal.pop();
   });
 
   $(document).on('show.bs.modal', '.modal', function () {
@@ -436,9 +457,9 @@ $(document).ready(function () {
 
   $(document).on('shown.bs.modal', '.modal', function () {
     let remote = (this.dataset.remote ?? null);
-    if (typeof window.modal == 'undefined') window.modal = []; // Stackable Modal
+    if (typeof erp.modal == 'undefined') erp.modal = []; // Stackable Modal
 
-    window.modal.push(this);
+    erp.modal.push(this);
 
     $.ajax({
       error: (xhr) => {

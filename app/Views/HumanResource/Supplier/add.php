@@ -14,13 +14,13 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="name"><?= lang('App.name') ?></label>
+                  <label for="name"><?= lang('App.name') ?> *</label>
                   <input id="name" name="name" class="form-control form-control-border form-control-sm" placeholder="Ex. Riyan Widiyanto">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="company"><?= lang('App.company') ?></label>
+                  <label for="company"><?= lang('App.company') ?> *</label>
                   <input id="company" name="company" class="form-control form-control-border form-control-sm" placeholder="Ex. PT. Ridintek Industri">
                 </div>
               </div>
@@ -28,7 +28,7 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="phone"><?= lang('App.phone') ?></label>
+                  <label for="phone"><?= lang('App.phone') ?> *</label>
                   <input id="phone" name="phone" class="form-control form-control-border form-control-sm" placeholder="Ex. 0823116620xx">
                 </div>
               </div>
@@ -151,8 +151,8 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {

@@ -101,11 +101,30 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-gradient-warning"><?= lang('App.misc') ?></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="billers"><?= lang('App.billeraccess') ?></label>
+              <select id="billers" name="billers[]" class="select-biller" style="width:100%" multiple>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="warehouses"><?= lang('App.warehouseaccess') ?></label>
+              <select id="warehouses" name="warehouses[]" class="select-warehouse" style="width:100%" multiple>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {
@@ -138,6 +157,8 @@
     $('#gender').val('<?= $user->gender ?>').trigger('change');
     $('#groups').val('<?= $user->groups ?>'.split(',')).trigger('change');
     $('#warehouse').val('<?= $user->warehouse ?>').trigger('change');
+    preSelect2('biller', '#billers', <?= isset($userJS->billers) ? json_encode($userJS?->billers) : '[]' ?>);
+    preSelect2('warehouse', '#warehouses', <?= isset($userJS->warehouses) ? json_encode($userJS?->warehouses) : '[]' ?>);
 
     initModalForm({
       form: '#form',

@@ -23,16 +23,16 @@
         </tr>
         <tr>
           <td><?= lang('App.bankaccount') ?></td>
-          <?php $bank = \App\Models\Bank::getRow(['code' => $expense->bank]) ?>
+          <?php $bank = \App\Models\Bank::getRow(['id' => $expense->bank_id]) ?>
           <td><?= ($bank->number ? $bank->name . " ({$bank->number})" : $bank->name) ?></td>
         </tr>
         <tr>
           <td><?= lang('App.biller') ?></td>
-          <td><?= \App\Models\Biller::getRow(['code' => $expense->biller])->name ?></td>
+          <td><?= \App\Models\Biller::getRow(['id' => $expense->biller_id])->name ?></td>
         </tr>
         <tr>
           <td><?= lang('App.category') ?></td>
-          <td><?= \App\Models\ExpenseCategory::getRow(['code' => $expense->category])->name ?></td>
+          <td><?= \App\Models\ExpenseCategory::getRow(['id' => $expense->category_id])->name ?></td>
         </tr>
         <tr>
           <td><?= lang('App.amount') ?></td>
@@ -95,17 +95,23 @@
             <td><?= \App\Models\User::getRow(['id' => $expense->created_by])->fullname ?></td>
           </tr>
         <?php endif; ?>
+        <?php if ($expense->attachment) : ?>
+          <tr>
+            <td><?= lang('App.attachment') ?></td>
+            <td><img src="<?= base_url('attachment/' . $expense->attachment) ?>" style="max-width:300px; width:100%"></td>
+          </tr>
+        <?php endif; ?>
       </tbody>
     </table>
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
   <?php if (hasAccess('Expense.Approve') && $expense->status == 'need_approval') : ?>
-    <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.approve') ?></button>
+    <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-check"></i> <?= lang('App.approve') ?></button>
   <?php endif; ?>
   <?php if (hasAccess('Expense.Disapprove') && $expense->status == 'approved') : ?>
-    <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.disapprove') ?></button>
+    <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-times"></i> <?= lang('App.disapprove') ?></button>
   <?php endif; ?>
 </div>
 <script>

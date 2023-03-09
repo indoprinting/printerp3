@@ -22,7 +22,6 @@
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
                   <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%" placeholder="<?= lang('App.biller') ?>">
-                    <option value=""></option>
                   </select>
                 </div>
               </div>
@@ -30,7 +29,6 @@
                 <div class="form-group">
                   <label for="warehouse"><?= lang('App.warehouse') ?> *</label>
                   <select id="warehouse" name="warehouse" class="select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" placeholder="<?= lang('App.warehouse') ?>">
-                    <option value=""></option>
                   </select>
                 </div>
               </div>
@@ -65,39 +63,43 @@
                   <input type="datetime-local" id="duedate" name="duedate" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="attachment"><?= lang('App.attachment') ?></label>
-                  <div class="custom-file">
-                    <input type="file" id="attachment" name="attachment" class="custom-file-input">
-                    <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
-                  </div>
-                </div>
-              </div>
-              <?php if (hasAccess(['Sale.Approve', 'Sale.RawMaterial'])) : ?>
-                <div class="col-md-4">
-                  <?php if (hasAccess('Sale.RawMaterial')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="rawmaterial" name="rawmaterial">
-                      <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
-                    </div>
-                  <?php endif; ?>
-                  <?php if (hasAccess('Sale.Approve')) : ?>
-                    <div class="form-group">
-                      <input type="checkbox" id="approve" name="approve" value="1">
-                      <label for="approve"><?= lang('App.approve') ?></label>
-                    </div>
-                  <?php endif; ?>
-                </div>
-              <?php endif; ?>
             </div>
             <div class="row">
-              <div class="col-md-12">
-                <div class="form-group">
-                  <label for="editor"><?= lang('App.note') ?></label>
-                  <div id="editor"></div>
-                  <input type="hidden" name="note">
-                </div>
+              <div class="col-md-4">
+                <?php if (hasAccess('Sale.Discount')) : ?>
+                  <div class="form-group">
+                    <label for="discount"><?= lang('App.discount') ?></label>
+                    <input type="number" id="discount" name="discount" class="form-control form-control-border form-control-sm" min="0" value="0">
+                  </div>
+                <?php endif; ?>
+              </div>
+              <div class="col-md-4">
+                <?php if (hasAccess('Sale.RawMaterial')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="rawmaterial" name="rawmaterial">
+                    <label for="rawmaterial"><?= lang('App.rawmaterial') ?></label>
+                  </div>
+                <?php endif; ?>
+                <?php if (hasAccess('Sale.Approve')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="approved" name="approved" value="1">
+                    <label for="approved"><?= lang('Status.approved') ?></label>
+                  </div>
+                <?php endif; ?>
+              </div>
+              <div class="col-md-4">
+                <?php if (hasAccess('Sale.Payment')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="transfer" name="transfer" value="1">
+                    <label for="transfer"><?= lang('App.transfer') ?></label>
+                  </div>
+                <?php endif; ?>
+                <?php if (hasAccess('Sale.Draft')) : ?>
+                  <div class="form-group">
+                    <input type="checkbox" id="draft" name="draft" value="1">
+                    <label for="draft"><?= lang('App.draft') ?></label>
+                  </div>
+                <?php endif; ?>
               </div>
             </div>
           </div>
@@ -112,7 +114,7 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="form-group">
-                  <select id="product" class="select-product-sale" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
+                  <select id="product" class="select-product" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -143,13 +145,50 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header bg-gradient-success"><?= lang('App.misc') ?></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="attachment"><?= lang('App.attachment') ?></label>
+                  <div class="custom-file">
+                    <input type="file" id="attachment" name="attachment" class="custom-file-input">
+                    <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 text-center">
+                <div class="form-group">
+                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300px">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="editor"><?= lang('App.note') ?></label>
+                  <div id="editor"></div>
+                  <input type="hidden" name="note">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
-  <a href="<?= base_url('sale/preview') ?>" class="btn btn-info" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable"><?= lang('App.preview') ?></a>
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="draft" class="btn bg-gradient-warning"><?= lang('App.draft') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <a href="<?= base_url('sale/preview') ?>" class="btn bg-gradient-info" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <i class="fad fa-fw fa-magnifying-glass"></i> <?= lang('App.preview') ?>
+  </a>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {
@@ -162,25 +201,53 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.select2.product.type = ['combo', 'service'];
+    erp.select2.user.biller = ['<?= session('login')->biller ?>'];
+    erp.select2.operator.warehouse = ['<?= session('login')->warehouse ?>'];
+
     let editor = new Quill('#editor', {
       theme: 'snow'
-    });
-
-    window.saleUseRawMaterial = false;
-
-    $('#rawmaterial').on('change', function() {
-      if (this.checked) {
-        saleUseRawMaterial = true;
-      } else {
-        saleUseRawMaterial = false;
-      }
     });
 
     editor.on('text-change', (delta, oldDelta, source) => {
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
-    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
+    $('#attachment').change(function() {
+      let src = '';
+
+      if (this.files.length) {
+        src = URL.createObjectURL(this.files[0]);
+      } else {
+        src = base_url + '/assets/app/images/picture.png';
+      }
+
+      $('.attachment-preview').prop('src', src);
+    });
+
+    $('#biller').change(function() {
+      erp.select2.user.biller = [this.value];
+    });
+
+    $('#warehouse').change(function() {
+      erp.select2.operator.warehouse = [this.value];
+    });
+
+    $('#draft').on('change', function() {
+      if (this.checked) {
+        $('#approved, #transfer').iCheck('uncheck').prop('disabled', true);
+      } else {
+        $('#approved, #transfer').prop('disabled', false);
+      }
+    });
+
+    $('#rawmaterial').on('change', function() {
+      if (this.checked) {
+        erp.select2.product.type.push('standard');
+      } else {
+        erp.select2.product.type.pop();
+      }
+    });
 
     $('#product').change(function() {
       if (!this.value) return false;
@@ -211,19 +278,17 @@
           warehouse: warehouse
         },
         success: (data) => {
-          let sa = new Sale('#table-sale');
-
-          sa.addItem({
+          Sale.table('#table-sale').addItem({
             code: data.data.code,
             name: data.data.name,
             category: data.data.category,
-            width: 1,
             length: 1,
+            prices: data.data.prices,
             quantity: 1,
+            ranges: data.data.ranges,
             spec: '',
             type: data.data.type,
-            prices: data.data.prices,
-            ranges: data.data.ranges
+            width: 1
           }, true);
 
           initControls();
@@ -233,6 +298,24 @@
         url: base_url + '/api/v1/product'
       });
     });
+
+    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
+
+    try {
+      if (erp.biller) {
+        preSelect2('biller', '#biller', erp.biller);
+      }
+
+      if (erp.warehouse) {
+        preSelect2('warehouse', '#warehouse', erp.warehouse);
+      }
+
+      if (erp.sale.customer) {
+        preSelect2('customer', '#customer', erp.sale.customer);
+      }
+    } catch (e) {
+      console.warn(e);
+    }
 
     initModalForm({
       form: '#form',

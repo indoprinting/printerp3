@@ -65,7 +65,7 @@
           <div class="table-responsive">
             <table class="table table-hover table-sm table-striped">
               <thead>
-                <tr>
+                <tr class="text-center">
                   <th>ID</th>
                   <th>Name</th>
                   <th>Quantity</th>
@@ -77,7 +77,7 @@
                 <?php $items = \App\Models\Stock::get(['adjustment_id' => $adjustment->id]) ?>
                 <?php foreach ($items as $item) : ?>
                   <tr>
-                    <td><?= $item->id ?></td>
+                    <td><span class="float-right"><?= $item->id ?></span></td>
                     <td><?= "($item->product_code) " . $item->product_name ?></td>
                     <td><span class="float-right"><?= formatNumber($item->quantity) ?></span></td>
                     <td><span class="float-right"><?= formatNumber($item->adjustment_qty) ?></span></td>
@@ -93,7 +93,7 @@
   </div>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.close') ?></button>
 </div>
 <script>
   (function() {

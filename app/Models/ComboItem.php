@@ -13,9 +13,11 @@ class ComboItem
   {
     DB::table('combo_items')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
+
+    setLastError(DB::error()['message']);
 
     return false;
   }
@@ -27,8 +29,8 @@ class ComboItem
   {
     DB::table('combo_items')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -52,7 +54,7 @@ class ComboItem
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -70,8 +72,8 @@ class ComboItem
   {
     DB::table('combo_items')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

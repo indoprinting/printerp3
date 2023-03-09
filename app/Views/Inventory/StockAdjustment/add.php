@@ -71,7 +71,7 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="form-group">
-                  <select id="product" class="select-product-standard" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
+                  <select id="product" class="select-product" data-placeholder="<?= lang('App.product') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -96,8 +96,8 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {
@@ -110,6 +110,9 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.product = {};
+    erp.product.type = ['service', 'standard'];
+
     let editor = new Quill('#editor', {
       theme: 'snow'
     });
@@ -137,9 +140,7 @@
           warehouse: warehouse
         },
         success: (data) => {
-          let sa = new StockAdjustment('#table-stockadjustment');
-
-          sa.addItem({
+          StockAdjustment.table('#table-stockadjustment').addItem({
             code: data.data.code,
             name: data.data.name,
             quantity: 0,

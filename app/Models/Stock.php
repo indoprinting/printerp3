@@ -121,14 +121,19 @@ class Stock
 
     DB::table('stocks')->insert($data);
 
-    if ($insertId = DB::insertID()) {
-      if ($data['status'] == 'received')
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
+
+      if ($data['status'] == 'received') {
         WarehouseProduct::increaseQuantity((int)$product->id, (int)$warehouse->id, (float)$data['quantity']);
-      if ($data['status'] == 'sent')
+      } else if ($data['status'] == 'sent') {
         WarehouseProduct::decreaseQuantity((int)$product->id, (int)$warehouse->id, (float)$data['quantity']);
+      }
 
       return $insertId;
     }
+
+    setLastError(DB::error()['message']);
 
     return false;
   }
@@ -149,8 +154,8 @@ class Stock
   {
     DB::table('stocks')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -316,8 +321,8 @@ class Stock
 
     DB::table('stocks')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

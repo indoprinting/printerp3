@@ -4,7 +4,7 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('finance/reconciliation/sync') ?>" data-action="http-get" data-message="Sync Bank Reconciliation?">
+            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('finance/reconciliation/sync') ?>" data-action="confirm" data-widget="tooltip" title="Sync Bank Reconciliation">
               <i class="fad fa-sync"></i>
             </a>
           </div>
@@ -45,7 +45,7 @@
   $(document).ready(function() {
     "use strict";
 
-    window.Table = $('#Table').DataTable({
+    erp.table = $('#Table').DataTable({
       ajax: {
         data: {
           <?= csrf_token() ?>: '<?= csrf_hash() ?>'

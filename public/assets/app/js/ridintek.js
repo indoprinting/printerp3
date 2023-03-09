@@ -1,4 +1,10 @@
 
+export class Notification {
+  static reload() {
+
+  }
+}
+
 export default class Ridintek {
   tbody = null;
 
@@ -407,13 +413,23 @@ export class QueueTimer {
 }
 
 export class Sale {
-  tbody = null;
+  static tbody = null;
 
-  constructor(table) {
+  static table(table) {
     this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('Sale::table() Cannot find tbody.');
+    }
+
+    return this;
   }
 
-  addItem(item, allowDuplicate = false) {
+  static addItem(item, allowDuplicate = false) {
+    if (!this.tbody.length) {
+      return false;
+    }
+
     if (!allowDuplicate) {
       let items = this.tbody.find('.item_name');
 
@@ -425,44 +441,50 @@ export class Sale {
       }
     }
 
+    item.hash = randomString();
     item.area = item.width * item.length;
     item.price = getSalePrice(item.area * item.quantity, item.ranges, item.prices);
-    item.subtotal = item.area * item.price;
+    item.subtotal = item.area * item.price * item.quantity;
+
+    // console.log(item);
 
     let readOnly = (item.category != 'DPI' ? ' readonly' : '');
     let priceReadOnly = (hasAccess('Sale.EditPrice') ? '' : ' readonly');
 
-    this.tbody.append(`
+    this.tbody.prepend(`
       <tr>
         <td class="col-md-3">
-          <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
-          <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
-          <input type="hidden" name="item[type][]" value="${item.type}">
           <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
           <input type="hidden" name="item[name][]" value="${item.name}">
+          <input type="hidden" name="item[completed_at][]" value="${item.completed_at ?? ''}">
+          <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty ?? ''}">
+          <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
+          <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
+          <input type="hidden" name="item[status][]" value="${item.status ?? ''}">
+          <input type="hidden" name="item[type][]" value="${item.type}">
           (${item.code}) ${item.name}
         </td>
         <td>
           <div class="card card-dark card-tabs">
-            <div class="card-header bg-gradient-indigo p-0 pt-1">
+            <div class="card-header bg-gradient-dark p-0 pt-1">
               <ul class="nav nav-tabs">
                 <li class="nav-item">
-                  <a href="#tab-size-${item.code}" class="nav-link active" data-toggle="pill">${lang.App.size}</a>
+                  <a href="#tab-size-${item.hash}" class="nav-link active" data-toggle="pill">${lang.App.size}</a>
                 </li>
                 <li class="nav-item">
-                  <a href="#tab-spec-${item.code}" class="nav-link" data-toggle="pill">${lang.App.spec}</a>
+                  <a href="#tab-spec-${item.hash}" class="nav-link" data-toggle="pill">${lang.App.spec}</a>
                 </li>
                 <li class="nav-item">
-                  <a href="#tab-opr-${item.code}" class="nav-link" data-toggle="pill">${lang.App.operator}</a>
+                  <a href="#tab-opr-${item.hash}" class="nav-link" data-toggle="pill">${lang.App.operator}</a>
                 </li>
                 <li class="nav-item">
-                  <a href="#tab-price-${item.code}" class="nav-link" data-toggle="pill">${lang.App.price}</a>
+                  <a href="#tab-price-${item.hash}" class="nav-link" data-toggle="pill">${lang.App.price}</a>
                 </li>
               </ul>
             </div>
             <div class="card-body">
               <div class="tab-content">
-                <div class="tab-pane fade active show" id="tab-size-${item.code}">
+                <div class="tab-pane fade active show" id="tab-size-${item.hash}">
                   <div class="row">
                     <div class="col-md-3">
                       <div class="form-group">
@@ -490,21 +512,21 @@ export class Sale {
                     </div>
                   </div>
                 </div>
-                <div class="tab-pane fade" id="tab-spec-${item.code}">
+                <div class="tab-pane fade" id="tab-spec-${item.hash}">
                   <div class="form-group">
                     <label>${lang.App.spec}</label>
                     <input name="item[spec][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.spec}" value="${item.spec}">
                   </div>
                 </div>
-                <div class="tab-pane fade" id="tab-opr-${item.code}">
+                <div class="tab-pane fade" id="tab-opr-${item.hash}">
                   <div class="form-group">
                     <label>${lang.App.operator}</label>
-                    <select name="item[operator][]" class="select-user" data-placeholder="${lang.App.operator}" style="width:100%">
+                    <select id="item-opr-${item.hash}" name="item[operator][]" class="select-operator" data-placeholder="${lang.App.operator}" style="width:100%">
                       <option value=""></option>
                     </select>
                   </div>
                 </div>
-                <div class="tab-pane fade" id="tab-price-${item.code}">
+                <div class="tab-pane fade" id="tab-price-${item.hash}">
                   <div class="form-group">
                     <label>${lang.App.price}</label>
                     <input name="item[price][]" class="form-control form-control-border form-control-sm currency saleitem" value="${item.price}" ${priceReadOnly}>
@@ -519,18 +541,35 @@ export class Sale {
       </tr>
     `);
 
+    if (item.operator) {
+      try {
+        preSelect2('user', `#item-opr-${item.hash}`, item.operator);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
     calculateSale();
   }
 }
 
 export class StockAdjustment {
-  tbody = null;
+  static tbody = null;
 
-  constructor(table) {
+  static table(table) {
     this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('Sale::table() Cannot find tbody.');
+    }
+
+    return this;
   }
 
-  addItem(item, allowDuplicate = false) {
+  static addItem(item, allowDuplicate = false) {
+    if (!this.tbody.length) {
+      return false;
+    }
 
     if (!allowDuplicate) {
       let items = this.tbody.find('.item_name');
@@ -543,12 +582,12 @@ export class StockAdjustment {
       }
     }
 
-    this.tbody.append(`
+    this.tbody.prepend(`
       <tr>
         <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
         <td>(${item.code}) ${item.name}</td>
         <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
-        <td>${filterDecimal(item.current_qty)}</td>
+        <td>${formatNumber(item.current_qty)}</td>
         <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);
@@ -556,11 +595,9 @@ export class StockAdjustment {
 }
 
 export class TableFilter {
-  constructor() {
-    this._cb = [];
-  }
+  static _cb = [];
 
-  bind(action, selector) {
+  static bind(action, selector) {
     if (action == 'apply') {
       $(document).on('click', selector, (ev) => {
         for (let a in this._cb) {
@@ -569,8 +606,8 @@ export class TableFilter {
           }
         }
 
-        if (typeof Table != 'undefined') {
-          Table.draw(false);
+        if (erp?.table) {
+          erp.table.draw(false);
         }
 
         controlSidebar('collapse');
@@ -585,8 +622,8 @@ export class TableFilter {
           }
         }
 
-        if (typeof Table != 'undefined') {
-          Table.draw(false);
+        if (erp?.table) {
+          erp.table.draw(false);
         }
 
         controlSidebar('collapse');
@@ -594,7 +631,7 @@ export class TableFilter {
     }
   }
 
-  on(event, callback) {
+  static on(event, callback) {
     this._cb.push({
       ev: event,
       cb: callback

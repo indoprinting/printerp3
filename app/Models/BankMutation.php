@@ -11,32 +11,18 @@ class BankMutation
    */
   public static function add(array $data)
   {
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
-    if (isset($data['bankfrom'])) {
-      $bankFrom = Bank::getRow(['code' => $data['bankfrom']]);
-      $data['from_bank_id'] = $bankFrom->id;
-      $data['from_bank_name'] = $bankFrom->name;
-    }
-
-    if (isset($data['bankto'])) {
-      $bankTo = Bank::getRow(['code' => $data['bankto']]);
-      $data['to_bank_id'] = $bankTo->id;
-      $data['to_bank_name'] = $bankTo->name;
-    }
+    $data['reference'] = OrderRef::getReference('mutation');
 
     $data = setCreatedBy($data);
-    $data['reference'] = OrderRef::getReference('mutation');
 
     DB::table('bank_mutations')->insert($data);
 
-    if ($insertID = DB::insertID()) {
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
+
       OrderRef::updateReference('mutation');
 
-      return $insertID;
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);
@@ -51,8 +37,8 @@ class BankMutation
   {
     DB::table('bank_mutations')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -76,7 +62,7 @@ class BankMutation
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -94,8 +80,8 @@ class BankMutation
   {
     DB::table('bank_mutations')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

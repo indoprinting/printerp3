@@ -14,8 +14,8 @@ class Group
   {
     DB::table('groups')->insert($data);
     
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -31,8 +31,8 @@ class Group
   {
     DB::table('groups')->delete($clause);
     
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -58,7 +58,7 @@ class Group
     if ($rows = self::get($clause)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -80,8 +80,8 @@ class Group
   {
     DB::table('groups')->update($data, ['id' => $id]);
     
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

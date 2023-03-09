@@ -43,7 +43,7 @@
   $(document).ready(function() {
     "use strict";
 
-    window.Table = $('#Table').DataTable({
+    erp.table = $('#Table').DataTable({
       ajax: {
         data: {
           <?= csrf_token() ?>: '<?= csrf_hash() ?>'

@@ -21,7 +21,7 @@
       </tr>
       <tr>
         <td><?= lang('App.bankaccount') ?></td>
-        <?php $bank = \App\Models\Bank::getRow(['code' => $expense->bank]) ?>
+        <?php $bank = \App\Models\Bank::getRow(['code' => $income->bank]) ?>
         <td><?= ($bank->number ? $bank->name . " ({$bank->number})" : $bank->name) ?></td>
       </tr>
       <tr>
@@ -64,7 +64,7 @@
   </table>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.close') ?></button>
 </div>
 <script>
   (function() {

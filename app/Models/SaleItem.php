@@ -33,7 +33,7 @@ class SaleItem
         return false;
       }
 
-      $data['product_id'] = $product->id;
+      $data['product_id']   = $product->id;
       $data['product_code'] = $product->code;
       $data['product_name'] = $product->name;
       $data['product_type'] = $product->type;
@@ -44,8 +44,81 @@ class SaleItem
 
     DB::table('sale_items')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
+
+      $saleItem   = self::getRow(['id' => $insertId]);
+      $saleItemJS = getJSON($saleItem->json);
+
+      if (isCompleted($saleItemJS->status)) {
+        if ($product->type == 'combo') {
+          $comboItems = ComboItem::get(['product_id' => $product->id]);
+
+          foreach ($comboItems as $comboItem) {
+            $rawItem = Product::getRow(['code' => $comboItem->item_code]);
+
+            if ($rawItem->type == 'standard') {
+              $res = Stock::decrease([
+                'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
+                'sale'        => $sale->reference,
+                'saleitem_id' => $saleItem->id,
+                'product'     => $rawItem->code,
+                'quantity'    => ($saleItem->finished_qty * $comboItem->quantity),
+                'warehouse'   => $sale->warehouse,
+                'created_by'  => $saleItemJS->operator_id
+              ]);
+
+              if (!$res) {
+                return false;
+              }
+            } else if ($rawItem->type == 'service') {
+              $res = Stock::increase([
+                'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
+                'sale'        => $sale->reference,
+                'saleitem_id' => $saleItem->id,
+                'product'     => $rawItem->code,
+                'quantity'    => ($saleItem->finished_qty * $comboItem->quantity),
+                'warehouse'   => $sale->warehouse,
+                'created_by'  => $saleItemJS->operator_id
+              ]);
+
+              if (!$res) {
+                return false;
+              }
+            }
+          }
+        } else if ($product->type == 'service') {
+          $res = Stock::increase([
+            'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
+            'sale'        => $sale->reference,
+            'saleitem_id' => $saleItem->id,
+            'product'     => $product->code,
+            'quantity'    => $saleItem->finished_qty,
+            'warehouse'   => $sale->warehouse,
+            'created_by'  => $saleItemJS->operator_id
+          ]);
+
+          if (!$res) {
+            return false;
+          }
+        } else if ($product->type == 'standard') {
+          $res = Stock::decrease([
+            'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
+            'sale'        => $sale->reference,
+            'saleitem_id' => $saleItem->id,
+            'product'     => $product->code,
+            'quantity'    => $saleItem->finished_qty,
+            'warehouse'   => $sale->warehouse,
+            'created_by'  => $saleItemJS->operator_id
+          ]);
+
+          if (!$res) {
+            return false;
+          }
+        }
+      }
+
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);
@@ -78,24 +151,19 @@ class SaleItem
       // Get operator data.
       $operator = User::getRow(['id' => $data['created_by']]);
 
-      // if (empty($saleItemJS->due_date)) { // Check if sale item has due date. If empty then restricted.
-      //   setLastError("Item {$saleItem->product_code} doesn't have due date.");
-      //   return FALSE;
-      // }
-
       if (($completedQty + $saleItem->finished_qty) < $saleItem->quantity) { // If completed partial.
         $status = 'completed_partial';
       } else if (($completedQty + $saleItem->finished_qty) == $saleItem->quantity) { // If fully completed.
         $status = 'completed';
       } else {
-        setLastError("SaleItem::complete(): Something wrong! Maybe you complete more quantity than requested. " .
-          "Completed: {$completedQty}, Finished: {$saleItem->finished_qty}, Quantity: {$saleItem->quantity}");
+        setLastError("SaleItem::complete(): Complete is more than requested. Complete: {$completedQty}, " .
+          "Finished: {$saleItem->finished_qty}, Quantity: {$saleItem->quantity}");
         return false;
       }
 
       // Set Completed date and Operator who completed it.
 
-      $saleItemJS->completed_at = $data['created_at']; // Completed date.
+      $saleItemJS->completed_at = ($data['created_at'] ?? date('Y-m-d H:i:s')); // Completed date.
       $saleItemJS->operator_id  = $operator->id; // Change PIC who completed it.
       $saleItemJS->status       = $status; // Restore status as completed or completed_partial.
 
@@ -106,11 +174,15 @@ class SaleItem
 
       $klikpod = Product::getRow(['code' => 'KLIKPOD']);
 
+      $saleItemJSON = json_encode($saleItemJS);
+
       $saleItemData = [
         'finished_qty'  => ($saleItem->finished_qty + $completedQty),
-        'json_data'     => json_encode($saleItemJS)
+        'json'          => $saleItemJSON,
+        'json_data'     => $saleItemJSON
       ];
-
+      print_r($saleItemData);
+      die;
       if (self::update((int)$saleItem->id, $saleItemData)) {
         // Increase and Decrease item.
 
@@ -188,7 +260,7 @@ class SaleItem
         } else if ($saleItem->product_type == 'standard') { // SALEITEM. Decrement. FFC280, POCT15
           if ($saleItem->product_code == 'KLIKPOD') {
             setLastError('CRITICAL: KLIKPOD KNOWN AS STANDARD TYPE MUST NOT BE DECREASED!');
-            return FALSE;
+            return false;
           }
 
           Stock::decrease([
@@ -206,10 +278,10 @@ class SaleItem
         // Sync sale after operator complete the item.
         Sale::sync(['sale_id' => $sale->id]);
 
-        return TRUE;
+        return true;
       }
     }
-    return FALSE;
+    return false;
   }
 
 
@@ -220,8 +292,8 @@ class SaleItem
   {
     DB::table('sale_items')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -245,13 +317,13 @@ class SaleItem
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
    * Select SaleItem.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('sale_items')->select($columns, $escape);
   }
@@ -263,8 +335,8 @@ class SaleItem
   {
     DB::table('sale_items')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

@@ -21,12 +21,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
+                  <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -35,11 +30,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
-                  <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <select id="bank" name="bank" class="select-bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -61,9 +52,8 @@
                 <div class="form-group">
                   <label for="category"><?= lang('App.category') ?> *</label>
                   <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
-                    <option value=""></option>
                     <?php foreach (\App\Models\ExpenseCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
-                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
+                      <option value="<?= $excat->id ?>"><?= $excat->name ?></option>
                     <?php endforeach; ?>
                   </select>
                 </div>
@@ -77,13 +67,22 @@
                   </select>
                 </div>
               </div>
-              <div class="col-md-6">
+            </div>
+            <div class="row">
+              <div class="col-md-12">
                 <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
-                    <input type="file" id="attachment" name="attachment" class="custom-file-input">
+                    <input id="attachment" name="attachment" class="custom-file-input" type="file">
                     <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
                   </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 text-center">
+                <div class="form-group">
+                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300xp">
                 </div>
               </div>
             </div>
@@ -103,8 +102,8 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {
@@ -112,6 +111,8 @@
   })();
 
   $(document).ready(function() {
+    erp.select2.bank.biller = [0];
+
     let editor = new Quill('#editor', {
       theme: 'snow'
     });
@@ -120,7 +121,21 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    $('#attachment').change(function() {
+      let src = '';
+
+      if (this.files.length) {
+        src = URL.createObjectURL(this.files[0]);
+      } else {
+        src = base_url + '/assets/app/images/picture.png';
+      }
+
+      $('.attachment-preview').prop('src', src);
+    });
+
     $('#bank').change(function() {
+      if (!this.value) return false;
+
       $.ajax({
         success: (data) => {
           $('#bankbalance').val(formatCurrency(data.data));
@@ -128,6 +143,14 @@
         url: base_url + '/finance/bank/balance/' + this.value
       })
     });
+
+    $('#biller').change(function() {
+      erp.select2.bank.biller = [this.value];
+    });
+
+    if (erp.biller.id) {
+      preSelect2('biller', '#biller', erp.biller.id);
+    }
 
     initModalForm({
       form: '#form',

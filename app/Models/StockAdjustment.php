@@ -31,7 +31,9 @@ class StockAdjustment
 
     DB::table('adjustments')->insert($data);
 
-    if ($insertID = DB::insertID()) {
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
+
       OrderRef::updateReference('adjustment');
 
       foreach ($items as $item) {
@@ -76,7 +78,7 @@ class StockAdjustment
         }
       }
 
-      return $insertID;
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);
@@ -91,8 +93,8 @@ class StockAdjustment
   {
     DB::table('adjustments')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -134,8 +136,8 @@ class StockAdjustment
   {
     DB::table('adjustments')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

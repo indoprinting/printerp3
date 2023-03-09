@@ -43,7 +43,6 @@
           </div>
         </div>
       </div>
-
       <div class="col-md-6">
         <div class="card">
           <div class="card-header bg-gradient-primary"><?= lang('App.account') ?></div>
@@ -101,11 +100,30 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-gradient-warning"><?= lang('App.misc') ?></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="billers"><?= lang('App.billeraccess') ?></label>
+              <select name="billers[]" class="select-biller" style="width:100%" multiple>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="warehouses"><?= lang('App.warehouseaccess') ?></label>
+              <select name="warehouses[]" class="select-warehouse" style="width:100%" multiple>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-danger" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
+  <button type="button" id="submit" class="btn bg-gradient-primary"><i class="fad fa-fw fa-floppy-disk"></i> <?= lang('App.save') ?></button>
 </div>
 <script>
   (function() {

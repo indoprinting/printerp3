@@ -33,7 +33,7 @@ function appendZero(number) { // Return as string, you can convert to number wit
 function calculateSale() {
   let table = $('#table-sale');
 
-  if (!table) {
+  if (!table.length) {
     return false;
   }
 
@@ -46,6 +46,8 @@ function calculateSale() {
   });
 
   grandTotal.html(formatCurrency(amount));
+
+  return amount;
 }
 
 /**
@@ -336,6 +338,10 @@ function initControls() {
     console.error('%cjQuery', 'font-weight:bold', ' is not installed');
   }
 
+  if (isFunction('$.fn.tooltip')) {
+    $('[data-widget="tooltip"]').tooltip({ html: true, placement: 'left' });
+  }
+
   if (isFunction('$.fn.overlayScrollbars')) {
     $('body').overlayScrollbars({
       scrollbars: {
@@ -364,6 +370,67 @@ function initControls() {
     $('.select-allow-clear').select2({ allowClear: true });
     $('.select-tags').select2({ tags: true });
     $('.select-allow-clear-tags').select2({ allowClear: true, tags: true });
+    $('.select-bank').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (erp?.select2?.bank?.biller) {
+            params.biller = erp.select2.bank.biller;
+          }
+
+          if (erp?.select2?.bank?.type) {
+            params.type = erp.select2.bank.type;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/bank'
+      }
+    });
+    $('.select-bank-from').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (typeof erp?.select2.bankfrom?.biller !== 'undefined') {
+            params.biller = erp.select2.bankfrom.biller;
+          }
+
+          if (typeof erp?.select2?.bankfrom?.type !== 'undefined') {
+            params.type = erp.select2.bankfrom.type;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/bank'
+      }
+    });
+    $('.select-bank-to').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (typeof erp?.select2.bankto?.biller !== 'undefined') {
+            params.biller = erp.select2.bankto.biller;
+          }
+
+          if (typeof erp?.select2.bankto?.type !== 'undefined') {
+            params.type = erp.select2.bankto.type;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/bank'
+      }
+    });
+    $('.select-bank-type').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/bank/type'
+      }
+    });
     $('.select-biller').select2({
       allowClear: true,
       ajax: {
@@ -378,25 +445,30 @@ function initControls() {
         url: base_url + '/select2/customer'
       }
     });
-    $('.select-product').select2({
-      allowClear: true,
-      ajax: {
-        delay: 1000,
-        url: base_url + '/select2/product'
-      }
-    });
-    $('.select-product-sale').select2({
+    $('.select-operator').select2({
       allowClear: true,
       ajax: {
         data: (params) => {
-          params.type = ['combo', 'service'];
+          if (typeof erp?.select2?.operator?.biller !== 'undefined') {
+            params.biller = erp.select2.operator.biller;
+          }
 
-          if (typeof saleUseRawMaterial !== 'undefined') {
-            if (saleUseRawMaterial) {
-              params.type.push('standard');
-            } else if (params.type.indexOf('standard') > 0) {
-              params.type.pop();
-            }
+          if (typeof erp?.select2?.operator?.warehouse !== 'undefined') {
+            params.warehouse = erp.select2.operator.warehouse;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/user'
+      }
+    });
+    $('.select-product').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (typeof erp?.select2?.product?.type !== 'undefined') {
+            params.type = erp.select2.product.type;
           }
 
           return params;
@@ -427,8 +499,33 @@ function initControls() {
     $('.select-user').select2({
       allowClear: true,
       ajax: {
+        data: (params) => {
+          if (typeof erp?.select2?.user?.biller !== 'undefined') {
+            params.biller = erp.select2.user.biller;
+          }
+
+          if (typeof erp?.select2?.user?.warehouse !== 'undefined') {
+            params.warehouse = erp.select2.user.warehouse;
+          }
+
+          return params;
+        },
         delay: 1000,
         url: base_url + '/select2/user'
+      }
+    });
+    $('.select-usergroup').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/usergroup'
+      }
+    });
+    $('.select-voucher').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/voucher'
       }
     });
     $('.select-warehouse').select2({
@@ -479,7 +576,17 @@ function initModalForm(opt = {}) {
       return false;
     }
 
-    $(this).prepend(`<i class="fad fa-spinner-third fa-spin"></i> `);
+    let icon = $(this).find('i');
+    let oldClass = '';
+
+    if (icon.length) {
+      oldClass = icon.prop('class');
+
+      icon.removeClass().addClass('fad fa-fw fa-spinner-third fa-spin');
+    } else {
+      $(this).prepend(`<i class="fad fa-fw fa-spinner-third fa-spin"></i> `);
+    }
+
     $(this).prop('disabled', true);
 
     let formData = new FormData(typeof opt.form == 'string' ? $(opt.form)[0] : opt.form);
@@ -495,7 +602,12 @@ function initModalForm(opt = {}) {
         });
 
         $(opt.submit).prop('disabled', false);
-        $(opt.submit).find('i').remove();
+
+        if (icon.length) {
+          icon.removeClass().addClass(oldClass);
+        } else {
+          $(opt.submit).find('i').remove();
+        }
       },
       method: 'POST',
       processData: false,
@@ -509,16 +621,27 @@ function initModalForm(opt = {}) {
 
           // Pre-select customer after add from add customer button.
           if ($('#customer').length && $('#phone').length) {
-            preSelect2('customer', '#customer', $('#phone').val());
+            try {
+              preSelect2('customer', '#customer', $('#phone').val());
+            } catch (e) {
+              console.warn(e);
+            }
           }
 
           reDrawDataTable();
 
-          $(window.modal[window.modal.length - 1]).modal('hide');
+          if (erp.modal && isArray(erp.modal)) {
+            $(erp.modal[erp.modal.length - 1]).modal('hide');
+          }
         }
 
         $(opt.submit).prop('disabled', false);
-        $(opt.submit).find('i').remove();
+
+        if (icon.length) {
+          icon.removeClass().addClass(oldClass);
+        } else {
+          $(opt.submit).find('i').remove();
+        }
       },
       url: opt.url
     });
@@ -540,6 +663,10 @@ function isEmpty(data) {
 function isFunction(data) {
   if (typeof data == 'object') return false;
   return eval(`typeof ${data} == 'function'`);
+}
+
+function isNumber(data) {
+  return (data instanceof Number || typeof data == 'number');
 }
 
 function isObject(data) {
@@ -564,27 +691,79 @@ function lc(str) {
  * @param {*} elm Element to change.
  * @param {*} id Id of mode.
  */
-function preSelect2(mode, elm, id) {
-  $.ajax({
-    error: (xhr) => {
-      toastr.error(xhr.responseJSON.message, xhr.status);
-    },
-    success: (data) => {
-      let opt = new Option(data.results[0].text, data.results[0].id, true, true);
+async function preSelect2(mode, elm, id) {
+  return new Promise((resolve, reject) => {
+    if (isEmpty(id)) {
+      reject(`preSelect2: id for ${mode}:${elm} is empty.`);
+      return false;
+    }
 
-      $(elm).html('').append(opt).trigger('change');
-    },
-    url: base_url + `/select2/${mode}?term=${id}`
+    let params = '';
+
+    if (isArray(id)) {
+      for (let i of id) {
+        params += 'term[]=' + i + '&';
+      }
+    } else if (isString(id) || isNumber(id)) {
+      params = 'term=' + id;
+      params += '&limit=1';
+    } else {
+      reject(`id type is ${typeof id} is unacceptable.`);
+      return false;
+    }
+
+    if (params.slice(-1) == '&') {
+      params = params.slice(0, -1);
+    }
+
+    $.ajax({
+      error: (xhr) => {
+        toastr.error(xhr.responseJSON.message, xhr.status);
+        reject(xhr.responseJSON.message);
+      },
+      success: (data) => {
+        if (!data.results.length) {
+          reject(`preSelect2: ${mode} results are empty.`);
+          return false;
+        }
+
+        if (!$(elm).length) {
+          reject(`Element ${elm} is not found.`);
+          return false;
+        }
+
+        $(elm).html('');
+
+        for (let a = 0; a < data.results.length; a++) {
+          $(elm).append(new Option(data.results[a].text, data.results[a].id, true, true)).trigger('change');
+        }
+
+        resolve(true);
+      },
+      url: base_url + `/select2/${mode}?${params}`
+    });
   });
+}
+
+function randomString(length = 8) {
+  let chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+  let buff = '';
+
+  for (let a = 0; a < length; a++) {
+    buff += chars.charAt(Math.floor(Math.random() * chars.length) % chars.length);
+  }
+
+  return buff;
 }
 
 /**
  * Redraw Table from DataTable instance.
- * @param {object} table DataTable instance. If omitted, it will use window.Table variable.
+ * @param {object} table DataTable instance. If omitted, it will use window.erp.Table variable.
  */
 function reDrawDataTable(table = null) {
   if (isFunction(table?.draw)) table.draw(false);
-  if (isFunction(window?.Table?.draw)) window.Table.draw(false);
+  if (isFunction(erp?.table?.draw)) erp.table.draw(false);
+  if (isFunction(erp?.tableModal?.draw)) erp.tableModal.draw(false);
 }
 
 function separateChar(char) {
@@ -632,6 +811,21 @@ function ucwords(words, delimiter = ' \,\-\_\t\r\n') {
   }
 
   return s.trim();
+}
+
+function uuid() {
+  let buff = '';
+  let bytes = randomString(16);
+
+  for (let a = 0; a < bytes.length; a++) {
+    buff += bytes.charCodeAt(a).toString(16);
+
+    if (a == 3 || a == 5 || a == 7 || a == 9) {
+      buff += '-';
+    }
+  }
+
+  return buff;
 }
 
 function validateData(data) {

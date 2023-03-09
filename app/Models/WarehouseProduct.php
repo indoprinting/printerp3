@@ -15,8 +15,8 @@ class WarehouseProduct
   {
     DB::table('warehouses_products')->insert($data);
     
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -27,7 +27,7 @@ class WarehouseProduct
   public static function decreaseQuantity(int $productId, int $warehouseId, float $quantity)
   {
     $whp = self::getRow(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
-    self::update((int)$whp->id, ['quantity' => $whp->quantity - $quantity]);
+    return self::update((int)$whp->id, ['quantity' => $whp->quantity - $quantity]);
   }
 
   /**
@@ -38,8 +38,8 @@ class WarehouseProduct
   {
     DB::table('warehouses_products')->delete($clause);
     
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -65,13 +65,13 @@ class WarehouseProduct
     if ($rows = self::get($clause)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   public static function increaseQuantity(int $productId, int $warehouseId, float $quantity)
   {
     $whp = self::getRow(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
-    self::update((int)$whp->id, ['quantity' => $whp->quantity + $quantity]);
+    return self::update((int)$whp->id, ['quantity' => $whp->quantity + $quantity]);
   }
 
   /**
@@ -84,8 +84,8 @@ class WarehouseProduct
   {
     DB::table('warehouses_products')->update($data, ['id' => $id]);
     
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

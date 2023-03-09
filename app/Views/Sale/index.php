@@ -4,7 +4,7 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-            <a class="btn btn-tool bg-gradient-warning" href="#" data-widget="control-sidebar" data-slide="true">
+            <a class="btn btn-tool bg-gradient-warning" href="#" data-widget="control-sidebar" data-toggle="tooltip" title="Filter" data-slide="true">
               <i class="fad fa-filter"></i>
             </a>
             <a class="btn btn-tool bg-gradient-success" href="<?= base_url('sale/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -101,6 +101,14 @@
                 <label for="filter-status"><?= lang('App.status') ?></label>
                 <select id="filter-status" class="select-allow-clear" data-placeholder="<?= lang('App.status') ?>" style="width:100%" multiple>
                   <option value=""></option>
+                  <option value="completed"><?= lang('Status.completed') ?></option>
+                  <option value="completed_partial"><?= lang('Status.completed_partial') ?></option>
+                  <option value="delivered"><?= lang('Status.delivered') ?></option>
+                  <option value="finished"><?= lang('Status.finished') ?></option>
+                  <option value="inactive"><?= lang('Status.inactive') ?></option>
+                  <option value="need_payment"><?= lang('Status.need_payment') ?></option>
+                  <option value="preparing"><?= lang('Status.preparing') ?></option>
+                  <option value="waiting_production"><?= lang('Status.waiting_production') ?></option>
                 </select>
               </div>
             </div>
@@ -111,6 +119,13 @@
                 <label for="filter-paymentstatus"><?= lang('App.paymentstatus') ?></label>
                 <select id="filter-paymentstatus" class="select-allow-clear" data-placeholder="<?= lang('App.paymentstatus') ?>" style="width:100%" multiple>
                   <option value=""></option>
+                  <option value="due"><?= lang('Status.due') ?></option>
+                  <option value="due_partial"><?= lang('Status.due_partial') ?></option>
+                  <option value="expired"><?= lang('Status.expired') ?></option>
+                  <option value="paid"><?= lang('Status.paid') ?></option>
+                  <option value="partial"><?= lang('Status.partial') ?></option>
+                  <option value="pending"><?= lang('Status.pending') ?></option>
+                  <option value="waiting_transfer"><?= lang('Status.waiting_transfer') ?></option>
                 </select>
               </div>
             </div>
@@ -119,11 +134,16 @@
             <div class="col-md-12">
               <div class="form-group">
                 <label for="filter-createdby"><?= lang('App.createdby') ?></label>
-                <select id="filter-createdby" class="select-allow-clear" data-placeholder="<?= lang('App.createdby') ?>" style="width:100%" multiple>
-                  <option value=""></option>
-                  <?php foreach (\App\Models\User::get(['active' => 1]) as $usr) : ?>
-                    <option value="<?= $usr->id ?>"><?= $usr->fullname ?></option>
-                  <?php endforeach; ?>
+                <select id="filter-createdby" class="select-user" data-placeholder="<?= lang('App.createdby') ?>" style="width:100%" multiple>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="filter-customer"><?= lang('App.customer') ?></label>
+                <select id="filter-customer" class="select-customer" data-placeholder="<?= lang('App.customer') ?>" style="width:100%" multiple>
                 </select>
               </div>
             </div>
@@ -168,14 +188,14 @@
     TableFilter
   } from '<?= base_url('assets/app/js/ridintek.js?v=') . $resver ?>';
 
-  let tableFilter = new TableFilter();
+  TableFilter.bind('apply', '.filter-apply');
+  TableFilter.bind('clear', '.filter-clear');
 
-  tableFilter.bind('apply', '.filter-apply');
-  tableFilter.bind('clear', '.filter-clear');
-
-  tableFilter.on('clear', () => {
+  TableFilter.on('clear', () => {
     $('#filter-biller').val([]).trigger('change');
     $('#filter-warehouse').val([]).trigger('change');
+    $('#filter-status').val([]).trigger('change');
+    $('#filter-paymentstatus').val([]).trigger('change');
     $('#filter-createdby').val([]).trigger('change');
     $('#filter-receivable').iCheck('uncheck');
     $('#filter-startdate').val('');
@@ -186,7 +206,7 @@
   $(document).ready(function() {
     "use strict";
 
-    window.Table = $('#Table').DataTable({
+    erp.table = $('#Table').DataTable({
       ajax: {
         data: (data) => {
           data.__ = __;
@@ -194,7 +214,10 @@
           let billers = $('#filter-biller').val();
           let warehouses = $('#filter-warehouse').val();
           let createdBy = $('#filter-createdby').val();
+          let customers = $('#filter-customer').val();
           let receivable = $('#filter-receivable');
+          let status = $('#filter-status').val();
+          let paymentStatus = $('#filter-paymentstatus').val();
           let startDate = $('#filter-startdate').val();
           let endDate = $('#filter-enddate').val();
 
@@ -210,8 +233,20 @@
             data.created_by = createdBy;
           }
 
+          if (customers) {
+            data.customer = customers;
+          }
+
           if (receivable.is(':checked')) {
             data.receivable = receivable.val();
+          }
+
+          if (status) {
+            data.status = status;
+          }
+
+          if (paymentStatus) {
+            data.payment_status = paymentStatus;
           }
 
           if (startDate) {

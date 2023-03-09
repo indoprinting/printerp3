@@ -133,8 +133,8 @@ class QueueTicket
 
     DB::table('queue_tickets')->insert($data);
 
-    if ($insertID = DB::insertID()) {
-      return $insertID;
+    if (DB::error()['code'] == 0) {
+      return DB::insertID();
     }
 
     setLastError(DB::error()['message']);
@@ -185,9 +185,9 @@ class QueueTicket
         User::update((int)$user->id, ['token' => $ticket->token, 'queue_category_id' => $ticket->queue_category_id]);
         return self::getQueueTicketById((int)$ticket->id);
       }
-      return NULL;
+      return null;
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -197,8 +197,8 @@ class QueueTicket
   {
     DB::table('queue_tickets')->delete($where);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -306,7 +306,7 @@ class QueueTicket
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   public static function getTodayCallableQueueTicket(string $warehouseCode)
@@ -353,7 +353,7 @@ class QueueTicket
       ->where('warehouse_id', $warehouse->id);
 
     if ($warehouse->code == 'LUC') {
-      $user->orWhere('warehouse IS NULL');
+      $user->orWhere('warehouse IS null');
     }
 
     return $user
@@ -453,8 +453,8 @@ class QueueTicket
   {
     DB::table('queue_tickets')->update($data, ['id' => $id]);
 
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);

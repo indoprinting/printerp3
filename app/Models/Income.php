@@ -30,12 +30,13 @@ class Income
     $data['reference'] = OrderRef::getReference('income');
 
     DB::table('incomes')->insert($data);
-    $insertID = DB::insertID();
 
-    if ($insertID) {
+    if (DB::error()['code'] == 0) {
+      $insertId = DB::insertID();
+
       OrderRef::updateReference('income');
 
-      return $insertID;
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);
@@ -49,9 +50,9 @@ class Income
   public static function delete(array $where)
   {
     DB::table('incomes')->delete($where);
-    
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
@@ -75,7 +76,7 @@ class Income
     if ($rows = self::get($where)) {
       return $rows[0];
     }
-    return NULL;
+    return null;
   }
 
   /**
@@ -109,9 +110,9 @@ class Income
     $data = setUpdatedBy($data);
 
     DB::table('incomes')->update($data, ['id' => $id]);
-    
-    if ($affectedRows = DB::affectedRows()) {
-      return $affectedRows;
+
+    if (DB::error()['code'] == 0) {
+      return DB::affectedRows();
     }
 
     setLastError(DB::error()['message']);
