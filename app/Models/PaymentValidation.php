@@ -11,26 +11,26 @@ class PaymentValidation
    */
   public static function add(array $data)
   {
-    if (isset($data['expense'])) {
-      $expense = Expense::getRow(['reference' => $data['expense']]);
+    if (isset($data['expense_id'])) {
+      $expense = Expense::getRow(['id' => $data['expense_id']]);
       $data['reference']  = $expense->reference;
       $data['expense_id'] = $expense->id;
     }
 
-    if (isset($data['mutation'])) {
-      $mutation = BankMutation::getRow(['reference' => $data['mutation']]);
+    if (isset($data['mutation_id'])) {
+      $mutation = BankMutation::getRow(['id' => $data['mutation_id']]);
       $data['reference']    = $mutation->reference;
       $data['mutation_id']  = $mutation->id;
     }
 
-    if (isset($data['sale'])) {
-      $sale = Sale::getRow(['reference' => $data['sale']]);
+    if (isset($data['sale_id'])) {
+      $sale = Sale::getRow(['id' => $data['sale_id']]);
       $data['reference']  = $sale->reference;
       $data['sale_id']    = $sale->id;
     }
 
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
+    if (isset($data['biller_id'])) {
+      $biller = Biller::getRow(['id' => $data['biller_id']]);
       $data['biller_id']  = $biller->id;
     }
 

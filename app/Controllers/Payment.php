@@ -136,9 +136,9 @@ class Payment extends BaseController
 
         $inv = Expense::getRow(['id' => $id]);
         $modeLang = lang('App.expense');
-        $data['expense']      = $inv->reference;
-        $data['expense_id']   = $inv->id;
-        $data['type']         = 'sent';
+        $data['expense_id'] = $inv->id;
+        $data['type']       = 'sent';
+
         $this->data['inv']    = $inv;
         $this->data['amount'] = $inv->amount;
 
@@ -149,8 +149,9 @@ class Payment extends BaseController
         if ($inv->payment_status == 'paid') {
           $this->response(400, ['message' => 'Expense is already paid.']);
         }
+
         break;
-      case 'income':
+        // case 'income':
         // $inv = Income::getRow(['id' => $id]);
         // $modeLang = lang('App.income');
         // $data['income']       = $inv->reference;
@@ -159,41 +160,41 @@ class Payment extends BaseController
         // $this->data['amount'] = $inv->amount;
         // $this->data['biller'] = $inv->biller;
         // $this->data['bank']   = $inv->bank;
-        break;
-      case 'mutation':
+        // break;
+        // case 'mutation':
         // $inv = BankMutation::getRow(['id' => $id]);
         // $modeLang = lang('App.bankmutation');
         // $data['mutation']     = $inv->reference;
         // $data['mutation_id']  = $inv->id;
-        break;
-      case 'purchase':
-        $inv = ProductPurchase::getRow(['id' => $id]);
-        $modeLang = lang('App.productpurchase');
-        $data['purchase']     = $inv->reference;
-        $data['purchase_id']  = $inv->id;
-        $data['type']         = 'sent';
-        $this->data['amount'] = ($inv->grand_total - $inv->paid - $inv->discount);
-        $this->data['bank']   = $inv->bank;
+        // break;
+      case 'purchase': // NOT IMPLEMENTED
+        // $inv = ProductPurchase::getRow(['id' => $id]);
+        // $modeLang = lang('App.productpurchase');
+        // $data['purchase']     = $inv->reference;
+        // $data['purchase_id']  = $inv->id;
+        // $data['type']         = 'sent';
+        // $this->data['amount'] = ($inv->grand_total - $inv->paid - $inv->discount);
+        // $this->data['bank']   = $inv->bank;
         break;
       case 'sale':
         $inv = Sale::getRow(['id' => $id]);
         $modeLang = lang('App.sale');
         $tax = ($inv->grand_total * 0.01 * $inv->tax);
-        $data['sale']         = $inv->reference;
-        $data['sale_id']      = $inv->id;
-        $data['biller']       = $inv->biller;
-        $data['type']         = 'received';
+        $data['sale_id']    = $inv->id;
+        $data['biller_id']  = $inv->biller_id;
+        $data['type']       = 'received';
+
         $this->data['inv']    = $inv;
         $this->data['amount'] = ($inv->grand_total + $tax - $inv->paid - $inv->discount);
         break;
-      case 'transfer':
-        $inv = ProductTransfer::getRow(['id' => $id]);
-        $modeLang = lang('App.producttransfer');
-        $data['transfer']     = $inv->reference;
-        $data['transfer_id']  = $inv->id;
-        $data['type']         = 'sent';
-        $this->data['amount'] = ($inv->grand_total - $inv->paid);
-        $this->data['bank']   = $inv->bank;
+      case 'transfer': // NOT IMPLEMENTED
+        // $inv = ProductTransfer::getRow(['id' => $id]);
+        // $modeLang = lang('App.producttransfer');
+        // $data['transfer']     = $inv->reference;
+        // $data['transfer_id']  = $inv->id;
+        // $data['type']         = 'sent';
+        // $this->data['amount'] = ($inv->grand_total - $inv->paid);
+        // $this->data['bank']   = $inv->bank;
         break;
       default:
         $modeLang = '';
@@ -204,7 +205,7 @@ class Payment extends BaseController
       $data['date']           = dateTimeJS(getPost('date'));
       $data['reference']      = $inv->reference;
       $data['reference_date'] = $inv->date;
-      $data['bank']           = getPost('bank');
+      $data['bank_id']        = getPost('bank');
       $data['method']         = getPost('method'); // Cash / EDC / Transfer
       $data['note']           = getPost('note');
 
@@ -233,9 +234,9 @@ class Payment extends BaseController
         }
       } else { // Use payment validation. (Sale only)
         $res = PaymentValidation::add([
-          'sale'        => $inv->reference,
+          'sale_id'     => $inv->id,
+          'biller_id'   => $data['biller_id'],
           'amount'      => $data['amount'],
-          'biller'      => $data['biller'],
           'attachment'  => ($data['attachment'] ?? NULL)
         ]);
 
@@ -244,12 +245,12 @@ class Payment extends BaseController
         }
       }
 
-      if (isset($data['expense'])) {
+      if (isset($data['expense_id'])) {
         Expense::update((int)$inv->id, ['payment_status' => 'paid']);
       }
 
-      if (isset($data['sale'])) {
-        Sale::sync(['id' => $data['sale_id']]);
+      if (isset($data['sale_id'])) {
+        Sale::sync(['id' => $inv->id]);
       }
 
       DB::transComplete();
@@ -349,8 +350,8 @@ class Payment extends BaseController
       $data['date']           = dateTimeJS(getPost('date'));
       $data['reference']      = $inv->reference;
       $data['reference_date'] = $inv->date;
-      $data['bank']           = getPost('bank');
-      $data['biller']         = getPost('biller');
+      $data['bank_id']        = getPost('bank');
+      $data['biller_id']      = getPost('biller');
       $data['method']         = getPost('method'); // Cash / EDC / Transfer
       $data['note']           = getPost('note');
 

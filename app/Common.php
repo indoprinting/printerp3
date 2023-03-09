@@ -300,7 +300,8 @@ function filterNumber($num)
  */
 function formatCurrency($num)
 {
-  return 'Rp ' . number_format(filterDecimal($num), 0, ',', '.');
+  // return 'Rp ' . number_format(filterDecimal($num), 0, ',', '.');
+  return 'Rp ' . number_format(filterDecimal($num), 0);
 }
 
 /**
@@ -350,6 +351,184 @@ function getCurrentMonthPeriod($period = [])
   $period['end_date']   = ($period['end_date']   ?? date('Y-m-d'));
 
   return $period;
+}
+
+/**
+ * Get daily performance report. biller_id MUST BE Array (PROGRESS). period = yyyy-mm
+ * @param array $opt [ biller_id[], period ]
+ * @return array Return daily performance data.
+ */
+function getDailyPerformanceReport($opt)
+{
+  // We need biller to warehouse because ONLY warehouse has 'active' column.
+  $dailyPerformanceData = [];
+  $billers    = [];
+  $warehouses = [];
+
+  if (!empty($opt['biller_id']) && is_array($opt['biller_id'])) {
+    foreach ($opt['biller_id'] as $billerId) {
+      $billers[] = Biller::getRow(['id' => $billerId, 'active' => '1']);
+    }
+
+    if ($warehouseIds = billerToWarehouse($opt['biller_id'])) {
+      foreach ($warehouseIds as $warehouseId) {
+        $warehouses[] = Warehouse::getRow(['id' => $warehouseId, 'active' => '1']);
+      }
+    }
+  } else if (empty($opt['biller_id'])) {
+    $billers    = Biller::get(['active' => '1']);
+    $warehouses = Warehouse::get(['active' => '1']);
+  }
+
+  if ($opt['period']) {
+    $period = new DateTime($opt['period'] . '-01');
+    unset($opt['period']);
+  } else {
+    $period = new DateTime(date('Y-m-') . '01'); // Current month and date.
+  }
+
+  $currentDate  = new DateTime();
+  $beginDate    = new DateTime('2022-01-01 00:00:00'); // First data date of begin date.
+  $startDate    = new DateTime($period->format('Y-m-d')); // First date of current period.
+  $endDate      = new DateTime($period->format('Y-m-t')); // Date must be end of month. (28 to 31)
+  $activeDays   = intval($startDate->diff($currentDate)->format('%a'));
+
+  $firstDate  = 1; // First date of month.
+  $lastDate   = intval($endDate->format('j')); // Date only. COUNTABLE
+  $ymPeriod   = $period->format('Y-m'); // 2022-11
+
+  foreach ($billers as $biller) {
+    if ($biller->active != 1) continue;
+    // Hide FUCKED IDS
+    // if ($biller->code == 'BALINN') continue;
+    if ($biller->code == 'IDSUNG') continue;
+    if ($biller->code == 'IDSLOS') continue;
+    if ($biller->code == 'BALINT') continue;
+
+    $dailyData = [];
+
+    $billerJS = getJSON($biller->json);
+    $warehouse = Warehouse::getRow(['code' => $biller->code]);
+
+    if ($biller->code == 'LUC') { // Lucretia method is different.
+      $revenue = round(floatval(DB::table('product_transfer')
+        ->selectSum('grand_total', 'total')
+        ->where('warehouse_id_from', $warehouse->id)
+        ->where("created_at BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'")
+        ->getRow()->total) ?? 0);
+
+      for ($a = $firstDate; $a <= $lastDate; $a++) {
+        $dt       = prependZero($a);
+        $dtDaily  = new DateTime("{$ymPeriod}-{$dt}");
+
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+
+        if (!$overTime) {
+          $dailyRevenue = round(floatval(DB::table('product_transfer')
+            ->selectSum('grand_total', 'total')
+            ->where('warehouse_id_from', $warehouse->id)
+            ->where("created_at LIKE '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $dailyRevenue = 0;
+        }
+
+        $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+          'start_date'  => $beginDate->format('Y-m-d'),
+          'end_date'    => "{$ymPeriod}-{$dt}"
+        ]); // sql
+
+        if (!$overTime) {
+          $piutang  = round(floatval(DB::table('product_transfer')
+            ->selectSum('(grand_total - paid)', 'total')
+            ->where('warehouse_id_from', $warehouse->id)
+            ->where("created_at BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $piutang = 0;
+        }
+
+        $dailyData[] = [
+          'revenue'     => $dailyRevenue,
+          'stock_value' => $stockValue,
+          'piutang'     => $piutang
+        ];
+      }
+    } else { // All warehouses except Lucretia.
+      $sale = DB::table('sales')
+        ->selectSum('grand_total', 'total')
+        ->where('biller_id', $biller->id)
+        ->where("date BETWEEN '{$startDate->format('Y-m-d')} 00:00:00' AND '{$endDate->format('Y-m-d')} 23:59:59'");
+
+      // I/O MANIP: Tanggal lebih dari 2023-01-01 00:00:00, maka jangan include sale.status = need_payment.
+      if (strtotime($startDate->format('Y-m-d')) >= strtotime('2023-01-01 00:00:00') || strtotime($endDate->format('Y-m-d')) >= strtotime('2023-01-01 00:00:00')) {
+        $sale->notLike('status', 'need_payment', 'none');
+      }
+
+      $revenue = round(floatval($sale->getRow()->total) ?? 0);
+
+      for ($a = $firstDate; $a <= $lastDate; $a++) {
+        $dt = prependZero($a);
+        $dtDaily = new DateTime("{$ymPeriod}-{$dt}");
+
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+
+        if (!$overTime) {
+          $dailyRevenue = round(floatval(DB::table('sales')
+            ->selectSum('grand_total', 'total')
+            ->notLike('status', 'need_payment')
+            ->where('biller_id', $biller->id)
+            ->where("date LIKE '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $dailyRevenue = 0;
+        }
+
+        if ($warehouse) {
+          $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+            'start_date'  => $beginDate->format('Y-m-d'),
+            'end_date'    => "{$ymPeriod}-{$dt}"
+          ]); // sql
+        } else {
+          $stockValue = 0;
+        }
+
+        if (!$overTime) {
+          $piutang  = round(floatval(DB::table('sales')
+            ->selectSum('balance', 'total')
+            ->notLike('payment_status', 'paid')
+            ->where('biller_id', $biller->id)
+            ->whereIn('status', ['waiting_production', 'completed_partial', 'completed'])
+            ->where("date BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $piutang = 0;
+        }
+
+        $dailyData[] = [
+          'revenue'     => $dailyRevenue,
+          'stock_value' => $stockValue,
+          'piutang'     => $piutang
+        ];
+      }
+    }
+
+    // $activeDays     = intval($startDate->diff($currentDate)->format('%d'));
+    $daysInMonth    = getDaysInMonth($startDate->format('Y'), $startDate->format('n'));
+    $averageRevenue = ($revenue / $activeDays);
+
+    $dailyPerformanceData[] = [
+      'biller_id'   => $biller->id,
+      'biller'      => $biller->name,
+      'avg_revenue' => round($averageRevenue),
+      'forecast'    => round($averageRevenue * $daysInMonth),
+      'revenue'     => round($revenue), // total sales even not paid.
+      'target'      => ($billerJS->target ?? 0), // set on biller
+      'daily_data'  => $dailyData // [['revenue' => 100, 'stock_value' => 200, 'piutang' => 300]]
+    ];
+  }
+
+  return $dailyPerformanceData;
 }
 
 /**

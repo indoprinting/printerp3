@@ -230,8 +230,8 @@ class Finance extends BaseController
         bank_mutations.note, bank_mutations.amount, biller.name AS biller_name,
         creator.fullname, bank_mutations.status, bank_mutations.created_at,
         bank_mutations.attachment")
-      ->join('banks bankfrom', 'bankfrom.id = bank_mutations.from_bank_id', 'left')
-      ->join('banks bankto', 'bankto.id = bank_mutations.to_bank_id', 'left')
+      ->join('banks bankfrom', 'bankfrom.id = bank_mutations.bankfrom_id', 'left')
+      ->join('banks bankto', 'bankto.id = bank_mutations.bankto_id', 'left')
       ->join('biller', 'biller.id = bank_mutations.biller_id', 'left')
       ->join('users creator', 'creator.id = bank_mutations.created_by', 'left')
       ->editColumn('id', function ($data) {

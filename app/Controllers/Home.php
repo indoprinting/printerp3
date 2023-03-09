@@ -507,6 +507,7 @@ class Home extends BaseController
     $billers    = getGet('biller');
     $warehouses = getGet('warehouse');
     $types      = getGet('type');
+    $limit      = getGet('limit');
 
     switch ($mode) {
       case 'bank':
@@ -518,8 +519,13 @@ class Home extends BaseController
         }
 
         $q = Bank::select("id, (CASE WHEN number IS NOT NULL THEN CONCAT(name, ' (', number, ')') ELSE name END) text")
-          ->where('active', 1)
-          ->limit(10);
+          ->where('active', 1);
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -558,8 +564,13 @@ class Home extends BaseController
         break;
       case 'biller':
         $q = Biller::select("id, name text")
-          ->where('active', 1)
-          ->limit(10);
+          ->where('active', 1);
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -579,8 +590,13 @@ class Home extends BaseController
 
         break;
       case 'customer':
-        $q = Customer::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
-          ->limit(10);
+        $q = Customer::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text");
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -603,8 +619,13 @@ class Home extends BaseController
         break;
       case 'expense':
         if ($submode == 'category') {
-          $q = ExpenseCategory::select("id, name text")
-            ->limit(10);
+          $q = ExpenseCategory::select("id, name text");
+
+          if ($limit) {
+            $q->limit(intval($limit));
+          } else {
+            $q->limit(10); // Default 10
+          }
 
           if ($term && is_string($term)) {
             $q->groupStart()
@@ -625,8 +646,13 @@ class Home extends BaseController
         break;
       case 'product':
         $q = Product::select("id, CONCAT('(', code, ') ', name) text")
-          ->where('active', 1)
-          ->limit(10);
+          ->where('active', 1);
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -654,8 +680,13 @@ class Home extends BaseController
 
         break;
       case 'supplier':
-        $q = Supplier::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
-          ->limit(10);
+        $q = Supplier::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ");
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -676,8 +707,13 @@ class Home extends BaseController
         break;
       case 'user':
         $q = User::select("id, fullname text")
-          ->where('active', 1)
-          ->limit(10);
+          ->where('active', 1);
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -707,8 +743,13 @@ class Home extends BaseController
 
         break;
       case 'usergroup':
-        $q = UserGroup::select("id, name text")
-          ->limit(10);
+        $q = UserGroup::select("id, name text");
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -731,8 +772,13 @@ class Home extends BaseController
         $q = Voucher::select("id, code text")
           ->where('quota > 0')
           ->where("valid_from < '{$currentDate}'")
-          ->where("valid_to > '{$currentDate}'")
-          ->limit(10);
+          ->where("valid_to > '{$currentDate}'");
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()
@@ -753,8 +799,13 @@ class Home extends BaseController
         break;
       case 'warehouse':
         $q = Warehouse::select("id, name text ")
-          ->where('active', 1)
-          ->limit(10);
+          ->where('active', 1);
+
+        if ($limit) {
+          $q->limit(intval($limit));
+        } else {
+          $q->limit(10); // Default 10
+        }
 
         if ($term && is_string($term)) {
           $q->groupStart()

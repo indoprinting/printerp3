@@ -196,6 +196,13 @@ $(document).ready(function () {
     e.preventDefault();
 
     let url = this.href;
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
 
     Swal.fire({
       icon: 'warning',
@@ -204,6 +211,10 @@ $(document).ready(function () {
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
+        this.dataset.progress = 'true';
+
+        $(fa).removeClass(faClass).addClass(faClassProgress);
+
         $.ajax({
           data: {
             __: __
@@ -214,6 +225,8 @@ $(document).ready(function () {
               text: xhr.responseJSON.message,
               title: lang.App.failed
             });
+
+            $(fa).removeClass(faClassProgress).addClass(faClass);
           },
           method: 'POST',
           success: (data) => {
@@ -222,6 +235,8 @@ $(document).ready(function () {
               text: data.message,
               title: lang.App.success
             });
+
+            $(fa).removeClass(faClassProgress).addClass(faClass);
 
             if (typeof erp.table !== 'undefined') erp.table.draw(false);
             if (typeof erp.modalTable !== 'undefined') erp.modalTable.draw(false);

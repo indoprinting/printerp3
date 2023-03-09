@@ -52,7 +52,6 @@
                 <div class="form-group">
                   <label for="category"><?= lang('App.category') ?> *</label>
                   <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
-                    <option value=""></option>
                     <?php foreach (\App\Models\ExpenseCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
                       <option value="<?= $excat->id ?>"><?= $excat->name ?></option>
                     <?php endforeach; ?>
@@ -112,6 +111,8 @@
   })();
 
   $(document).ready(function() {
+    erp.select2.bank.biller = [0];
+
     let editor = new Quill('#editor', {
       theme: 'snow'
     });
@@ -133,6 +134,8 @@
     });
 
     $('#bank').change(function() {
+      if (!this.value) return false;
+
       $.ajax({
         success: (data) => {
           $('#bankbalance').val(formatCurrency(data.data));
@@ -140,6 +143,14 @@
         url: base_url + '/finance/bank/balance/' + this.value
       })
     });
+
+    $('#biller').change(function() {
+      erp.select2.bank.biller = [this.value];
+    });
+
+    if (erp.biller.id) {
+      preSelect2('biller', '#biller', erp.biller.id);
+    }
 
     initModalForm({
       form: '#form',

@@ -706,6 +706,7 @@ async function preSelect2(mode, elm, id) {
       }
     } else if (isString(id) || isNumber(id)) {
       params = 'term=' + id;
+      params += '&limit=1';
     } else {
       reject(`id type is ${typeof id} is unacceptable.`);
       return false;

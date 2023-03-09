@@ -52,9 +52,8 @@
                 <div class="form-group">
                   <label for="category"><?= lang('App.category') ?> *</label>
                   <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style=" width:100%">
-                    <option value=""></option>
                     <?php foreach (\App\Models\ExpenseCategory::select('*')->orderBy('name', 'ASC')->get() as $excat) : ?>
-                      <option value="<?= $excat->code ?>"><?= $excat->name ?></option>
+                      <option value="<?= $excat->id ?>"><?= $excat->name ?></option>
                     <?php endforeach; ?>
                   </select>
                 </div>
@@ -83,7 +82,7 @@
             <div class="row">
               <div class="col-md-12 text-center">
                 <div class="form-group">
-                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300xp">
+                  <img class="attachment-preview" src="<?= base_url('assets/app/images/picture.png') ?>" style="max-width:300xp; width:100%">
                 </div>
               </div>
             </div>
@@ -112,6 +111,8 @@
   })();
 
   $(document).ready(function() {
+    erp.select2.bank.biller = [0];
+
     let editor = new Quill('#editor', {
       theme: 'snow'
     });
@@ -141,10 +142,18 @@
       })
     });
 
+    $('.attachment-preview').prop('src', '<?= base_url('attachment/' . $expense->attachment) ?>');
+
+    $('#biller').change(function() {
+      erp.select2.bank.biller = [this.value];
+    });
+
     editor.root.innerHTML = `<?= $expense->note ?>`;
-    $('#biller').val('<?= $expense->biller ?>').trigger('change');
-    $('#bank').val('<?= $expense->bank ?>').trigger('change');
-    $('#category').val('<?= $expense->category ?>').trigger('change');
+
+    $('#category').val('<?= $expense->category_id ?>').trigger('change');
+    preSelect2('bank', '#bank', '<?= $expense->bank_id ?>').catch(err => console.warn(err));
+    preSelect2('biller', '#biller', '<?= $expense->biller_id ?>').catch(err => console.warn(err));
+    preSelect2('supplier', '#supplier', '<?= $expense->supplier_id ?>').catch(err => console.warn(err));
 
     initModalForm({
       form: '#form',

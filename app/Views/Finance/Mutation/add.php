@@ -130,6 +130,8 @@
     });
 
     $('#bankfrom').change(function() {
+      if (!this.value) return false;
+
       let bankTo = $('#bankto').val();
 
       if (bankTo) {
@@ -150,6 +152,8 @@
     });
 
     $('#bankto').change(function() {
+      if (!this.value) return false;
+
       let bankFrom = $('#bankfrom').val();
 
       if (bankFrom) {

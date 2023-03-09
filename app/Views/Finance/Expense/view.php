@@ -23,16 +23,16 @@
         </tr>
         <tr>
           <td><?= lang('App.bankaccount') ?></td>
-          <?php $bank = \App\Models\Bank::getRow(['code' => $expense->bank]) ?>
+          <?php $bank = \App\Models\Bank::getRow(['id' => $expense->bank_id]) ?>
           <td><?= ($bank->number ? $bank->name . " ({$bank->number})" : $bank->name) ?></td>
         </tr>
         <tr>
           <td><?= lang('App.biller') ?></td>
-          <td><?= \App\Models\Biller::getRow(['code' => $expense->biller])->name ?></td>
+          <td><?= \App\Models\Biller::getRow(['id' => $expense->biller_id])->name ?></td>
         </tr>
         <tr>
           <td><?= lang('App.category') ?></td>
-          <td><?= \App\Models\ExpenseCategory::getRow(['code' => $expense->category])->name ?></td>
+          <td><?= \App\Models\ExpenseCategory::getRow(['id' => $expense->category_id])->name ?></td>
         </tr>
         <tr>
           <td><?= lang('App.amount') ?></td>
@@ -93,6 +93,12 @@
           <tr>
             <td><?= lang('App.updatedby') ?></td>
             <td><?= \App\Models\User::getRow(['id' => $expense->created_by])->fullname ?></td>
+          </tr>
+        <?php endif; ?>
+        <?php if ($expense->attachment) : ?>
+          <tr>
+            <td><?= lang('App.attachment') ?></td>
+            <td><img src="<?= base_url('attachment/' . $expense->attachment) ?>" style="max-width:300px; width:100%"></td>
           </tr>
         <?php endif; ?>
       </tbody>

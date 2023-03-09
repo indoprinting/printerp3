@@ -132,6 +132,8 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    $('#amount').val(formatCurrency('<?= $mutation->amount ?>'));
+
     $('#bankfrom').change(function() {
       let bankTo = $('#bankto').val();
 

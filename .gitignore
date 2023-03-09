@@ -125,8 +125,11 @@ nb-configuration.xml
 /.phpunit.*.cache
 
 # Acme-Challenge
-/.well-known/
+.well-known/
 
 # Custom
 composer.phar
 .user.ini
+
+node_modules/
+tests/
