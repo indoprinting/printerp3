@@ -11,25 +11,19 @@ class Expense
    */
   public static function add(array $data)
   {
-    if (isset($data['bank'])) {
-      $bank = Bank::getRow(['code' => $data['bank']]);
-      $data['bank_id'] = $bank->id;
+    if (!isset($data['bank_id'])) {
+      setLastError('Bank is empty.');
+      return false;
     }
 
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
+    if (!isset($data['biller_id'])) {
+      setLastError('Biller is empty.');
+      return false;
     }
 
-    if (isset($data['category'])) {
-      $category = ExpenseCategory::getRow(['code' => $data['category']]);
-      $data['category_id'] = $category->id;
-    }
-
-    if (isset($data['supplier'])) {
-      $supplier = Supplier::getRow(['id' => $data['supplier']]);
-      $data['supplier_id'] = $supplier->id;
-      unset($data['supplier']);
+    if (!isset($data['category_id'])) {
+      setLastError('Category is empty.');
+      return false;
     }
 
     $data = setCreatedBy($data);
@@ -49,7 +43,7 @@ class Expense
 
     setLastError(DB::error()['message']);
 
-    return FALSE;
+    return false;
   }
 
   /**
@@ -90,7 +84,7 @@ class Expense
   /**
    * Select Expense.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('expenses')->select($columns, $escape);
   }
@@ -100,26 +94,6 @@ class Expense
    */
   public static function update(int $id, array $data)
   {
-    if (isset($data['bank'])) {
-      $bank = Bank::getRow(['code' => $data['bank']]);
-      $data['bank_id'] = $bank->id;
-    }
-
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
-    if (isset($data['category'])) {
-      $category = ExpenseCategory::getRow(['code' => $data['category']]);
-      $data['category_id'] = $category->id;
-    }
-
-    if (isset($data['supplier'])) {
-      $supplier = Supplier::getRow(['id' => $data['supplier']]);
-      $data['supplier_id'] = $supplier->id;
-    }
-
     $data = setUpdatedBy($data);
 
     DB::table('expenses')->update($data, ['id' => $id]);

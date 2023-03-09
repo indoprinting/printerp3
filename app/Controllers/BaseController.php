@@ -65,10 +65,13 @@ class BaseController extends Controller
 		 * Reset last error. This is global error message if error occurred.
 		 * Use getLastError() to get last error message.
 		 */
-		setLastError();
+
+		if (!isCLI()) {
+			setLastError();
+		}
 
 		// Force to HTTPS connection.
-		if (!isSecure()) {
+		if (!isSecure() && !isCLI()) {
 			redirect()->to('https://' . $_SERVER['HTTP_HOST']);
 		}
 

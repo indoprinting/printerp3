@@ -1,4 +1,10 @@
 
+export class Notification {
+  static reload() {
+
+  }
+}
+
 export default class Ridintek {
   tbody = null;
 
@@ -600,7 +606,7 @@ export class TableFilter {
           }
         }
 
-        if (typeof erp.table != 'undefined') {
+        if (erp?.table) {
           erp.table.draw(false);
         }
 
@@ -616,7 +622,7 @@ export class TableFilter {
           }
         }
 
-        if (typeof erp.table != 'undefined') {
+        if (erp?.table) {
           erp.table.draw(false);
         }
 

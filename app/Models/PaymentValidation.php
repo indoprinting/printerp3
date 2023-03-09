@@ -197,28 +197,23 @@ class PaymentValidation
 
     // Manual Validation.
     if (isset($option['manual']) && $option['manual']) {
-      if (empty($option['reference'])) {
-        setLastError('Reference is empty.');
-        return false;
-      }
-
       if (empty($option['amount'])) {
         setLastError('Amount is empty.');
         return false;
       }
 
-      if (empty($option['bank'])) {
+      if (empty($option['bank_id'])) {
         setLastError('Bank is empty.');
         return false;
       }
 
-      if (empty($option['biller'])) {
+      if (empty($option['biller_id'])) {
         setLastError('Biller is empty.');
         return false;
       }
 
       $date = ($option['date'] ?? date('Y-m-d H:i:s'));
-      $bank = Bank::getRow(['code' => $option['bank']]);
+      $bank = Bank::getRow(['id' => $option['bank_id']]);
 
       if (!$bank) {
         setLastError('Bank is not found.');
@@ -227,7 +222,10 @@ class PaymentValidation
 
       $pv = self::select('*')
         ->whereIn('status', ['expired', 'pending'])
-        ->where('reference', $option['reference'])
+        ->groupStart()
+        ->where('mutation_id', $option['mutation_id'])
+        ->orWhere('sale_id', $option['sale_id'])
+        ->groupEnd()
         ->orderBy('id', 'DESC')
         ->getRow();
 
@@ -349,7 +347,6 @@ class PaymentValidation
             $bank = Bank::getRow(['number' => $mb->account_number, 'biller_id' => $pv->biller_id]);
 
             $pvData = [
-              'bank'              => $bank->code,
               'bank_id'           => $bank->id,
               'transaction_at'    => $dm->created,
               'transaction_date'  => $dm->created,
@@ -389,12 +386,12 @@ class PaymentValidation
               }
 
               $payment = [
-                'amount'          => $pv->amount,
-                'method'          => 'Transfer',
-                'bank'            => $bank->code,
-                'created_at'      => $createdAt,
-                'created_by'      => $pv->created_by,
-                'type'            => 'received'
+                'amount'      => $pv->amount,
+                'method'      => 'Transfer',
+                'bank_id'     => $bank->id,
+                'created_at'  => $createdAt,
+                'created_by'  => $pv->created_by,
+                'type'        => 'received'
               ];
 
               if (isset($option['attachment'])) {

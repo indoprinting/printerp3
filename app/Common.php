@@ -364,6 +364,24 @@ function getDaysInMonth($year, $month)
 }
 
 /**
+ * Get excerpt text.
+ * @param string $text Text to excerpt.
+ * @param int $length Return text length include '...'. Default: 20
+ */
+function getExcerpt($text, int $length = 20)
+{
+  $text_len = strlen($text);
+
+  if ($length < 3 || !$length) $length = 3;
+
+  if ($text_len <= ($length - 3)) {
+    return $text;
+  }
+
+  return substr($text, 0, $length - 3) . '...';
+}
+
+/**
  * Fetch an item from GET data.
  */
 function getGet($name)

@@ -34,7 +34,10 @@
     const permissions = JSON.parse(atob('<?= $permission64 ?>'));
     // ERP namespace.
     window.erp = {
-      biller: '<?= session('login')->biller ?>',
+      biller: {
+        code: '<?= session('login')->biller ?>',
+        id: '<?= session('login')->biller_id ?>'
+      },
       chart: {},
       modal: [], // Stackable modal.
       sale: {
@@ -58,7 +61,10 @@
         warehouse: {}
       },
       table: null,
-      warehouse: '<?= session('login')->warehouse ?>',
+      warehouse: {
+        code: '<?= session('login')->warehouse ?>',
+        id: '<?= session('login')->biller_id ?>'
+      }
     };
   </script>
 </head>
@@ -97,10 +103,10 @@
                 <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
                 <div class="input-group-append">
                   <button class="btn btn-navbar" type="submit">
-                    <i class="fas fa-search"></i>
+                    <i class="fad fa-search"></i>
                   </button>
                   <button class="btn btn-navbar" type="button" data-widget="navbar-search">
-                    <i class="fas fa-times"></i>
+                    <i class="fad fa-times"></i>
                   </button>
                 </div>
               </div>
@@ -110,8 +116,8 @@
 
         <!-- Notifications Dropdown Menu -->
         <li class="nav-item">
-          <a class="nav-link" href="<?= base_url('profile/notification') ?>" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-            <i class="far fa-info-circle"></i>
+          <a class="nav-link" href="<?= base_url('profile/notification') ?>" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <i class="fad fa-bell"></i>
           </a>
         </li>
 
@@ -456,6 +462,16 @@
                 </ul>
               </li>
             <?php endif; ?>
+            <!-- Notification -->
+            <?php if (hasAccess('Notification.View')) : ?>
+              <li class="nav-item">
+                <a href="<?= base_url('notification') ?>" class="nav-link" data-action="link" data-slug="notification">
+                  <i class="nav-icon fad fa-bell" style="color:darkorange"></i>
+                  <p><?= lang('App.notification') ?>
+                  </p>
+                </a>
+              </li>
+            <?php endif; ?>
             <!-- Procurement -->
             <?php if (hasAccess('ProductPurchase.View')) : ?>
               <li class="nav-item">
@@ -618,14 +634,14 @@
             <?php if (hasAccess('Setting.Edit')) : ?>
               <li class="nav-item">
                 <a href="<?= base_url('setting') ?>" class="nav-link" data-slug="setting">
-                  <i class="nav-icon fad fa-cogs"></i>
+                  <i class="nav-icon fad fa-cogs" style="color:#80ff40"></i>
                   <p><?= lang('App.setting') ?> <i class="fad fa-angle-right right"></i></p>
                 </a>
                 <ul class="nav nav-treeview">
                   <?php if (hasAccess('All')) : ?>
                     <li class="nav-item">
                       <a href="<?= base_url('setting/permission') ?>" class="nav-link" data-action="link" data-slug="permission">
-                        <i class="nav-icon fad fa-user-lock"></i>
+                        <i class="nav-icon fad fa-user-lock" style="color:#ff4040"></i>
                         <p><?= lang('App.permission') ?></p>
                       </a>
                     </li>
@@ -633,6 +649,17 @@
                 </ul>
               </li>
             <?php endif; ?>
+
+            <!-- Ticket -->
+            <?php if (hasAccess('Ticket.View')) : ?>
+              <li class="nav-item">
+                <a href="#" class="nav-link" data-action="link" data-slug="ticket">
+                  <i class="nav-icon fad fa-ticket"></i>
+                  <p><?= lang('App.ticket') ?></p>
+                </a>
+              </li>
+            <?php endif; ?>
+
             <!-- TrackingPOD -->
             <?php if (hasAccess('TrackingPOD.View')) : ?>
               <li class="nav-item">
@@ -784,8 +811,8 @@
 
   <!-- jQuery -->
   <script src="<?= base_url() ?>/assets/modules/jquery/jquery.min.js"></script>
-  <!-- Bootstrap 4 -->
-  <script src="<?= base_url() ?>/assets/modules/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- AdminLTE App -->
+  <script src="<?= base_url() ?>/assets/dist/js/adminlte.min.js"></script>
   <!-- Application -->
   <script src="<?= base_url() ?>/assets/modules/alertifyjs/alertify.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/bootstrap-validate/bootstrap-validate.js"></script>
@@ -800,6 +827,9 @@
   <script src="<?= base_url() ?>/assets/modules/select2/js/select2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/sweetalert2/sweetalert2.min.js"></script>
   <script src="<?= base_url() ?>/assets/modules/toastr/toastr.min.js"></script>
+  <script src="<?= base_url() ?>/assets/modules/socket.io/socket.io.min.js"></script>
+  <!-- Bootstrap 4 -->
+  <script src="<?= base_url() ?>/assets/modules/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script>
     /**
      * Not Used. Required by google maps.
@@ -807,10 +837,12 @@
     function initmap() {
 
     }
+
+    (function() {
+
+    })();
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=<?= env('API_GMAPS') ?>&libraries=places&v=weekly&callback=initmap"></script>
-  <!-- AdminLTE App -->
-  <script src="<?= base_url() ?>/assets/dist/js/adminlte.min.js"></script>
   <!-- Custom -->
   <script src="<?= base_url() ?>/assets/app/js/app.js?v=<?= $resver ?>"></script>
   <script src="<?= base_url() ?>/assets/app/js/common.js?v=<?= $resver ?>"></script>

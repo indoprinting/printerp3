@@ -370,6 +370,10 @@ $(document).ready(function () {
     });
   });
 
+  $(document).on('click', '[data-action="notification"]', function () {
+
+  });
+
   $(document).on('click', '.change-locale', function (e) {
     e.preventDefault();
 

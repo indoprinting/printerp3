@@ -21,12 +21,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
+                  <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -35,11 +30,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bank"><?= lang('App.bankaccount') ?> *</label>
-                  <select id="bank" name="bank" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <select id="bank" name="bank" class="select-bank" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -74,10 +65,6 @@
                 <div class="form-group">
                   <label for="supplier"><?= lang('App.supplier') ?></label>
                   <select id="supplier" name="supplier" class="select-supplier" data-placeholder="<?= lang('App.supplier') ?>" style="width:100%">
-                    <?php $supplier = \App\Models\Supplier::getRow(['id' => $expense->supplier_id]); ?>
-                    <?php if ($supplier) : ?>
-                      <option value="<?= $supplier->id ?>"><?= (empty($supplier->company) ? $supplier->name : $supplier->name . ' (' . $supplier->company . ')') ?></option>
-                    <?php endif; ?>
                   </select>
                 </div>
               </div>
@@ -87,7 +74,7 @@
                 <div class="form-group">
                   <label for="attachment"><?= lang('App.attachment') ?></label>
                   <div class="custom-file">
-                    <input type="file" id="attachment" name="attachment" class="custom-file-input">
+                    <input id="attachment" name="attachment" class="custom-file-input" type="file">
                     <label for="attachment" class="custom-file-label"><?= lang('App.choosefile') ?></label>
                   </div>
                 </div>

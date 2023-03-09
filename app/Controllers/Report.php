@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\Notification;
+
 class Report extends BaseController
 {
   public function dailyperformance()
@@ -24,5 +26,16 @@ class Report extends BaseController
 
   public function getDailyPerformance()
   {
+  }
+
+  public static function callback($response = null)
+  {
+    Notification::add(['note' => 'Report has been created: ' . $response]);
+  }
+
+  public static function excel()
+  {
+    // sleep(5);
+    return 'https://erp.indoprinting.co.id/report/main.xlsx';
   }
 }

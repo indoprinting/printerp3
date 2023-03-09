@@ -54,6 +54,18 @@ class Auth
           $row->avatar = ($row->gender == 'male' ? 'avatarmale' : 'avatarfemale');
         }
 
+        if ($row->biller) {
+          $row->biller_id = Biller::getRow(['code' => $row->biller])->id;
+        } else {
+          $row->biller_id = null;
+        }
+
+        if ($row->warehouse) {
+          $row->warehouse_id = Warehouse::getRow(['code' => $row->warehouse])->id;
+        } else {
+          $row->warehouse_id = null;
+        }
+
         unset($attachment);
 
         if (!empty($row->groups)) {

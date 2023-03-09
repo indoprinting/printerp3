@@ -11,11 +11,6 @@ class Bank
    */
   public static function add(array $data)
   {
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
     DB::table('banks')->insert($data);
 
     if (DB::error()['code'] == 0) {
@@ -62,7 +57,7 @@ class Bank
       return $res->balance;
     }
 
-    return FALSE;
+    return false;
   }
 
   /**
@@ -103,7 +98,7 @@ class Bank
   /**
    * Select Bank.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('banks')->select($columns, $escape);
   }
@@ -123,13 +118,12 @@ class Bank
 
     if ($banks) {
       foreach ($banks as $bank) {
-        $bank->balance = self::balance((int)$bank->id);
-        self::update((int)$bank->id, ['amount' => $bank->balance]);
+        self::update((int)$bank->id, ['amount' => self::balance((int)$bank->id)]);
       }
 
-      return TRUE;
+      return true;
     }
-    return FALSE;
+    return false;
   }
 
   /**
@@ -137,11 +131,6 @@ class Bank
    */
   public static function update(int $id, array $data)
   {
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
     DB::table('banks')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {

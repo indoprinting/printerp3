@@ -257,11 +257,11 @@
     });
 
     $('#biller').change(function() {
-      erp.user.biller = [this.value];
+      erp.select2.user.biller = [this.value];
     });
 
     $('#warehouse').change(function() {
-      erp.operator.warehouse = [this.value];
+      erp.select2.operator.warehouse = [this.value];
     });
 
     $('#draft').on('change', function() {
@@ -274,9 +274,9 @@
 
     $('#rawmaterial').on('change', function() {
       if (this.checked) {
-        erp.product.type.push('standard');
+        erp.select2.product.type.push('standard');
       } else {
-        erp.product.type.pop();
+        erp.select2.product.type.pop();
       }
     });
 

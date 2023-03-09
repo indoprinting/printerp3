@@ -5,6 +5,7 @@
   </button>
 </div>
 <div class="modal-body">
+
   <form method="post" enctype="multipart/form-data" id="form">
     <?= csrf_field() ?>
     <div class="row">
@@ -15,18 +16,13 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="date"><?= lang('App.date') ?></label>
-                  <input type="datetime-local" id="date" name="date" class="form-control form-control-border form-control-sm" value="<?= dateTimeJS($mutation->date) ?>">
+                  <input type="datetime-local" id="date" name="date" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style=" width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
+                  <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style=" width:100%">
                   </select>
                 </div>
               </div>
@@ -35,7 +31,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="amount"><?= lang('App.amount') ?> *</label>
-                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="<?= $mutation->amount ?>">
+                  <input id="amount" name="amount" class="form-control form-control-border form-control-sm currency" value="0">
                 </div>
               </div>
               <div class="col-md-6">
@@ -71,11 +67,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bankfrom"><?= lang('App.from') ?> *</label>
-                  <select id="bankfrom" name="bankfrom" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <select id="bankfrom" name="bankfrom" class="select-bank-from" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -90,11 +82,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="bankto"><?= lang('App.to') ?> *</label>
-                  <select id="bankto" name="bankto" class="select" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Bank::get(['active' => 1]) as $bk) : ?>
-                      <option value="<?= $bk->code ?>"><?= (empty($bk->number) ? $bk->name : "{$bk->name} ({$bk->number})") ?></option>
-                    <?php endforeach; ?>
+                  <select id="bankto" name="bankto" class="select-bank-to" data-placeholder="<?= lang('App.bankaccount') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -133,6 +121,8 @@
   $(document).ready(function() {
     let bankToVal = '';
     let bankFromVal = '';
+
+    $('#date').val('<?= dateTimeJS($mutation->date) ?>');
 
     let editor = new Quill('#editor', {
       theme: 'snow'
@@ -183,9 +173,10 @@
     });
 
     editor.root.innerHTML = '<?= $mutation->note ?>';
-    $('#biller').val('<?= $mutation->biller ?>').trigger('change');
-    $('#bankfrom').val('<?= $mutation->bankfrom ?>').trigger('change');
-    $('#bankto').val('<?= $mutation->bankto ?>').trigger('change');
+
+    preSelect2('biller', '#biller', '<?= $mutation->biller_id ?>');
+    preSelect2('bank', '#bankfrom', '<?= $mutation->bankfrom_id ?>');
+    preSelect2('bank', '#bankto', '<?= $mutation->bankto_id ?>');
 
     initModalForm({
       form: '#form',

@@ -166,32 +166,5 @@
 
       erp.chart.targetRevenue.setOption(response.data);
     });
-
-    let hChart = setInterval(async () => {
-      if ($('#monthly-sales-chart').length == 0) {
-        console.log('Auto update chart is disabled.');
-        clearInterval(hChart);
-        return false;
-      }
-
-      $('#monthly-sales-loader').fadeIn();
-      $('#target-revenue-loader').fadeIn();
-
-      fetch(base_url + '/chart/monthlySales', {
-        method: 'GET'
-      }).then(response => response.json()).then((response) => {
-        $('#monthly-sales-loader').fadeOut();
-
-        erp.chart.monthlySales.setOption(response.data);
-      });
-
-      fetch(base_url + '/chart/targetRevenue', {
-        method: 'GET'
-      }).then(response => response.json()).then((response) => {
-        $('#target-revenue-loader').fadeOut();
-
-        erp.chart.targetRevenue.setOption(response.data);
-      });
-    }, 1000 * 60);
   });
 </script>

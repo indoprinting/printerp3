@@ -11,6 +11,7 @@ return [
   'completed'           => 'Completed',
   'completed_partial'   => 'Completed Partial',
   'confirmed'           => 'Confirmed',
+  'danger'              => 'Danger',
   'decrease'            => 'Decrease',
   'delivered'           => 'Delivered',
   'draft'               => 'Draft',
@@ -23,6 +24,7 @@ return [
   'good'                => 'Good',
   'inactive'            => 'Inactive',
   'increase'            => 'Increase',
+  'info'                => 'Info',
   'installed'           => 'Installed',
   'installed_partial'   => 'Installed Partial',
   'need_approval'       => 'Need Approval',
@@ -45,9 +47,11 @@ return [
   'serving'             => 'Serving',
   'skipped'             => 'Skipped',
   'slow'                => 'Slow',
+  'success'             => 'Success',
   'trouble'             => 'Trouble',
   'verified'            => 'Verified',
   'waiting'             => 'Waiting',
   'waiting_production'  => 'Waiting Production',
-  'waiting_transfer'    => 'Waiting Transfer'
+  'waiting_transfer'    => 'Waiting Transfer',
+  'warning'             => 'Warning'
 ];

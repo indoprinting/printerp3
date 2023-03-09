@@ -33,7 +33,7 @@ class Finance extends BaseController
     $dt
       ->select("banks.id AS id, banks.code, banks.name, banks.number,
       banks.holder, banks.type, banks.amount, biller.name AS biller_name, banks.bic, banks.active")
-      ->join('biller', 'biller.code = banks.biller', 'left')
+      ->join('biller', 'biller.id = banks.biller_id', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -69,7 +69,7 @@ class Finance extends BaseController
         $type = ($data['active'] == 1 ? 'success' : 'danger');
         $status = ($data['active'] == 1 ? lang('App.active') : lang('App.inactive'));
 
-        return "<div class=\"badge bg-gradient-{$type}\">{$status}</div>";
+        return "<div class=\"badge bg-gradient-{$type} p-2\">{$status}</div>";
       })
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
@@ -91,13 +91,13 @@ class Finance extends BaseController
       ->select("expenses.id AS id, expenses.date, expenses.reference, biller.name AS biller_name,
         expense_categories.name AS category_name, expenses.amount, expenses.note,
         (CASE
-          WHEN banks.number IS NOT NULL THEN CONCAT(banks.name, ' (', banks.number, ')')
+          WHEN banks.number IS NOT null THEN CONCAT(banks.name, ' (', banks.number, ')')
           ELSE banks.name
         END) AS bank_name,
         creator.fullname, expenses.payment_date, expenses.status, expenses.payment_status,
         suppliers.name AS supplier_name, expenses.created_at, expenses.attachment")
-      ->join('banks', 'banks.code = expenses.bank', 'left')
-      ->join('biller', 'biller.code = expenses.biller', 'left')
+      ->join('banks', 'banks.id = expenses.bank_id', 'left')
+      ->join('biller', 'biller.id = expenses.biller_id', 'left')
       ->join('expense_categories', 'expense_categories.id = expenses.category_id', 'left')
       ->join('suppliers', 'suppliers.id = expenses.supplier_id', 'left')
       ->join('users creator', 'creator.id = expenses.created_by', 'left')
@@ -166,12 +166,12 @@ class Finance extends BaseController
       ->select("incomes.id AS id, incomes.date, incomes.reference, biller.name AS biller_name,
         income_categories.name AS category_name, incomes.amount, incomes.note,
         (CASE
-          WHEN banks.number IS NOT NULL THEN CONCAT(banks.name, ' (', banks.number, ')')
+          WHEN banks.number IS NOT null THEN CONCAT(banks.name, ' (', banks.number, ')')
           ELSE banks.name
         END) AS bank_name,
         creator.fullname, incomes.created_at, incomes.attachment")
-      ->join('banks', 'banks.code = incomes.bank', 'left')
-      ->join('biller', 'biller.code = incomes.biller', 'left')
+      ->join('banks', 'banks.id = incomes.bank_id', 'left')
+      ->join('biller', 'biller.id = incomes.biller_id', 'left')
       ->join('income_categories', 'income_categories.id = incomes.category_id', 'left')
       ->join('users creator', 'creator.id = incomes.created_by', 'left')
       ->editColumn('id', function ($data) {
@@ -297,11 +297,11 @@ class Finance extends BaseController
         payment_validations.note, payment_validations.status,
         payment_validations.created_at,
         payment_validations.attachment")
-      ->join('banks', 'banks.code = payment_validations.bank', 'left')
-      ->join('biller', 'biller.code = payment_validations.biller', 'left')
-      ->join('sales', 'sales.reference = payment_validations.sale', 'left')
-      ->join('customers', 'customers.phone = sales.customer', 'left')
-      ->join('bank_mutations', 'bank_mutations.reference = payment_validations.mutation', 'left')
+      ->join('banks', 'banks.id = payment_validations.bank_id', 'left')
+      ->join('biller', 'biller.id = payment_validations.biller_id', 'left')
+      ->join('sales', 'sales.id = payment_validations.sale_id', 'left')
+      ->join('customers', 'customers.id = sales.customer_id', 'left')
+      ->join('bank_mutations', 'bank_mutations.id = payment_validations.mutation_id', 'left')
       ->join('users creator', 'creator.id = payment_validations.created_by', 'left')
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
@@ -373,7 +373,7 @@ class Finance extends BaseController
     return $this->buildPage($this->data);
   }
 
-  protected function bank_activate($id = NULL)
+  protected function bank_activate($id = null)
   {
     $bank = Bank::getRow(['id' => $id]);
 
@@ -396,14 +396,14 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'biller'  => getPost('biller'),
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'number'  => getPost('number'),
-        'holder'  => getPost('holder'),
-        'type'    => getPost('type'),
-        'bic'     => getPost('bic'),
-        'active'  => (getPost('active') == 1 ? 1 : 0)
+        'biller_id' => getPost('biller'),
+        'code'      => getPost('code'),
+        'name'      => getPost('name'),
+        'number'    => getPost('number'),
+        'holder'    => getPost('holder'),
+        'type'      => getPost('type'),
+        'bic'       => getPost('bic'),
+        'active'    => (getPost('active') == 1 ? 1 : 0)
       ];
 
       if (empty($data['code'])) {
@@ -414,7 +414,7 @@ class Finance extends BaseController
         $this->response(400, ['message' => 'Name is required.']);
       }
 
-      if (empty($data['biller'])) {
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller is required.']);
       }
 
@@ -429,16 +429,10 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $bank = Bank::getRow(['id' => $insertID]);
-
-        addActivity("Add bank {$bank->code}.", [
-          'data' => $bank
-        ]);
-
         $this->response(201, ['message' => 'Bank has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addbankaccount');
@@ -446,7 +440,7 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Bank/add', $this->data)]);
   }
 
-  protected function bank_balance($id = NULL)
+  protected function bank_balance($id = null)
   {
     if ($amount = cache('bank_balance_' . $id)) {
       $this->response(200, ['data' => floatval($amount)]);
@@ -466,13 +460,12 @@ class Finance extends BaseController
     $this->response(404, ['message' => 'Bank not found.']);
   }
 
-  protected function bank_delete($bankId = NULL)
+  protected function bank_delete($bankId = null)
   {
     checkPermission('BankAccount.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      $bank     = Bank::getRow(['id' => $bankId]);
-      $payments = Payment::get(['bank_id' => $bankId]);
+      $bank = Bank::getRow(['id' => $bankId]);
 
       if (!$bank) {
         $this->response(404, ['message' => 'Bank is not found.']);
@@ -495,21 +488,16 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        addActivity("Delete bank {$bank->code}.", [
-          'data'      => $bank,
-          'payments'  => $payments
-        ]);
-
         $this->response(200, ['message' => 'Bank has been deleted.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to delete bank.']);
   }
 
-  protected function bank_edit($id = NULL)
+  protected function bank_edit($id = null)
   {
     checkPermission('BankAccount.Edit');
 
@@ -519,16 +507,16 @@ class Finance extends BaseController
       $this->response(404, ['message' => 'Bank is not found.']);
     }
 
-    if (requestMethod() == 'POST') {
+    if (requestMethod() == 'POST' && isAJAX()) {
       $data = [
-        'biller'  => getPost('biller'),
-        'code'    => getPost('code'),
-        'name'    => getPost('name'),
-        'number'  => getPost('number'),
-        'holder'  => getPost('holder'),
-        'type'    => getPost('type'),
-        'bic'     => getPost('bic'),
-        'active'  => (getPost('active') == 1 ? 1 : 0)
+        'biller_id' => getPost('biller'),
+        'code'      => getPost('code'),
+        'name'      => getPost('name'),
+        'number'    => getPost('number'),
+        'holder'    => getPost('holder'),
+        'type'      => getPost('type'),
+        'bic'       => getPost('bic'),
+        'active'    => (getPost('active') == 1 ? 1 : 0)
       ];
 
       if (empty($data['code'])) {
@@ -539,7 +527,7 @@ class Finance extends BaseController
         $this->response(400, ['message' => 'Name is required.']);
       }
 
-      if (empty($data['biller'])) {
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller is required.']);
       }
 
@@ -554,19 +542,10 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $bankNew = Bank::getRow(['id' => $id]);
-
-        addActivity("Edit bank {$bank->code}.", [
-          'data' => [
-            'after'   => $bankNew,
-            'before'  => $bank
-          ]
-        ]);
-
-        $this->response(200, ['message' => sprintf(lang('Msg.bankEditOK'), $bank->name)]);
+        $this->response(200, ['message' => 'Bank has been updated.']);
       }
 
-      $this->response(400, ['message' => sprintf(lang('Msg.bankEditNO'), $bank->name)]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['bank'] = $bank;
@@ -575,7 +554,7 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Bank/edit', $this->data)]);
   }
 
-  protected function bank_view($id = NULL)
+  protected function bank_view($id = null)
   {
     checkPermission('BankAccount.View');
 
@@ -622,25 +601,25 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST' && isAJAX()) {
       $data = [
-        'date'      => dateTimeJS(getPost('date')),
-        'bank'      => getPost('bank'),
-        'biller'    => getPost('biller'),
-        'category'  => getPost('category'),
-        'supplier'  => getPost('supplier'),
-        'amount'    => filterDecimal(getPost('amount')),
-        'note'      => stripTags(getPost('note'))
+        'date'        => dateTimeJS(getPost('date')),
+        'bank_id'     => getPost('bank'),
+        'biller_id'   => getPost('biller'),
+        'category_id' => getPost('category'),
+        'supplier_id' => getPost('supplier'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note'))
       ];
 
-      if (empty($data['biller'])) {
+      if (empty($data['bank_id'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller is required.']);
       }
 
-      if (empty($data['category'])) {
+      if (empty($data['category_id'])) {
         $this->response(400, ['message' => 'Category is required.']);
-      }
-
-      if (empty($data['bank'])) {
-        $this->response(400, ['message' => 'Bank is required.']);
       }
 
       if (empty($data['amount'])) {
@@ -667,15 +646,10 @@ class Finance extends BaseController
           $attachment->data = base64_encode($attachment->data);
         }
 
-        addActivity("Add expense {$expense->reference}.", [
-          'data'        => $expense,
-          'attachment'  => $attachment
-        ]);
-
         $this->response(201, ['message' => 'Expense has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addexpense');
@@ -683,7 +657,7 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Expense/add', $this->data)]);
   }
 
-  protected function expense_approve($id = NULL)
+  protected function expense_approve($id = null)
   {
     checkPermission('Expense.Approval');
 
@@ -703,8 +677,8 @@ class Finance extends BaseController
         $data['status'] = 'approved';
       } else {
         $data['status'] = 'need_approval';
-        $data['approved_at'] = NULL;
-        $data['approved_by'] = NULL;
+        $data['approved_at'] = null;
+        $data['approved_by'] = null;
       }
 
       DB::transStart();
@@ -718,43 +692,25 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $newExpense = Expense::getRow(['id' => $id]);
-
         if ($data['status'] == 'approved') {
-          addActivity("Approve expense {$expense->reference}.", [
-            'data' => [
-              'after'   => $newExpense,
-              'before'  => $expense
-            ]
-          ]);
-
           $this->response(200, ['message' => 'Expense has been approved.']);
         } else {
-          addActivity("Disapprove expense {$expense->reference}.", [
-            'data' => [
-              'after'   => $newExpense,
-              'before'  => $expense
-            ]
-          ]);
-
           $this->response(200, ['message' => 'Expense has been disapproved.']);
         }
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to approve expense.']);
   }
 
-  protected function expense_delete($id = NULL)
+  protected function expense_delete($id = null)
   {
     checkPermission('Expense.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
       $expense    = Expense::getRow(['id' => $id]);
-      $attachment = Attachment::getRow(['hashname' => $expense->attachment]);
-      $payment    = Payment::getRow(['expense_id' => $expense->id]);
 
       if (!$expense) {
         $this->response(404, ['message' => 'Expense is not found.']);
@@ -774,26 +730,16 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        if ($attachment) {
-          $attachment->data = base64_encode($attachment->data);
-        }
-
-        addActivity("Delete expense {$expense->reference}.", [
-          'data'        => $expense,
-          'attachment'  => $attachment,
-          'payment'     => $payment
-        ]);
-
         $this->response(200, ['message' => 'Expense has been deleted.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to delete expense.']);
   }
 
-  protected function expense_edit($id = NULL)
+  protected function expense_edit($id = null)
   {
     checkPermission('Expense.Edit');
 
@@ -804,28 +750,26 @@ class Finance extends BaseController
     }
 
     if (requestMethod() == 'POST') {
-      $attachment = Attachment::getRow(['hashname' => $expense->attachment]);
-
       $data = [
-        'date'      => dateTimeJS(getPost('date')),
-        'bank'      => getPost('bank'),
-        'biller'    => getPost('biller'),
-        'category'  => getPost('category'),
-        'supplier'  => getPost('supplier'),
-        'amount'    => filterDecimal(getPost('amount')),
-        'note'      => stripTags(getPost('note'))
+        'date'        => dateTimeJS(getPost('date')),
+        'bank_id'     => getPost('bank'),
+        'biller_id'   => getPost('biller'),
+        'category_id' => getPost('category'),
+        'supplier_id' => getPost('supplier'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note'))
       ];
 
-      if (empty($data['biller'])) {
+      if (empty($data['bank_id'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller is required.']);
       }
 
-      if (empty($data['category'])) {
+      if (empty($data['category_id'])) {
         $this->response(400, ['message' => 'Category is required.']);
-      }
-
-      if (empty($data['bank'])) {
-        $this->response(400, ['message' => 'Bank is required.']);
       }
 
       if (empty($data['amount'])) {
@@ -844,48 +788,32 @@ class Finance extends BaseController
 
       if ($payment = Payment::getRow(['expense_id' => $id])) {
         $paymentData = [
-          'bank'    => $data['bank'],
-          'biller'  => $data['biller'],
-          'amount'  => $data['amount'],
-          'note'    => $data['note']
+          'bank_id'   => $data['bank_id'],
+          'biller_id' => $data['biller_id'],
+          'amount'    => $data['amount'],
+          'note'      => $data['note']
         ];
 
         if (isset($data['attachment'])) {
           $paymentData['attachment'] = $data['attachment'];
         }
 
-        Payment::update((int)$payment->id, $paymentData);
+        $res = Payment::update((int)$payment->id, $paymentData);
+
+        if (!$res) {
+          $this->response(400, ['message' => getLastError()]);
+        }
+
+        Bank::sync((int)$data['bank_id']);
       }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $newExpense = Expense::getRow(['id' => $id]);
-        $newAttachment = Attachment::getRow(['hashname' => $newExpense->attachment]);
-        $newPayment = Payment::getRow(['expense_id' => $id]);
-
-        $attachment->data = base64_encode($attachment->data);
-        $newAttachment->data = base64_encode($newAttachment->data);
-
-        addActivity("Edit expense {$expense->reference}.", [
-          'data' => [
-            'after'   => $newExpense,
-            'before'  => $expense
-          ],
-          'attachment' => [
-            'after'   => $newAttachment,
-            'before'  => $attachment
-          ],
-          'payment' => [
-            'after'   => $newPayment,
-            'before'  => $payment
-          ]
-        ]);
-
         $this->response(201, ['message' => 'Expense has been updated.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['expense']  = $expense;
@@ -894,7 +822,7 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Expense/edit', $this->data)]);
   }
 
-  protected function expense_view($id = NULL)
+  protected function expense_view($id = null)
   {
     checkPermission('Expense.View');
 
@@ -941,23 +869,23 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'      => dateTimeJS(getPost('date')),
-        'bank'      => getPost('bank'),
-        'biller'    => getPost('biller'),
-        'category'  => getPost('category'),
-        'amount'    => filterDecimal(getPost('amount')),
-        'note'      => stripTags(getPost('note'))
+        'date'        => dateTimeJS(getPost('date')),
+        'bank_id'     => getPost('bank'),
+        'biller_id'   => getPost('biller'),
+        'category_id' => getPost('category'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note'))
       ];
 
-      if (empty($data['biller'])) {
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller is required.']);
       }
 
-      if (empty($data['category'])) {
+      if (empty($data['category_id'])) {
         $this->response(400, ['message' => 'Category is required.']);
       }
 
-      if (empty($data['bank'])) {
+      if (empty($data['bank_id'])) {
         $this->response(400, ['message' => 'Bank is required.']);
       }
 
@@ -979,12 +907,12 @@ class Finance extends BaseController
         $income = Income::getRow(['id' => $insertID]);
 
         $paymentData = [
-          'date'    => $income->date,
-          'income'  => $income->reference,
-          'bank'    => $income->bank,
-          'biller'  => $income->biller,
-          'amount'  => $income->amount,
-          'type'    => 'received'
+          'date'      => $income->date,
+          'income_id' => $income->id,
+          'bank_id'   => $income->bank_id,
+          'biller_id' => $income->biller_id,
+          'amount'    => $income->amount,
+          'type'      => 'received'
         ];
 
         if (isset($data['attachment'])) {
@@ -1001,23 +929,10 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $attachment = Attachment::getRow(['hashname' => $income->attachment]);
-        $payment = Payment::getRow(['id' => $paymentID]);
-
-        if ($attachment) {
-          $attachment->data = base64_encode($attachment->data);
-        }
-
-        addActivity("Add income {$income->reference}.", [
-          'data'        => $income,
-          'attachment'  => $attachment,
-          'payment'     => $payment
-        ]);
-
         $this->response(201, ['message' => 'Income has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addincome');
@@ -1025,14 +940,12 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Income/add', $this->data)]);
   }
 
-  protected function income_delete($id = NULL)
+  protected function income_delete($id = null)
   {
     checkPermission('Income.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      $income     = Income::getRow(['id' => $id]);
-      $attachment = Attachment::getRow(['hashname' => $income->attachment]);
-      $payment    = Payment::getRow(['income_id' => $income->id]);
+      $income = Income::getRow(['id' => $id]);
 
       if (!$income) {
         $this->response(404, ['message' => 'Income is not found.']);
@@ -1052,26 +965,16 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        if ($attachment) {
-          $attachment->data = base64_encode($attachment->data);
-        }
-
-        addActivity("Delete income {$income->hashname}.", [
-          'data'        => $income,
-          'attachment'  => $attachment,
-          'payment'     => $payment
-        ]);
-
         $this->response(200, ['message' => 'Income has been deleted.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to delete income.']);
   }
 
-  protected function income_edit($id = NULL)
+  protected function income_edit($id = null)
   {
     checkPermission('Income.Edit');
 
@@ -1085,24 +988,24 @@ class Finance extends BaseController
       $attachment = Attachment::getRow(['hashname' => $income->attachment]);
 
       $data = [
-        'date'      => dateTimeJS(getPost('date')),
-        'bank'      => getPost('bank'),
-        'biller'    => getPost('biller'),
-        'category'  => getPost('category'),
-        'amount'    => filterDecimal(getPost('amount')),
-        'note'      => stripTags(getPost('note'))
+        'date'        => dateTimeJS(getPost('date')),
+        'bank_id'     => getPost('bank'),
+        'biller_id'   => getPost('biller'),
+        'category_id' => getPost('category'),
+        'amount'      => filterDecimal(getPost('amount')),
+        'note'        => stripTags(getPost('note'))
       ];
 
-      if (empty($data['biller'])) {
+      if (empty($data['bank_id'])) {
+        $this->response(400, ['message' => 'Bank is required.']);
+      }
+
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller is required.']);
       }
 
-      if (empty($data['category'])) {
+      if (empty($data['category_id'])) {
         $this->response(400, ['message' => 'Category is required.']);
-      }
-
-      if (empty($data['bank'])) {
-        $this->response(400, ['message' => 'Bank is required.']);
       }
 
       if (empty($data['amount'])) {
@@ -1121,9 +1024,10 @@ class Finance extends BaseController
 
       if ($payment = Payment::getRow(['income_id' => $id])) {
         $paymentData = [
-          'bank'    => $data['bank'],
-          'biller'  => $data['biller'],
-          'amount'  => $data['amount']
+          'bank_id'   => $data['bank_id'],
+          'biller_id' => $data['biller_id'],
+          'amount'    => $data['amount'],
+          'note'      => $data['note']
         ];
 
         if (isset($data['attachment'])) {
@@ -1136,29 +1040,10 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $newIncome  = Income::getRow(['id' => $id]);
-        $newAttachment  = Attachment::getRow(['hashname' => $newIncome->attachment]);
-        $newPayment = Payment::getRow(['income_id' => $id]);
-
-        addActivity("Edit income {$income->reference}.", [
-          'data' => [
-            'after'   => $newIncome,
-            'before'  => $income
-          ],
-          'attachment' => [
-            'after'   => $newAttachment,
-            'before'  => $attachment,
-          ],
-          'payment' => [
-            'after'   => $newPayment,
-            'before'  => $payment
-          ]
-        ]);
-
         $this->response(201, ['message' => 'Income has been updated.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['income'] = $income;
@@ -1167,7 +1052,7 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Income/edit', $this->data)]);
   }
 
-  protected function income_view($id = NULL)
+  protected function income_view($id = null)
   {
     checkPermission('Income.View');
 
@@ -1214,12 +1099,12 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'      => dateTimeJS(getPost('date')),
-        'amount'    => filterDecimal(getPost('amount')),
-        'biller'    => getPost('biller'),
-        'bankfrom'  => getPost('bankfrom'),
-        'bankto'    => getPost('bankto'),
-        'note'      => stripTags(getPost('note'))
+        'date'        => dateTimeJS(getPost('date')),
+        'amount'      => filterDecimal(getPost('amount')),
+        'biller_id'   => getPost('biller'),
+        'bankfrom_id' => getPost('bankfrom'),
+        'bankto_id'   => getPost('bankto'),
+        'note'        => stripTags(getPost('note'))
       ];
 
       $skipPV = (getPost('skip_pv') == 1 ? true : false);
@@ -1228,15 +1113,15 @@ class Finance extends BaseController
         $this->response(400, ['message' => 'Amount required.']);
       }
 
-      if (empty($data['biller'])) {
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller required.']);
       }
 
-      if (empty($data['bankfrom'])) {
+      if (empty($data['bankfrom_id'])) {
         $this->response(400, ['message' => 'Bank from required.']);
       }
 
-      if (empty($data['bankto'])) {
+      if (empty($data['bankto_id'])) {
         $this->response(400, ['message' => 'Bank to required.']);
       }
 
@@ -1253,10 +1138,10 @@ class Finance extends BaseController
       if ($mutation = BankMutation::getRow(['id' => $insertID])) {
         if (!$skipPV) {
           $res = PaymentValidation::add([
-            'mutation'    => $mutation->reference,
+            'mutation_id' => $mutation->id,
             'amount'      => $data['amount'],
-            'biller'      => $data['biller'],
-            'attachment'  => ($data['attachment'] ?? NULL)
+            'biller_id'   => $data['biller_id'],
+            'attachment'  => ($data['attachment'] ?? null)
           ]);
 
           if (!$res) {
@@ -1266,21 +1151,21 @@ class Finance extends BaseController
           BankMutation::update((int)$insertID, ['status' => 'waiting_transfer']);
         } else {
           $paymentOutID = Payment::add([
-            'mutation'    => $mutation->reference,
-            'bank'        => $data['bankfrom'],
-            'biller'      => $data['biller'],
+            'mutation_id' => $mutation->id,
+            'bank_id'     => $data['bankfrom_id'],
+            'biller_id'   => $data['biller_id'],
             'amount'      => $data['amount'],
             'type'        => 'sent',
-            'attachment'  => ($data['attachment'] ?? NULL)
+            'attachment'  => ($data['attachment'] ?? null)
           ]);
 
           $paymentInID = Payment::add([
-            'mutation'    => $mutation->reference,
-            'bank'        => $data['bankto'],
-            'biller'      => $data['biller'],
+            'mutation_id'    => $mutation->id,
+            'bank_id'        => $data['bankto_id'],
+            'biller_id'      => $data['biller_id'],
             'amount'      => $data['amount'],
             'type'        => 'received',
-            'attachment'  => ($data['attachment'] ?? NULL)
+            'attachment'  => ($data['attachment'] ?? null)
           ]);
 
           if (!$paymentOutID || !$paymentInID) {
@@ -1294,26 +1179,10 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $mutation           = BankMutation::getRow(['id' => $insertID]);
-        $attachment         = Attachment::getRow(['hashname' => $mutation->attachment]);
-        $payments           = Payment::get(['mutation' => $mutation->reference]);
-        $paymentValidation  = PaymentValidation::getRow(['mutation_id' =>  $insertID]);
-
-        if ($attachment) {
-          $attachment->data = base64_encode($attachment->data);
-        }
-
-        addActivity("Add bank mutation {$mutation->reference}.", [
-          'data'                => $mutation,
-          'attachment'          => $attachment,
-          'payment_validation'  => $paymentValidation,
-          'payment'             => $payments
-        ]);
-
         $this->response(201, ['message' => 'Bank Mutation has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addbankmutation');
@@ -1321,15 +1190,12 @@ class Finance extends BaseController
     $this->response(200, ['content' => view('Finance/Mutation/add', $this->data)]);
   }
 
-  protected function mutation_delete($mutationId = NULL)
+  protected function mutation_delete($mutationId = null)
   {
     checkPermission('BankMutation.Delete');
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      $mutation           = BankMutation::getRow(['id' => $mutationId]);
-      $attachment         = Attachment::getRow(['hashname' => $mutation->attachment]);
-      $payments           = Payment::get(['mutation' => $mutation->reference]);
-      $paymentValidation  = PaymentValidation::getRow(['mutation' => $mutation->reference]);
+      $mutation = BankMutation::getRow(['id' => $mutationId]);
 
       if (!$mutation) {
         $this->response(404, ['message' => 'Mutation is not found.']);
@@ -1344,33 +1210,22 @@ class Finance extends BaseController
       }
 
       Attachment::delete(['hashname' => $mutation->attachment]);
-      PaymentValidation::delete(['mutation' => $mutation->reference]);
-      Payment::delete(['mutation' => $mutation->reference]);
+      PaymentValidation::delete(['mutation_id' => $mutation->id]);
+      Payment::delete(['mutation_id' => $mutation->id]);
 
       DB::transComplete();
 
       if (DB::transStatus()) {
-        if ($attachment) {
-          $attachment->data = base64_encode($attachment->data);
-        }
-
-        addActivity("Delete bank mutation {$mutation->reference}.", [
-          'data'                => $mutation,
-          'attachment'          => $attachment,
-          'payment_validation'  => $paymentValidation,
-          'payment'             => $payments
-        ]);
-
         $this->response(200, ['message' => 'Bank mutation has been deleted.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to delete bank mutation.']);
   }
 
-  protected function mutation_edit($id = NULL)
+  protected function mutation_edit($id = null)
   {
     checkPermission('BankMutation.Edit');
 
@@ -1381,17 +1236,13 @@ class Finance extends BaseController
     }
 
     if (requestMethod() == 'POST') {
-      $attachment         = Attachment::getRow(['hashname' => $mutation->attachment]);
-      $paymentValidation  = PaymentValidation::getRow(['mutation' => $mutation->reference]);
-      $payments           = Payment::get(['mutation' => $mutation->reference]);
-
       $data = [
-        'date'      => dateTimeJS(getPost('date')),
-        'amount'    => filterDecimal(getPost('amount')),
-        'biller'    => getPost('biller'),
-        'bankfrom'  => getPost('bankfrom'),
-        'bankto'    => getPost('bankto'),
-        'note'      => stripTags(getPost('note'))
+        'date'        => dateTimeJS(getPost('date')),
+        'amount'      => filterDecimal(getPost('amount')),
+        'biller_id'   => getPost('biller_id'),
+        'bankfrom_id' => getPost('bankfrom_id'),
+        'bankto_id'   => getPost('bankto_id'),
+        'note'        => stripTags(getPost('note'))
       ];
 
       $skipPV = (getPost('skip_pv') == 1 ? true : false);
@@ -1400,15 +1251,15 @@ class Finance extends BaseController
         $this->response(400, ['message' => 'Amount required.']);
       }
 
-      if (empty($data['biller'])) {
+      if (empty($data['biller_id'])) {
         $this->response(400, ['message' => 'Biller required.']);
       }
 
-      if (empty($data['bankfrom'])) {
+      if (empty($data['bankfrom_id'])) {
         $this->response(400, ['message' => 'Bank from required.']);
       }
 
-      if (empty($data['bankto'])) {
+      if (empty($data['bankto_id'])) {
         $this->response(400, ['message' => 'Bank to required.']);
       }
 
@@ -1422,10 +1273,10 @@ class Finance extends BaseController
         Payment::delete(['mutation_id' => $mutation->id]);
 
         $res = PaymentValidation::add([
-          'mutation'    => $mutation->reference,
+          'mutation_id' => $mutation->id,
           'amount'      => $data['amount'],
-          'biller'      => $data['biller'],
-          'attachment'  => ($data['attachment'] ?? NULL)
+          'biller_id'   => $data['biller_id'],
+          'attachment'  => ($data['attachment'] ?? null)
         ]);
 
         if (!$res) {
@@ -1434,11 +1285,14 @@ class Finance extends BaseController
 
         $data['status'] = 'waiting_transfer';
       }
+
+      $payments = Payment::get(['mutation_id' => $id]);
+
       if ($payments && $skipPV) {
         foreach ($payments as $payment) {
           Payment::update((int)$payment->id, [
             'amount'      => $data['amount'],
-            'biller'      => $data['biller'],
+            'biller_id'   => $data['biller_id'],
             'attachment'  => $mutation->attachment
           ]);
         }
@@ -1453,42 +1307,10 @@ class Finance extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $newMutation          = BankMutation::getRow(['id' => $id]);
-        $newAttachment        = Attachment::getRow(['hashname' => $mutation->attachment]);
-        $newPaymentValidation = PaymentValidation::getRow(['mutation' => $mutation->reference]);
-        $newPayments          = Payment::get(['mutation' => $mutation->reference]);
-
-        if ($attachment) {
-          $attachment->data = base64_encode($attachment->data);
-        }
-
-        if ($newAttachment) {
-          $newAttachment->data = base64_encode($newAttachment->data);
-        }
-
-        addActivity("Edit bank mutation {$mutation->reference}.", [
-          'data'  => [
-            'after'   => $newMutation,
-            'before'  => $mutation
-          ],
-          'attachment'  => [
-            'after'   => $newAttachment,
-            'before'  => $attachment,
-          ],
-          'payment_validation'  => [
-            'after'   => $newPaymentValidation,
-            'before'  => $paymentValidation,
-          ],
-          'payment' => [
-            'after'   => $newPayments,
-            'before'  => $payments
-          ]
-        ]);
-
-        $this->response(200, ['message' => sprintf(lang('Msg.mutationEditOK'), $mutation->reference)]);
+        $this->response(200, ['message' => 'Bank mutation has been updated.']);
       }
 
-      $this->response(400, ['message' => sprintf(lang('Msg.mutationEditNO'), $mutation->reference)]);
+      $this->response(400, ['message' => 'Failed to update bank mutation.']);
     }
 
     $this->data['mutation'] = $mutation;
@@ -1606,24 +1428,25 @@ class Finance extends BaseController
     if (requestMethod() == 'POST' && isAJAX()) {
       $date   = dateTimeJS(getPost('date'));
       $amount = filterDecimal(getPost('amount'));
-      $bank   = getPost('bank');
+      $bankId = getPost('bank');
 
       if (empty($amount)) {
         $this->response(400, ['message' => 'Amount is empty.']);
       }
 
-      if (empty($bank)) {
+      if (empty($bankId)) {
         $this->response(400, ['message' => 'Bank is empty.']);
       }
 
       $option = [
-        'date'      => $date,
-        'reference' => $pv->reference,
-        'bank'      => $bank,
-        'biller'    => $pv->biller,
-        'amount'    => $amount,
-        'note'      => stripTags(getPost('note')),
-        'manual'    => true // Required.
+        'date'        => $date,
+        'mutation_id' => $pv->mutation_id,
+        'sale_id'     => $pv->sale_id,
+        'bank_id'     => $bankId,
+        'biller_id'   => $pv->biller_id,
+        'amount'      => $amount,
+        'note'        => stripTags(getPost('note')),
+        'manual'      => true // Required.
       ];
 
       DB::transStart();

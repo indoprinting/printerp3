@@ -15,27 +15,10 @@ class Profile extends BaseController
 
     $dt = new DataTables('notification');
     $dt
-      ->select("notification.id, notification.note")
-      ->editColumn('id', function ($data) {
-        return '
-          <div class="btn-group btn-action">
-            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-page"></i>
-            </a>
-            <div class="dropdown-menu">
-              <a class="dropdown-item" href="' . base_url('humanresource/usergroup/edit/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> Edit
-              </a>
-              <a class="dropdown-item" href="' . base_url('humanresource/usergroup/delete/' . $data['id']) . '"
-                data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> Delete
-              </a>
-            </div>
-          </div>';
-      })
-      ->generate();
+      ->select("type, created_at, title, note")
+      ->where('status', 'active');
+
+    $dt->generate();
   }
 
   public function index()

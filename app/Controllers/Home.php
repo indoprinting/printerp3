@@ -10,12 +10,15 @@ use App\Models\{
   Biller,
   Customer,
   DB,
+  ExpenseCategory,
   Locale,
   Product,
   ProductTransfer,
   Sale,
   Supplier,
   User,
+  UserGroup,
+  Voucher,
   Warehouse
 };
 
@@ -36,7 +39,7 @@ class Home extends BaseController
     return $this->buildPage($this->data);
   }
 
-  public function attachment($hashName = NULL)
+  public function attachment($hashName = null)
   {
     $download = getGet('d');
     $attachment = Attachment::getRow(['hashname' => $hashName]);
@@ -59,7 +62,7 @@ class Home extends BaseController
     }
   }
 
-  public function chart($mode = NULL)
+  public function chart($mode = null)
   {
     if (!$mode) {
       $this->response(400, ['message' => 'Bad request.']);
@@ -90,9 +93,13 @@ class Home extends BaseController
         $data = $this->chartTargetRevenue();
     }
 
-    $this->response(200, ['data' => $data, 'module' => 'echarts']);
+    $this->response(200, ['data' => $data, 'message' => getLastError(), 'module' => 'echarts']);
   }
 
+  /**
+   * Get Daily Performance chart.
+   * Only one biller allowed.
+   */
   protected function chartDailyPerformance($option = [])
   {
     $receivables  = [];
@@ -112,9 +119,22 @@ class Home extends BaseController
       $option['end_date']   = date('Y-m-d', strtotime($option['period']));
     }
 
+    if (!isset($option['biller'])) {
+      setLastError('Biller is not set.');
+      return false;
+    }
+
+    $biller = Biller::getRow(['code' => $option['biller']]);
+
+    if (!$biller) {
+      setLastError('Biller is not found.');
+      return false;
+    }
+
+    $warehouse = Warehouse::getRow(['code' => $option['biller']]);
+
     $option = getCurrentMonthPeriod($option);
     $beginDate = new \DateTime('2022-01-01 00:00:00');
-    $billers = Biller::get(['active' => 1]);
     $ymPeriod = date('Y-m', strtotime($option['start_date']));
 
     for ($a = 1; $a < date('j', strtotime($option['end_date'])); $a++) {
@@ -122,78 +142,71 @@ class Home extends BaseController
       $dtDaily = new \DateTime("{$ymPeriod}-{$dt}");
       $overTime = ((new \DateTime())->diff($dtDaily)->format('%R') == '+' ? true : false);
 
-      foreach ($billers as $biller) {
-        $billerJS = getJSON($biller->json);
-        $warehouse = Warehouse::getRow(['code' => $biller->code]);
+      if ($biller->code == 'LUC') {
+        if (!$overTime) {
+          $dailyRevenue = round(floatval(DB::table('product_transfer')
+            ->selectSum('grand_total', 'total')
+            ->where('warehouse_id_from', $warehouse->id)
+            ->where("created_at LIKE '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
 
-        if (empty($billerJS->target)) {
-          continue;
-        }
-
-        if ($biller->code == 'LUC') {
-          if (!$overTime) {
-            $dailyRevenue = round(floatval(DB::table('product_transfer')
-              ->selectSum('grand_total', 'total')
-              ->where('warehouse_id_from', $warehouse->id)
-              ->where("created_at LIKE '{$ymPeriod}-{$dt}%'")
-              ->getRow()->total) ?? 0);
-
-            $receivable = round(floatval(DB::table('product_transfer')
-              ->selectSum('(grand_total - paid)', 'total')
-              ->where('warehouse_id_from', $warehouse->id)
-              ->where("created_at BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
-              ->getRow()->total) ?? 0);
-          } else {
-            $dailyRevenue = 0;
-            $receivable   = 0;
-          }
-
-          if ($warehouse) {
-            $stockValue = getWarehouseStockValue((int)$warehouse->id, [
-              'start_date'  => $beginDate->format('Y-m-d'),
-              'end_date'    => "{$ymPeriod}-{$dt}"
-            ]);
-          } else {
-            $stockValue = 0;
-          }
+          $receivable = round(floatval(DB::table('product_transfer')
+            ->selectSum('(grand_total - paid)', 'total')
+            ->where('warehouse_id_from', $warehouse->id)
+            ->where("created_at BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
         } else {
-          if (!$overTime) {
-            $dailyRevenue = round(floatval(DB::table('sales')
-              ->selectSum('grand_total', 'total')
-              ->notLike('status', 'need_payment')
-              ->where('biller_id', $biller->id)
-              ->where("date LIKE '{$ymPeriod}-{$dt}%'")
-              ->getRow()->total) ?? 0);
-
-            $receivable = round(floatval(DB::table('sales')
-              ->selectSum('balance', 'total')
-              ->where('biller_id', $biller->id)
-              ->where("date BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
-              ->getRow()->total) ?? 0);
-          } else {
-            $dailyRevenue = 0;
-            $receivable   = 0;
-          }
-
-          if ($warehouse) {
-            $stockValue = getWarehouseStockValue((int)$warehouse->id, [
-              'start_date'  => $beginDate->format('Y-m-d'),
-              'end_date'    => "{$ymPeriod}-{$dt}"
-            ]);
-          } else {
-            $stockValue = 0;
-          }
+          $dailyRevenue = 0;
+          $receivable   = 0;
         }
 
-        $dailyData[] = [
-          'revenue'     => $dailyRevenue,
-          'stock_value' => $stockValue,
-          'receivable'  => $receivable
-        ];
+        if ($warehouse) {
+          $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+            'start_date'  => $beginDate->format('Y-m-d'),
+            'end_date'    => "{$ymPeriod}-{$dt}"
+          ]);
+        } else {
+          $stockValue = 0;
+        }
+      } else {
+        if (!$overTime) {
+          $dailyRevenue = round(floatval(DB::table('sales')
+            ->selectSum('grand_total', 'total')
+            ->notLike('status', 'need_payment')
+            ->where('biller_id', $biller->id)
+            ->where("date LIKE '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
 
-        $labels[] = lang('App.day') . ' ' . $dt;
+          $receivable = round(floatval(DB::table('sales')
+            ->selectSum('balance', 'total')
+            ->where('biller_id', $biller->id)
+            ->where("date BETWEEN '{$beginDate->format('Y-m-d')} 00:00:00' AND '{$ymPeriod}-{$dt}%'")
+            ->getRow()->total) ?? 0);
+        } else {
+          $dailyRevenue = 0;
+          $receivable   = 0;
+        }
+
+        if ($warehouse) {
+          $stockValue = getWarehouseStockValue((int)$warehouse->id, [
+            'start_date'  => $beginDate->format('Y-m-d'),
+            'end_date'    => "{$ymPeriod}-{$dt}"
+          ]);
+        } else {
+          $stockValue = 0;
+        }
       }
+
+      $dailyData[] = [
+        'revenue'     => $dailyRevenue,
+        'stock_value' => $stockValue,
+        'receivable'  => $receivable
+      ];
+
+      $labels[] = lang('App.day') . ' ' . $dt;
     }
+
+    setLastError('success');
 
     $res = [
       'legend' => [
@@ -283,6 +296,7 @@ class Home extends BaseController
       $forecasts[]    = round($avgRevenue * $daysInMonth);
     }
 
+    setLastError('success');
 
     $res = [
       'legend' => [
@@ -347,6 +361,8 @@ class Home extends BaseController
         $receivables[]  = floatval($row->receivable > 0 ? $row->receivable * -1 : $row->receivable);
       }
     }
+
+    setLastError('success');
 
     $res = [
       'legend' => [
@@ -418,6 +434,8 @@ class Home extends BaseController
       $paids[]    = floatval($inv->paid);
     }
 
+    setLastError('success');
+
     $res = [
       'legend' => [
         'data' => [
@@ -477,7 +495,7 @@ class Home extends BaseController
     echo "OK";
   }
 
-  public function select2($mode = NULL)
+  public function select2($mode = null, $submode = null)
   {
     if (!$mode) {
       $this->response(400, ['message' => 'Bad request.']);
@@ -492,7 +510,14 @@ class Home extends BaseController
 
     switch ($mode) {
       case 'bank':
-        $q = Bank::select("code id, (CASE WHEN number IS NOT NULL THEN CONCAT(name, ' (', number, ')') ELSE name END) text")
+        if ($submode == 'type') {
+          $q = Bank::select('type id, type text')->distinct();
+
+          $results = $q->get();
+          break;
+        }
+
+        $q = Bank::select("id, (CASE WHEN number IS NOT NULL THEN CONCAT(name, ' (', number, ')') ELSE name END) text")
           ->where('active', 1)
           ->limit(10);
 
@@ -517,7 +542,7 @@ class Home extends BaseController
             $billers = [$billers];
           }
 
-          $q->whereIn('biller', $billers);
+          $q->whereIn('biller_id', $billers);
         }
 
         if ($types) {
@@ -532,7 +557,7 @@ class Home extends BaseController
 
         break;
       case 'biller':
-        $q = Biller::select("code id, name text")
+        $q = Biller::select("id, name text")
           ->where('active', 1)
           ->limit(10);
 
@@ -554,7 +579,7 @@ class Home extends BaseController
 
         break;
       case 'customer':
-        $q = Customer::select("phone id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
+        $q = Customer::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text")
           ->limit(10);
 
         if ($term && is_string($term)) {
@@ -576,8 +601,30 @@ class Home extends BaseController
         $results = $q->get();
 
         break;
+      case 'expense':
+        if ($submode == 'category') {
+          $q = ExpenseCategory::select("id, name text")
+            ->limit(10);
+
+          if ($term && is_string($term)) {
+            $q->groupStart()
+              ->where('id', $term)
+              ->orLike('name', $term, 'both')
+              ->groupEnd();
+          } else if ($term && is_array($term)) {
+            $q->groupStart()
+              ->whereIn('id', $term)
+              ->orWhereIn('name', $term)
+              ->groupEnd();
+          }
+
+          $results = $q->get();
+          break;
+        }
+        // Reserved
+        break;
       case 'product':
-        $q = Product::select("code id, CONCAT('(', code, ') ', name) text")
+        $q = Product::select("id, CONCAT('(', code, ') ', name) text")
           ->where('active', 1)
           ->limit(10);
 
@@ -607,7 +654,7 @@ class Home extends BaseController
 
         break;
       case 'supplier':
-        $q = Supplier::select("phone id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
+        $q = Supplier::select("id, (CASE WHEN company IS NOT NULL AND company <> '' THEN CONCAT(name, ' (', company, ')') ELSE name END) text ")
           ->limit(10);
 
         if ($term && is_string($term)) {
@@ -628,7 +675,7 @@ class Home extends BaseController
 
         break;
       case 'user':
-        $q = User::select("phone id, fullname text")
+        $q = User::select("id, fullname text")
           ->where('active', 1)
           ->limit(10);
 
@@ -659,8 +706,53 @@ class Home extends BaseController
         $results = $q->get();
 
         break;
+      case 'usergroup':
+        $q = UserGroup::select("id, name text")
+          ->limit(10);
+
+        if ($term && is_string($term)) {
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('name', $term, 'both')
+            ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('name', $term)
+            ->groupEnd();
+        }
+
+        $results = $q->get();
+
+        break;
+      case 'voucher':
+        $currentDate = date('Y-m-d H:i:s');
+
+        $q = Voucher::select("id, code text")
+          ->where('quota > 0')
+          ->where("valid_from < '{$currentDate}'")
+          ->where("valid_to > '{$currentDate}'")
+          ->limit(10);
+
+        if ($term && is_string($term)) {
+          $q->groupStart()
+            ->where('id', $term)
+            ->orLike('code', $term, 'both')
+            ->orLike('name', $term, 'both')
+            ->groupEnd();
+        } else if ($term && is_array($term)) {
+          $q->groupStart()
+            ->whereIn('id', $term)
+            ->orWhereIn('code', $term)
+            ->orWhereIn('name', $term)
+            ->groupEnd();
+        }
+
+        $results = $q->get();
+
+        break;
       case 'warehouse':
-        $q = Warehouse::select("code id, name text ")
+        $q = Warehouse::select("id, name text ")
           ->where('active', 1)
           ->limit(10);
 

@@ -11,6 +11,7 @@ return [
   'completed'           => 'Dikomplit',
   'completed_partial'   => 'Dikomplit Sebagian',
   'confirmed'           => 'Dikonfirmasi',
+  'danger'              => 'Bahaya',
   'decrease'            => 'Berkurang',
   'delivered'           => 'Terkirim',
   'draft'               => 'Draft',
@@ -23,6 +24,7 @@ return [
   'good'                => 'Baik',
   'inactive'            => 'Tidak Aktif',
   'increase'            => 'Bertambah',
+  'info'                => 'Info',
   'installed'           => 'Terinstall',
   'installed_partial'   => 'Terinstall Sebagian',
   'need_approval'       => 'Butuh Persetujuan',
@@ -45,9 +47,11 @@ return [
   'serving'             => 'Melayani',
   'skipped'             => 'Terlewati',
   'slow'                => 'Lambat',
+  'success'             => 'Sukses',
   'trouble'             => 'Masalah',
   'verified'            => 'Terverifikasi',
   'waiting'             => 'Menunggu',
   'waiting_production'  => 'Menunggu Produksi',
-  'waiting_transfer'    => 'Menunggu Transfer'
+  'waiting_transfer'    => 'Menunggu Transfer',
+  'warning'             => 'Perhatian'
 ];

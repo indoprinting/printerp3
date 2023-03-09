@@ -11,30 +11,15 @@ class BankMutation
    */
   public static function add(array $data)
   {
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-      $data['biller_id'] = $biller->id;
-    }
-
-    if (isset($data['bankfrom'])) {
-      $bankFrom = Bank::getRow(['code' => $data['bankfrom']]);
-      $data['from_bank_id'] = $bankFrom->id;
-      $data['from_bank_name'] = $bankFrom->name;
-    }
-
-    if (isset($data['bankto'])) {
-      $bankTo = Bank::getRow(['code' => $data['bankto']]);
-      $data['to_bank_id'] = $bankTo->id;
-      $data['to_bank_name'] = $bankTo->name;
-    }
+    $data['reference'] = OrderRef::getReference('mutation');
 
     $data = setCreatedBy($data);
-    $data['reference'] = OrderRef::getReference('mutation');
 
     DB::table('bank_mutations')->insert($data);
 
     if (DB::error()['code'] == 0) {
       $insertId = DB::insertID();
+
       OrderRef::updateReference('mutation');
 
       return $insertId;

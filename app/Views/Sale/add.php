@@ -302,8 +302,13 @@
     $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
 
     try {
-      preSelect2('biller', '#biller', erp.biller);
-      preSelect2('warehouse', '#warehouse', erp.warehouse);
+      if (erp.biller) {
+        preSelect2('biller', '#biller', erp.biller);
+      }
+
+      if (erp.warehouse) {
+        preSelect2('warehouse', '#warehouse', erp.warehouse);
+      }
 
       if (erp.sale.customer) {
         preSelect2('customer', '#customer', erp.sale.customer);

@@ -11,6 +11,18 @@ class Notification
    */
   public static function add(array $data)
   {
+    if (empty($data['title'])) {
+      setLastError('Title is required.');
+      return false;
+    }
+
+    if (empty($data['note'])) {
+      setLastError('Note is required.');
+      return false;
+    }
+
+    $data = setCreatedBy($data);
+
     DB::table('notification')->insert($data);
 
     if (DB::error()['code'] == 0) {
@@ -60,7 +72,7 @@ class Notification
   /**
    * Select Notification.
    */
-  public static function select(string $columns, $escape = TRUE)
+  public static function select(string $columns, $escape = true)
   {
     return DB::table('notification')->select($columns, $escape);
   }

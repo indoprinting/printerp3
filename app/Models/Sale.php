@@ -83,6 +83,7 @@ class Sale
       'est_complete_date'       => ($data['due_date'] ?? ''),
       'payment_due_date'        => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days')))),
       'source'                  => ($data['source'] ?? ''),
+      'vouchers'                => ($data['vouchers'] ?? []),
       'waiting_production_date' => ($data['waiting_production_date'] ?? '')
     ]);
 
@@ -214,9 +215,9 @@ class Sale
     $sale = self::getRow(['id' => $saleId]);
 
     $insertId = Payment::add([
-      'sale'        => $sale->reference,
-      'bank'        => $data['bank'],
-      'biller'      => $sale->biller,
+      'sale_id'     => $sale->id,
+      'bank_id'     => $data['bank_id'],
+      'biller_id'   => $sale->biller_id,
       'amount'      => $data['amount'],
       'type'        => 'received',
       'method'      => ($data['method'] ?? 'Transfer'),
@@ -541,9 +542,29 @@ class Sale
       unset($data['cashier']);
     }
 
+    if (isset($data['est_complete_date'])) {
+      $saleJS->est_complete_date = $data['est_complete_date'];
+      unset($data['est_complete_date']);
+    }
+
+    if (isset($data['payment_due_date'])) {
+      $saleJS->payment_due_date = $data['payment_due_date'];
+      unset($data['payment_due_date']);
+    }
+
     if (isset($data['source'])) {
       $saleJS->source = $data['source'];
       unset($data['source']);
+    }
+
+    if (isset($data['vouchers'])) {
+      $saleJS->vouchers = $data['vouchers'];
+      unset($data['vouchers']);
+    }
+
+    if (isset($data['waiting_production_date'])) {
+      $saleJS->waiting_production_date = $data['waiting_production_date'];
+      unset($data['waiting_production_date']);
     }
 
     if (isset($data['warehouse'])) {

@@ -339,7 +339,7 @@ function initControls() {
   }
 
   if (isFunction('$.fn.tooltip')) {
-    $('[data-toggle="tooltip"]').tooltip();
+    $('[data-widget="tooltip"]').tooltip({ html: true, placement: 'left' });
   }
 
   if (isFunction('$.fn.overlayScrollbars')) {
@@ -424,6 +424,13 @@ function initControls() {
         url: base_url + '/select2/bank'
       }
     });
+    $('.select-bank-type').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/bank/type'
+      }
+    });
     $('.select-biller').select2({
       allowClear: true,
       ajax: {
@@ -505,6 +512,20 @@ function initControls() {
         },
         delay: 1000,
         url: base_url + '/select2/user'
+      }
+    });
+    $('.select-usergroup').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/usergroup'
+      }
+    });
+    $('.select-voucher').select2({
+      allowClear: true,
+      ajax: {
+        delay: 1000,
+        url: base_url + '/select2/voucher'
       }
     });
     $('.select-warehouse').select2({
@@ -644,6 +665,10 @@ function isFunction(data) {
   return eval(`typeof ${data} == 'function'`);
 }
 
+function isNumber(data) {
+  return (data instanceof Number || typeof data == 'number');
+}
+
 function isObject(data) {
   return (data instanceof Object && !Array.isArray(data));
 }
@@ -669,7 +694,7 @@ function lc(str) {
 async function preSelect2(mode, elm, id) {
   return new Promise((resolve, reject) => {
     if (isEmpty(id)) {
-      console.warn(`preSelect2: id for ${mode}:${elm} is empty.`);
+      reject(`preSelect2: id for ${mode}:${elm} is empty.`);
       return false;
     }
 
@@ -679,8 +704,11 @@ async function preSelect2(mode, elm, id) {
       for (let i of id) {
         params += 'term[]=' + i + '&';
       }
-    } else {
+    } else if (isString(id) || isNumber(id)) {
       params = 'term=' + id;
+    } else {
+      reject(`id type is ${typeof id} is unacceptable.`);
+      return false;
     }
 
     if (params.slice(-1) == '&') {
@@ -690,11 +718,16 @@ async function preSelect2(mode, elm, id) {
     $.ajax({
       error: (xhr) => {
         toastr.error(xhr.responseJSON.message, xhr.status);
-        reject(false);
+        reject(xhr.responseJSON.message);
       },
       success: (data) => {
         if (!data.results.length) {
-          console.warn('preSelect2: results are empty.');
+          reject(`preSelect2: ${mode} results are empty.`);
+          return false;
+        }
+
+        if (!$(elm).length) {
+          reject(`Element ${elm} is not found.`);
           return false;
         }
 

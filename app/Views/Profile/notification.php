@@ -10,20 +10,21 @@
     <div class="row">
       <div class="col-md-12">
         <div class="card">
-          <div class="card-header bg-gradient-primary">
-            <div class="card-title"><?= lang('App.notification') ?></div>
-          </div>
           <div class="card-body table-responsive">
             <table class="table table-condensed table-hover table-striped" id="TableModal">
               <thead>
                 <tr>
-                  <th><?= lang('App.created_at') ?></th>
+                  <th></th>
+                  <th><?= lang('App.createdat') ?></th>
+                  <th><?= lang('App.title') ?></th>
                   <th><?= lang('App.content') ?></th>
                 </tr>
               </thead>
               <tfoot>
                 <tr>
-                  <th><?= lang('App.created_at') ?></th>
+                  <th></th>
+                  <th><?= lang('App.createdat') ?></th>
+                  <th><?= lang('App.title') ?></th>
                   <th><?= lang('App.content') ?></th>
                 </tr>
               </tfoot>
@@ -35,8 +36,7 @@
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-default" data-dismiss="modal"><?= lang('App.cancel') ?></button>
-  <button type="button" id="submit" class="btn bg-gradient-primary"><?= lang('App.save') ?></button>
+  <button type="button" class="btn bg-gradient-danger" data-dismiss="modal"><i class="fad fa-fw fa-times"></i> <?= lang('App.cancel') ?></button>
 </div>
 <script>
   (function() {
@@ -46,7 +46,7 @@
   $(document).ready(function() {
     "use strict";
 
-    window.Table = $('#Table').DataTable({
+    erp.tableModal = $('#TableModal').DataTable({
       ajax: {
         data: {
           <?= csrf_token() ?>: '<?= csrf_hash() ?>'
@@ -55,7 +55,10 @@
         url: base_url + '/profile/getNotifications'
       },
       columnDefs: [{
-        targets: [0, 1],
+        targets: [0],
+        visible: false
+      }, {
+        targets: [1, 2],
         orderable: false
       }],
       fixedHeader: false,
@@ -64,20 +67,28 @@
         [10, 25, 50, 100, lang.App.all]
       ],
       order: [
-        [1, 'asc']
+        [1, 'desc']
       ],
       processing: true,
       responsive: true,
+      rowCallback: (row, data) => {
+        if (data[0] == 'danger') {
+          $(row).addClass('bg-gradient-danger');
+        }
+        if (data[0] == 'info') {
+          $(row).addClass('bg-gradient-info');
+        }
+        if (data[0] == 'success') {
+          $(row).addClass('bg-gradient-success');
+        }
+        if (data[0] == 'warning') {
+          $(row).addClass('bg-gradient-warning');
+        }
+      },
       scrollX: false,
       searchDelay: 1000,
       serverSide: true,
       stateSave: false
-    });
-
-    initModalForm({
-      form: '#form',
-      submit: '#submit',
-      url: base_url + '/humanresource/usergroup/add'
     });
   });
 </script>
