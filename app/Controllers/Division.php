@@ -20,7 +20,7 @@ class Division extends BaseController
 
     $dt = new DataTables('biller');
     $dt
-      ->select("id, code, name, company, address, city, phone, email, json->>'$.target' AS target, active")
+      ->select("id, code, name, company, address, city, phone, email, JSON_UNQUOTE(JSON_EXTRACT(json, '$.target')) AS target, active")
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">

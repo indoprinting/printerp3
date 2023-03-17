@@ -272,7 +272,7 @@ $(document).ready(function () {
 
       },
       url: base_url + '/setting/theme?darkmode=' + darkMode
-    })
+    });
   });
 
   $(document).on('click', '[data-action="http-get"]', function (e) {
@@ -363,7 +363,7 @@ $(document).ready(function () {
         if (typeof erp.table !== 'undefined') erp.table.draw(false);
       },
       url: url
-    })
+    });
   });
 
   $(document).on('click', '[data-action="logout"]', function () {
@@ -385,8 +385,130 @@ $(document).ready(function () {
     });
   });
 
-  $(document).on('click', '[data-action="notification"]', function () {
+  $(document).on('click', '[data-action="export"]', function (e) {
+    e.preventDefault();
 
+    let url = this.href;
+    let param = $(this.dataset.param).val();
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
+
+    this.dataset.progress = 'true';
+
+    $(fa).removeClass(faClass).addClass(faClassProgress);
+
+    let data = JSON.parse(param ? param : '{}');
+
+    data.__ = __;
+
+    let bank = $('#filter-bank').val();
+    let biller = $('#filter-biller').val();
+    let createdBy = $('#filter-createdby').val();
+    let customer = $('#filter-customer').val();
+    let paymentStatus = $('#filter-paymentstatus').val();
+    let period = $('#filter-period').val();
+    let status = $('#filter-status').val();
+    let supplier = $('#filter-supplier').val();
+    let warehouse = $('#filter-warehouse').val();
+    let startDate = $('#filter-startdate').val();
+    let endDate = $('#filter-enddate').val();
+
+    if (bank) {
+      data.bank = bank;
+    }
+
+    if (biller) {
+      data.biller = biller;
+    }
+
+    if (createdBy) {
+      data.created_by = createdBy;
+    }
+
+    if (customer) {
+      data.customer = customer;
+    }
+
+    if (status) {
+      data.status = status;
+    }
+
+    if (paymentStatus) {
+      data.payment_status = paymentStatus;
+    }
+
+    if (period) {
+      data.period = period;
+    }
+
+    if (supplier) {
+      data.supplier = supplier;
+    }
+
+    if (warehouse) {
+      data.warehouse = warehouse;
+    }
+
+    if (startDate) {
+      data.start_date = startDate;
+    }
+
+    if (endDate) {
+      data.end_date = endDate;
+    }
+
+    $.ajax({
+      contentType: false,
+      data: JSON.stringify(data),
+      error: (xhr) => {
+        Swal.fire({
+          icon: 'error',
+          text: xhr.responseJSON.message,
+          title: lang.App.failed
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      method: 'POST',
+      processData: false,
+      success: (data) => {
+        Swal.fire({
+          icon: 'success',
+          text: data.message,
+          title: lang.App.success
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      url: url
+    });
+  });
+
+  $(document).on('click', '[data-widget="pushmenu"]', function () {
+    let collapse = 0;
+
+    if ($('body').hasClass('sidebar-collapse')) {
+      collapse = 1;
+    } else {
+      collapse = 0;
+    }
+
+    $.ajax({
+      error: (xhr) => {
+        if (xhr.status == 401) location.reload();
+      },
+      success: (data) => {
+
+      },
+      url: base_url + '/setting/sidebar?collapse=' + collapse
+    });
   });
 
   $(document).on('click', '.change-locale', function (e) {
@@ -442,6 +564,17 @@ $(document).ready(function () {
     if ($('.modal:visible').length) $('body').addClass('modal-open');
 
     erp.modal.pop();
+  });
+
+  // Fix echarts resize.
+  $(window).on('resize', () => {
+    let methods = Object.keys(erp.chart);
+
+    if (methods.length) {
+      for (let method of methods) {
+        erp.chart[method].resize();
+      }
+    }
   });
 
   $(document).on('show.bs.modal', '.modal', function () {

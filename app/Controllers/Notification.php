@@ -58,7 +58,7 @@ class Notification extends BaseController
 
         if (!empty($scopes->billers)) {
           foreach ($scopes->billers as $biller) {
-            $biller = Biller::getRow(['code' => $biller]);
+            $biller = Biller::getRow(['id' => $biller]);
             $status = lang('App.biller') . ': ' . $biller->name;
             $res .= "<div class=\"badge bg-gradient-orange m-1 p-2\">{$status}</div>";
           }
@@ -66,14 +66,15 @@ class Notification extends BaseController
 
         if (!empty($scopes->usergroups)) {
           foreach ($scopes->usergroups as $usergroup) {
-            $status = lang('App.usergroup') . ': ' . $usergroup;
+            $userGroup = UserGroup::getRow(['id' => $usergroup]);
+            $status = lang('App.usergroup') . ': ' . $userGroup->name;
             $res .= "<div class=\"badge bg-gradient-indigo m-1 p-2\">{$status}</div>";
           }
         }
 
         if (!empty($scopes->users)) {
           foreach ($scopes->users as $user) {
-            $user = User::getRow(['phone' => $user]);
+            $user = User::getRow(['id' => $user]);
             $status = lang('App.user') . ': ' . $user->fullname;
             $res .= "<div class=\"badge bg-gradient-info m-1 p-2\">{$status}</div>";
           }
@@ -81,7 +82,7 @@ class Notification extends BaseController
 
         if (!empty($scopes->warehouses)) {
           foreach ($scopes->warehouses as $warehouse) {
-            $warehouse = Warehouse::getRow(['code' => $warehouse]);
+            $warehouse = Warehouse::getRow(['id' => $warehouse]);
             $status = lang('App.warehouse') . ': ' . $warehouse->name;
             $res .= "<div class=\"badge bg-gradient-green m-1 p-2\">{$status}</div>";
           }

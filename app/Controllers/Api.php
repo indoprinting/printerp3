@@ -76,10 +76,6 @@ class Api extends BaseController
     $this->response(404, ['message' => 'Not Found']);
   }
 
-  protected function mutasibank_v2()
-  {
-  }
-
   public function mutasibank_accounts()
   {
     $data = [];
@@ -403,35 +399,47 @@ class Api extends BaseController
 
   protected function voucher_use()
   {
-    $code = getPost('code');
-    $invoice = getPost('invoice');
+    $code     = getPost('code'); // Must be separated by comma if more than one. code=VOUCHER1,VOUCHER2
+    $invoice  = getPost('invoice');
+    $discount = 0;
 
-    $voucher  = Voucher::getRow(['code' => $code]);
-    $sale     = Sale::getRow(['reference' => $invoice]);
-
-    if (!$voucher) {
-      $this->response(404, ['message' => 'Voucher is not found.']);
+    if (empty($code)) {
+      $this->response(400, ['message' => 'Voucher code is empty.']);
     }
+
+    $sale = Sale::getRow(['reference' => $invoice]);
 
     if (!$sale) {
       $this->response(404, ['message' => 'Invoice is not found.']);
     }
 
-    if (strtotime($voucher->valid_from) > time()) {
-      $this->response(400, ['message' => 'Voucher is too early to be used.']);
-    }
-
-    if (strtotime($voucher->valid_to) < time()) {
-      $this->response(400, ['message' => 'Voucher has been expired.']);
-    }
-
-    if (intval($voucher->quota) == 0) {
-      $this->response(400, ['message' => 'Voucher quota has been exceeded']);
-    }
-
     DB::transStart();
 
-    $res = Sale::update((int)$sale->id, ['discount' => $voucher->amount]);
+    foreach (explode(',', $code) as $vc) {
+      $voucher  = Voucher::getRow(['code' => $vc]);
+
+      if (!$voucher) {
+        $this->response(404, ['message' => 'Voucher is not found.']);
+      }
+
+      if (strtotime($voucher->valid_from) > time()) {
+        $this->response(400, ['message' => 'Voucher is too early to be used.']);
+      }
+
+      if (strtotime($voucher->valid_to) < time()) {
+        $this->response(400, ['message' => 'Voucher has been expired.']);
+      }
+
+      if (intval($voucher->quota) == 0) {
+        $this->response(400, ['message' => 'Voucher quota has been exceeded']);
+      }
+
+      if (Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1])) {
+        $discount += $voucher->amount;
+      }
+    }
+
+    $res = Sale::update((int)$sale->id, ['discount' => $discount]);
 
     if (!$res) {
       $this->response(400, ['message' => getLastError()]);
@@ -439,18 +447,12 @@ class Api extends BaseController
 
     Sale::sync(['id' => $sale->id]);
 
-    $res = Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1]);
-
-    if (!$res) {
-      $this->response(400, ['message' => getLastError()]);
-    }
-
     DB::transComplete();
 
     if (DB::transStatus()) {
-      $this->response(200, ['message' => 'Voucher has been used.']);
+      $this->response(200, ['message' => 'Vouchers have been used.']);
     }
 
-    $this->response(400, ['message' => 'Failed to use voucher.']);
+    $this->response(400, ['message' => 'Failed to use vouchers.']);
   }
 }

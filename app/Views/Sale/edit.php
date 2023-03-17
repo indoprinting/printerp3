@@ -38,7 +38,7 @@
             <div class="row">
               <div class="col-md-4">
                 <div class="form-group">
-                  <label for="cashier"><?= lang('App.cashier') ?> *</label>
+                  <label for="cashier"><?= lang('App.cashier') ?></label>
                   <select id="cashier" name="cashier" class="select-user" data-placeholder="<?= lang('App.cashier') ?>" style="width:100%" placeholder="<?= lang('App.cashier') ?>">
                     <option value=""></option>
                   </select>
@@ -338,14 +338,11 @@
     $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
     $('#discount').val('<?= filterDecimal($sale->discount) ?>');
 
-    try {
-      preSelect2('biller', '#biller', '<?= $sale->biller ?>');
-      preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
-      preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>');
-      preSelect2('customer', '#customer', '<?= $sale->customer ?>');
-    } catch (e) {
-      console.warn(e);
-    }
+    preSelect2('biller', '#biller', '<?= $sale->biller_id ?>').catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse_id ?>').catch(err => console.warn(err));
+    preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>').catch(err => console.warn(err));
+    preSelect2('customer', '#customer', '<?= $sale->customer_id ?>').catch(err => console.warn(err));
+
 
     initModalForm({
       form: '#form',

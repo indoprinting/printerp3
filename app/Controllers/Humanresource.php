@@ -695,21 +695,19 @@ class Humanresource extends BaseController
       ]);
 
       $data = [
-        'active'    => getPost('active'),
-        'biller'    => getPost('biller'),
-        'company'   => getPost('division'),
-        'fullname'  => getPost('fullname'),
-        'gender'    => getPost('gender'),
-        'groups'    => getPost('groups'),
-        'password'  => getPost('password'),
-        'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
-        'username'  => getPost('username'),
-        'warehouse' => getPost('warehouse'),
-        'json'      => $json,
-        'json_data' => $json
+        'active'        => getPost('active'),
+        'biller_id'     => getPost('biller'),
+        'company'       => getPost('division'),
+        'fullname'      => getPost('fullname'),
+        'gender'        => getPost('gender'),
+        'groups'        => getPost('groups'),
+        'password'      => getPost('password'),
+        'phone'         => preg_replace('/([^0-9])/', '', getPost('phone')),
+        'username'      => getPost('username'),
+        'warehouse_id'  => getPost('warehouse'),
+        'json'          => $json,
+        'json_data'     => $json
       ];
-
-      // $this->response(400, ['message' => is_array($data['groups'])]);
 
       $upload = new FileUpload();
 
@@ -779,22 +777,24 @@ class Humanresource extends BaseController
       ]);
 
       $data = [
-        'active'    => getPost('active'),
-        'biller'    => getPost('biller'),
-        'company'   => getPost('division'),
-        'fullname'  => getPost('fullname'),
-        'gender'    => getPost('gender'),
-        'groups'    => getPost('groups'),
-        'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
-        'username'  => getPost('username'),
-        'warehouse' => getPost('warehouse'),
-        'json'      => $json,
-        'json_data' => $json
+        'active'        => getPost('active'),
+        'biller_id'     => getPost('biller'),
+        'company'       => getPost('division'),
+        'fullname'      => getPost('fullname'),
+        'gender'        => getPost('gender'),
+        'groups'        => getPost('groups'),
+        'phone'         => preg_replace('/([^0-9])/', '', getPost('phone')),
+        'username'      => getPost('username'),
+        'warehouse_id'  => getPost('warehouse'),
+        'json'          => $json,
+        'json_data'     => $json
       ];
 
       if ($pass = getPost('password')) {
         $data['password'] = $pass;
       }
+
+      DB::transStart();
 
       $upload = new FileUpload();
 
@@ -815,8 +815,6 @@ class Humanresource extends BaseController
       } else {
         $data['avatar'] = ($data['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
       }
-
-      DB::transStart();
 
       $res = User::update((int)$userId, $data);
 

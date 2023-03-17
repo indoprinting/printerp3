@@ -339,7 +339,7 @@ function initControls() {
   }
 
   if (isFunction('$.fn.tooltip')) {
-    $('[data-widget="tooltip"]').tooltip({ html: true, placement: 'left' });
+    $('.use-tooltip').tooltip({ html: true, placement: 'left' });
   }
 
   if (isFunction('$.fn.overlayScrollbars')) {

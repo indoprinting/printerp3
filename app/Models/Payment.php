@@ -42,7 +42,8 @@ class Payment
       return false;
     }
 
-    $data['reference']  = $inv->reference;
+    $data['reference']      = $inv->reference;
+    $data['reference_date'] = $inv->date;
 
     if (!isset($data['bank_id'])) {
       setLastError('Bank is not set.');
@@ -71,6 +72,8 @@ class Payment
     if (DB::error()['code'] == 0) {
       return DB::insertID();
     }
+
+    setLastError(DB::error()['message']);
 
     return false;
   }

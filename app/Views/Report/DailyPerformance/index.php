@@ -3,13 +3,13 @@
     <div class="col-md-12">
       <div class="card">
         <div class="card-header bg-gradient-dark">
-          <h5 class="card-title"><?= lang('App.dailyperformance') ?></h5>
+          <h5 class="card-title"><?= lang('App.dailyperformance') ?> <span class="daily-performance-title"></span></h5>
           <div class="card-tools">
+            <a class="btn btn-tool bg-gradient-success export-report" href="<?= base_url('report/export/dailyPerformance') ?>" data-action="export" data-toggle="tooltip" title="Export to excel">
+              <i class="fad fa-download"></i>
+            </a>
             <a class="btn btn-tool bg-gradient-warning" href="#" data-widget="control-sidebar" data-toggle="tooltip" title="Filter" data-slide="true">
               <i class="fad fa-filter"></i>
-            </a>
-            <a class="btn btn-tool bg-gradient-success export-report" href="#" data-toggle="tooltip" title="Export to excel">
-              <i class="fad fa-file-excel"></i>
             </a>
           </div>
         </div>
@@ -26,8 +26,11 @@
     <div class="col-md-12">
       <div class="card">
         <div class="card-header bg-gradient-dark">
-          <h5 class="card-title"><?= lang('App.revenue') . ' ' . lang('App.and') . ' ' . lang('App.forecast') ?></h5>
+          <h5 class="card-title"><?= lang('App.revenue') . ' ' . lang('App.and') . ' ' . lang('App.forecast') ?> <span class="revenue-forecast-title"></span></h5>
           <div class="card-tools">
+            <a class="btn btn-tool bg-gradient-success export-report" href="<?= base_url('report/export/dailyPerformance') ?>" data-action="export" data-toggle="tooltip" title="Export to excel">
+              <i class="fad fa-download"></i>
+            </a>
             <a class="btn btn-tool bg-gradient-warning" href="#" data-widget="control-sidebar" data-toggle="tooltip" title="Filter" data-slide="true">
               <i class="fad fa-filter"></i>
             </a>
@@ -36,7 +39,7 @@
         <div class="card-body">
           <div id="revenue-forecast-chart" style="height:400px; width:100%"></div>
         </div>
-        <div class="overlay dark" id="revenue-forecase-loader">
+        <div class="overlay dark" id="revenue-forecast-loader">
           <i class="fad fa-sync fa-spin fa-4x"></i>
         </div>
       </div>
@@ -89,19 +92,14 @@
   TableFilter.bind('clear', '.filter-clear');
 
   TableFilter.on('apply', () => {
-    erp.chart.dailyPerformance.resize();
-    erp.chart.revenueForecast.resize();
+    erp.echart.reload();
   });
 
   TableFilter.on('clear', () => {
-    $('#filter-biller').val([]).trigger('change');
-    $('#filter-warehouse').val([]).trigger('change');
-    $('#filter-status').val([]).trigger('change');
-    $('#filter-paymentstatus').val([]).trigger('change');
-    $('#filter-createdby').val([]).trigger('change');
-    $('#filter-receivable').iCheck('uncheck');
-    $('#filter-startdate').val('');
-    $('#filter-enddate').val('');
+    preSelect2('biller', '#filter-biller', 2);
+    $('#filter-period').val('<?= date('Y-m') ?>').trigger('change');
+
+    erp.echart.reload();
   });
 </script>
 <script>
@@ -229,44 +227,44 @@
     });
   });
 
-  $(document).ready(function() {
-    $('#period').val('<?= date('Y-m') ?>');
-    $('#biller').val('<?= (session('login')->biller ?? 'DUR') ?>');
+  $(document).ready(async function() {
+    $('#filter-period').val('<?= date('Y-m') ?>');
+    await preSelect2('biller', '#filter-biller', 2);
 
-    $('#biller').change(function() {
+    erp.echart.reload = function() {
+      $('#daily-performance-loader').fadeIn();
+      $('#revenue-forecast-loader').fadeIn();
 
-    });
-
-    $('#period').change(function() {
-      $('#revenue-forecase-loader').fadeIn();
-
-      fetch(base_url + '/chart/revenueForecast?period=' + this.value, {
+      fetch(base_url + '/chart/dailyPerformance?period=' + $('#filter-period').val() + '&biller=' + $('#filter-biller').val(), {
         method: 'GET'
       }).then(response => response.json()).then((response) => {
-        $('#revenue-forecase-loader').fadeOut();
+        $('#daily-performance-loader').fadeOut();
+
+        fetch(base_url + '/select2/biller?limit=1&term=' + $('#filter-biller').val(), {
+          method: 'GET'
+        }).then(response => response.json()).then((response) => {
+          if (!response.results.length) {
+            console.warn('Results is empty.');
+            return false;
+          }
+
+          $('.daily-performance-title').html(`(Biller: ${response.results[0].text}, Period: ${$('#filter-period').val()})`);
+        });
+
+        erp.chart.dailyPerformance.setOption(response.data);
+      });
+
+      fetch(base_url + '/chart/revenueForecast?period=' + $('#filter-period').val(), {
+        method: 'GET'
+      }).then(response => response.json()).then((response) => {
+        $('#revenue-forecast-loader').fadeOut();
+
+        $('.revenue-forecast-title').html(`(Period: ${$('#filter-period').val()})`);
 
         erp.chart.revenueForecast.setOption(response.data);
       });
-    });
+    };
 
-    $('.export-report').click(() => {
-
-    });
-
-    fetch(base_url + '/chart/dailyPerformance', {
-      method: 'GET'
-    }).then(response => response.json()).then((response) => {
-      $('#daily-performance-loader').fadeOut();
-
-      erp.chart.dailyPerformance.setOption(response.data);
-    });
-
-    fetch(base_url + '/chart/revenueForecast', {
-      method: 'GET'
-    }).then(response => response.json()).then((response) => {
-      $('#revenue-forecase-loader').fadeOut();
-
-      erp.chart.revenueForecast.setOption(response.data);
-    });
+    erp.echart.reload();
   });
 </script>

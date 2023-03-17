@@ -211,6 +211,28 @@ class Setting extends BaseController
     $this->response(200, ['content' => view('Setting/Permission/edit', $this->data)]);
   }
 
+  public function sidebar()
+  {
+    checkPermission();
+
+    $collapse = (getGet('collapse') == 1 ? 1 : 0);
+    $userId = session('login')->user_id;
+
+    $user = User::getRow(['id' => $userId]);
+    $userJS = getJSON($user->json);
+
+    $userJS->collapse = $collapse;
+
+    User::update((int)$userId, [
+      'json'      => json_encode($userJS),
+      'json_data' => json_encode($userJS)
+    ]);
+
+    session('login')->collapse = $collapse;
+
+    $this->response(200, ['message' => 'Success']);
+  }
+
   public function theme()
   {
     checkPermission();

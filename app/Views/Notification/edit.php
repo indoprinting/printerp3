@@ -151,10 +151,10 @@
 
     let scope = JSON.parse($('#scope').val());
 
-    preSelect2('biller', '#biller', scope.billers);
-    preSelect2('user', '#user', scope.users);
-    preSelect2('usergroup', '#usergroup', scope.usergroups);
-    preSelect2('warehouse', '#warehouse', scope.warehouses);
+    preSelect2('biller', '#biller', scope.billers).catch(err => console.warn(err));;
+    preSelect2('user', '#user', scope.users).catch(err => console.warn(err));;
+    preSelect2('usergroup', '#usergroup', scope.usergroups).catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehouse', scope.warehouses).catch(err => console.warn(err));;
 
     initModalForm({
       form: '#form',

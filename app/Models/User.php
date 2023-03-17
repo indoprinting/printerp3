@@ -28,22 +28,6 @@ class User
       return false;
     }
 
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
-
-      if ($biller) {
-        $data['biller_id'] = $biller->id;
-      }
-    }
-
-    if (isset($data['warehouse'])) {
-      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
-
-      if ($warehouse) {
-        $data['warehouse_id'] = $warehouse->id;
-      }
-    }
-
     if (!empty($data['password'])) {
       if (strlen($data['password']) < 8) {
         setLastError('Password at least 8 characters');
@@ -56,7 +40,7 @@ class User
       return false;
     }
 
-    $data = nulling($data, ['biller', 'warehouse']);
+    $data = nulling($data, ['biller_id', 'warehouse_id']);
 
     DB::table('users')->insert($data);
 
@@ -161,26 +145,6 @@ class User
       }
     }
 
-    if (isset($data['biller'])) { // Backward Compatibility
-      $biller = Biller::getRow(['code' => $data['biller']]);
-
-      if ($biller) {
-        $data['biller_id'] = $biller->id;
-      } else {
-        $data['biller_id'] = null;
-      }
-    }
-
-    if (isset($data['warehouse'])) { // Backward Compatibility
-      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
-
-      if ($warehouse) {
-        $data['warehouse_id'] = $warehouse->id;
-      } else {
-        $data['warehouse_id'] = null;
-      }
-    }
-
     if (isset($data['password'])) {
       if (is_string($data['password']) && strlen($data['password']) < 8) {
         setLastError('Password at least 8 characters');
@@ -193,7 +157,7 @@ class User
       $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
     }
 
-    $data = nulling($data, ['biller', 'warehouse']);
+    $data = nulling($data, ['biller_id', 'warehouse_id']);
 
     DB::table('users')->update($data, ['id' => $id]);
 

@@ -22,10 +22,21 @@ class Payment extends BaseController
 {
   public function index()
   {
-    checkPermission();
+    checkPermission('Payment.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.finance'), 'slug' => 'finance', 'url' => '#'],
+        ['name' => lang('App.payment'), 'slug' => 'payment', 'url' => '#']
+      ],
+      'content' => 'Payment/index',
+      'title' => lang('App.payment')
+    ];
+
+    return $this->buildPage($this->data);
   }
 
-  public function getPayments()
+  public function getModalPayments()
   {
     checkPermission('Payment.View');
 
@@ -42,12 +53,105 @@ class Payment extends BaseController
     $dt = new DataTables('payments');
     $dt->select("payments.id, payments.date, payments.reference,
         (CASE
-          WHEN banks.number IS null THEN banks.name
-          WHEN banks.number IS NOT null THEN CONCAT(banks.name, ' (', banks.number, ')')
+          WHEN banks.number IS NULL THEN banks.name
+          WHEN banks.number IS NOT NULL THEN CONCAT(banks.name, ' (', banks.number, ')')
         END) bank_name,
         biller.name, payments.amount, payments.type, payments.attachment")
       ->join('banks', 'banks.id = payments.bank_id', 'left')
       ->join('biller', 'biller.id = payments.biller_id', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-gear"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('payment/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic2"
+                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('payment/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
+      ->editColumn('amount', function ($data) {
+        return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
+      })
+      ->editColumn('attachment', function ($data) {
+        return renderAttachment($data['attachment']);
+      })
+      ->editColumn('type', function ($data) {
+        return renderStatus($data['type']);
+      });
+
+    if ($accountNo) {
+      $dt->where('banks.number', $accountNo);
+    }
+
+    if ($bankId) {
+      $dt->where('payments.bank_id', $bankId);
+    }
+
+    if ($expenseId) {
+      $dt->where('payments.expense_id', $expenseId);
+    }
+
+    if ($incomeId) {
+      $dt->where('payments.income_id', $incomeId);
+    }
+
+    if ($mutationId) {
+      $dt->where('payments.mutation_id', $mutationId);
+    }
+
+    if ($saleId) {
+      $dt->where('payments.sale_id', $saleId);
+    }
+
+    if ($startDate) {
+      $dt->where("payments.date >= '{$startDate} 00:00:00'");
+    }
+
+    if ($endDate) {
+      $dt->where("payments.date <= '{$endDate} 23:59:59'");
+    }
+
+    $dt->generate();
+  }
+
+  public function getPayments()
+  {
+    checkPermission('Report.Payment');
+
+    $accountNo  = getPost('account_no');
+    $bankId     = getPost('bank_id');
+    $expenseId  = getPost('expense_id');
+    $incomeId   = getPost('income_id');
+    $mutationId = getPost('mutation_id');
+    $saleId     = getPost('sale_id');
+
+    $startDate  = getPost('start_date');
+    $endDate    = getPost('end_date');
+
+    $dt = new DataTables('payments');
+    $dt->select("payments.id, payments.date, payments.reference_date, payments.reference,
+        creator.fullname AS creator_name, biller.name AS biller_name,
+        customers.name AS customer_name,
+        (CASE
+          WHEN banks.number IS NULL THEN banks.name
+          WHEN banks.number IS NOT NULL THEN CONCAT(banks.name, ' (', banks.number, ')')
+        END) bank_account, payments.method, payments.amount, payments.type, payments.note,
+        payments.created_at, payments.attachment")
+      ->join('banks', 'banks.id = payments.bank_id', 'left')
+      ->join('biller', 'biller.id = payments.biller_id', 'left')
+      ->join('sales', 'sales.id = payments.sale_id', 'left')
+      ->join('customers', 'customers.id = sales.customer_id', 'left')
+      ->join('users creator', 'creator.id = payments.created_by', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -224,7 +328,7 @@ class Payment extends BaseController
 
       $data = $this->useAttachment($data, $inv->attachment);
 
-      $nonValidation = (isset($data['expense']) || isset($data['purchase']) || isset($data['transfer']));
+      $nonValidation = (isset($data['expense_id']) || isset($data['purchase_id']) || isset($data['transfer_id']));
 
       if ($skipValidation || $nonValidation || $data['method'] != 'Transfer') {
         $res = PaymentModel::add($data);

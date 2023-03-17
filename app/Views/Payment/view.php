@@ -51,7 +51,7 @@
       ajax: {
         data: tableData,
         method: 'POST',
-        url: base_url + '/payment/getPayments'
+        url: base_url + '/payment/getModalPayments'
       },
       columnDefs: [{
         targets: [7],
@@ -64,12 +64,12 @@
         let total = 0;
 
         for (let a = 0; a < columns[0].length; a++) {
-          if (columns[1][a].search(/received/i) >= 0) {
+          if (columns[1][a].search(/received/i) >= 0 || columns[1][a].search(/diterima/i) >= 0) {
             total += filterNumber(columns[0][a]);
-          } else if (columns[1][a].search(/sent/i) >= 0) {
+          } else if (columns[1][a].search(/sent/i) >= 0 || columns[1][a].search(/terkirim/i) >= 0) {
             total -= filterNumber(columns[0][a]);
           } else {
-            console.warn('Type is not received nor sent.');
+            console.warn('Type is not received nor sent: ' + columns[1][a]);
           }
         }
 

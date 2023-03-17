@@ -360,24 +360,15 @@ function getCurrentMonthPeriod($period = [])
  */
 function getDailyPerformanceReport($opt)
 {
-  // We need biller to warehouse because ONLY warehouse has 'active' column.
   $dailyPerformanceData = [];
-  $billers    = [];
-  $warehouses = [];
+  $billers              = [];
 
   if (!empty($opt['biller_id']) && is_array($opt['biller_id'])) {
     foreach ($opt['biller_id'] as $billerId) {
       $billers[] = Biller::getRow(['id' => $billerId, 'active' => '1']);
     }
-
-    if ($warehouseIds = billerToWarehouse($opt['biller_id'])) {
-      foreach ($warehouseIds as $warehouseId) {
-        $warehouses[] = Warehouse::getRow(['id' => $warehouseId, 'active' => '1']);
-      }
-    }
   } else if (empty($opt['biller_id'])) {
-    $billers    = Biller::get(['active' => '1']);
-    $warehouses = Warehouse::get(['active' => '1']);
+    $billers  = Biller::get(['active' => '1']);
   }
 
   if ($opt['period']) {
@@ -399,8 +390,8 @@ function getDailyPerformanceReport($opt)
 
   foreach ($billers as $biller) {
     if ($biller->active != 1) continue;
-    // Hide FUCKED IDS
     // if ($biller->code == 'BALINN') continue;
+    // Hide FUCKED IDS
     if ($biller->code == 'IDSUNG') continue;
     if ($biller->code == 'IDSLOS') continue;
     if ($biller->code == 'BALINT') continue;
@@ -569,11 +560,27 @@ function getGet($name)
 }
 
 /**
+ * Fetch an item from GET data with fallback to POST.
+ */
+function getGetPost($name)
+{
+  return Services::request()->getGetPost($name);
+}
+
+/**
  * Fetch an item from POST.
  */
 function getPost($name)
 {
   return Services::request()->getPost($name);
+}
+
+/**
+ * Fetch an item from POST data with fallback to GET.
+ */
+function getPostGet($name)
+{
+  return Services::request()->getPostGet($name);
 }
 
 /**
@@ -660,9 +667,9 @@ function getWarehouseStockValue(int $warehouseId, array $opt = [])
   }
 
   // If end date is more than current date then 0.
-  if ($currentDate->diff($endDate)->format('%R') == '+') {
-    return 0;
-  }
+  // if ($currentDate->diff($endDate)->format('%R') == '+') {
+  //   return 0;
+  // }
 
   if ($warehouse->code == 'LUC') { // Lucretai mode.
     $value = DB::table('products')->selectSum('products.cost * (recv.total - sent.total)', 'total')
@@ -753,7 +760,7 @@ function hasAccess($permission)
  */
 function html2Note($html)
 {
-  $str = str_replace('<br>', "\r\n", $html);
+  $str = str_replace('<br>', "\r\n", ($html ?? ''));
   return htmlRemove($str);
 }
 
@@ -1033,12 +1040,15 @@ function roundDecimal($num)
  */
 function sendJSON($data, $options = [])
 {
-  $origin = base_url();
+  if (!isCLI()) {
+    $origin = base_url();
 
-  if (!empty($options['origin'])) $origin = $options['origin'];
+    if (!empty($options['origin'])) $origin = $options['origin'];
 
-  header("Access-Control-Allow-Origin: {$origin}");
-  header('Content-Type: application/json');
+    header("Access-Control-Allow-Origin: {$origin}");
+    header('Content-Type: application/json');
+  }
+
   die(json_encode($data, JSON_PRETTY_PRINT));
 }
 
@@ -1191,6 +1201,37 @@ function setUpdatedBy($data = [])
 function stripTags(string $text)
 {
   return strip_tags($text, '<a><br><em><h1><h2><h3><li><ol><p><strong><u><ul>');
+}
+
+/**
+ * Return vouchers total amount.
+ * @param array $vouchers Array of voucher id.
+ */
+function useVouchers(array $vouchers, int $lastDiscount = 0)
+{
+  $discount = $lastDiscount;
+
+  foreach ($vouchers as $vid) {
+    $voucher = Voucher::getRow(['id' => $vid]);
+
+    if (strtotime($voucher->valid_from) > time()) {
+      continue;
+    }
+
+    if (strtotime($voucher->valid_to) < time()) {
+      continue;
+    }
+
+    if ($voucher->quota < 1) {
+      continue;
+    }
+
+    if (Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1])) {
+      $discount += $voucher->amount;
+    }
+  }
+
+  return $discount;
 }
 
 /**

@@ -412,6 +412,37 @@ export class QueueTimer {
   }
 }
 
+export class ReportExport {
+  static _cb = [];
+
+  static bind(action, selector) {
+    if (action == 'click') {
+      $(document).on('click', selector, (ev) => {
+        for (let a in this._cb) {
+          if (this._cb[a].ev == 'click' && typeof this._cb[a].cb == 'function') {
+            this._cb[a].cb.call(this, this);
+          }
+        }
+
+        $.ajax({
+
+        });
+      });
+    }
+
+    return this;
+  }
+
+  static on(event, callback) {
+    this._cb.push({
+      ev: event,
+      cb: callback
+    });
+
+    return this;
+  }
+}
+
 export class Sale {
   static tbody = null;
 
@@ -629,6 +660,8 @@ export class TableFilter {
         controlSidebar('collapse');
       });
     }
+
+    return this;
   }
 
   static on(event, callback) {
@@ -636,5 +669,7 @@ export class TableFilter {
       ev: event,
       cb: callback
     });
+
+    return this;
   }
 }

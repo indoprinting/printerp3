@@ -51,7 +51,17 @@ class DataTables
   /**
    * @var bool
    */
+  private $returnCompiled = false;
+
+  /**
+   * @var bool
+   */
   private $returnObject;
+
+  /**
+   * @var array
+   */
+  private $rowCallbacks;
 
   /**
    * @var array
@@ -167,7 +177,7 @@ class DataTables
       throw new \Exception(self::ERR_QUERY_BUILDER);
     }
 
-    // Get total records. 'where', 'orWhere', 'like' and 'orLike' is not filtering.
+    // Get total records. 'where', 'orWhere', 'like' and 'orLike' are not filtering.
     $recordsTotal = self::$qb->countAllResults(false);
 
     // Internal filter data.
@@ -195,9 +205,7 @@ class DataTables
 
       self::$qb->groupEnd();
 
-      // die(print_r($this->columns, true));
-      // die(self::$qb->getCompiledSelect()); // DEBUG_ONLY
-      self::$qb->groupBy('id'); // Temporary test. Required.
+      self::$qb->groupBy('id'); // Required.
     }
 
     // Return number of filtered rows.
@@ -216,16 +224,39 @@ class DataTables
       self::$qb->limit($this->length, $this->start);
     }
 
-    // print_r(self::$qb->getCompiledSelect()); die(); // DEBUG_ONLY
+    if ($this->returnCompiled) {
+      print_r(self::$qb->getCompiledSelect());
+      die;
+    }
 
     $rows = self::$qb->get()->getResultArray();
 
-    // Modifying row data.
-    for ($x = 0; $x < count($rows); $x++) {
-      // Add new column.
-      if ($this->addColumns) {
-        foreach ($this->addColumns as $addColumn) {
-          if (is_callable($addColumn['callback']) && !empty($addColumn['after'])) {
+    // Modify row data.
+    if ($this->rowCallbacks) {
+      $newRows = [];
+
+      foreach ($this->rowCallbacks as $rowCallback) {
+        if (is_callable($rowCallback)) {
+          for ($x = 0; $x < count($rows); $x++) {
+            $res = $rowCallback($rows[$x]);
+
+            if ($res) {
+              $newRows[] = $res;
+            } else {
+              $recordsFiltered--;
+            }
+          }
+        }
+      }
+
+      $rows = $newRows;
+    }
+
+    // Add new column.
+    if ($this->addColumns) {
+      foreach ($this->addColumns as $addColumn) {
+        if (is_callable($addColumn['callback']) && !empty($addColumn['after'])) {
+          for ($x = 0; $x < count($rows); $x++) {
             $callback = $addColumn['callback']($rows[$x]);
 
             $pos = array_search($addColumn['after'], array_keys($rows[$x]));
@@ -254,10 +285,12 @@ class DataTables
           }
         }
       }
+    }
 
-      // Currently use this instead of addColumns.
-      if ($this->editColumns) {
-        foreach ($this->editColumns as $editColumn) {
+    // Edit columns. Currently use this instead of addColumns.
+    if ($this->editColumns) {
+      foreach ($this->editColumns as $editColumn) {
+        for ($x = 0; $x < count($rows); $x++) {
           if (array_key_exists($editColumn['name'], $rows[$x])) {
             if (is_callable($editColumn['callback'])) {
               $rows[$x][$editColumn['name']] = $editColumn['callback']($rows[$x]);
@@ -269,8 +302,8 @@ class DataTables
 
     // Removing column data.
     if ($this->removeColumns) {
-      for ($x = 0; $x < count($rows); $x++) {
-        foreach ($this->removeColumns as $rcol) {
+      foreach ($this->removeColumns as $rcol) {
+        for ($x = 0; $x < count($rows); $x++) {
           if (isset($rows[$x][$rcol])) unset($rows[$x][$rcol]);
         }
       }
@@ -373,6 +406,13 @@ class DataTables
     }
 
     return $cols;
+  }
+
+  public function getCompiledSelect()
+  {
+    $this->returnCompiled = true;
+
+    return $this;
   }
 
   public function groupBy($by, $escape = null)
@@ -500,6 +540,12 @@ class DataTables
     $cols = explode(',', $columns);
 
     $this->removeColumns = $this->trimArray($cols);
+    return $this;
+  }
+
+  public function rowCallback(\Closure $callback)
+  {
+    $this->rowCallbacks[] = $callback;
     return $this;
   }
 

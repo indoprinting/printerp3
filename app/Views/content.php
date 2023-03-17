@@ -39,6 +39,7 @@
         id: '<?= session('login')->biller_id ?>'
       },
       chart: {},
+      echart: {},
       modal: [], // Stackable modal.
       sale: {
         customer: null
@@ -61,6 +62,9 @@
         warehouse: {}
       },
       table: null,
+      user: {
+        id: <?= session('login')->user_id ?>
+      },
       warehouse: {
         code: '<?= session('login')->warehouse ?>',
         id: '<?= session('login')->biller_id ?>'
@@ -69,7 +73,7 @@
   </script>
 </head>
 
-<body class="hold-transition layout-fixed layout-navbar-fixed sidebar-mini text-sm<?= session('login')->dark_mode ? ' dark-mode' : '' ?>">
+<body class="hold-transition layout-fixed layout-navbar-fixed sidebar-mini text-sm<?= session('login')->dark_mode ? ' dark-mode' : '' ?> <?= session('login')->collapse ? ' sidebar-collapse' : '' ?>">
   <div class="page-loader-wrapper">
     <div class="page-loader">
       <svg class="circular" viewBox="25 25 50 50">
@@ -565,53 +569,67 @@
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="<?= base_url('report/dailyperformance') ?>" class="nav-link" data-action="link" data-slug="dailyperformance">
-                      <i class="nav-icon fad fa-chart-mixed"></i>
-                      <p><?= lang('App.dailyperformance') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-receipt"></i>
-                      <p><?= lang('App.debt') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-money-bill-trend-up"></i>
-                      <p><?= lang('App.incomestatement') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-box-dollar"></i>
-                      <p><?= lang('App.inventorybalance') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-screwdriver-wrench"></i>
-                      <p><?= lang('App.maintenance') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-money-bill-wave"></i>
-                      <p><?= lang('App.payment') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-file-invoice-dollar"></i>
-                      <p><?= lang('App.receivable') ?></p>
-                    </a>
-                  </li>
+                  <?php if (hasAccess('Report.DailyPerformance')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('report/dailyperformance') ?>" class="nav-link" data-action="link" data-slug="dailyperformance">
+                        <i class="nav-icon fad fa-chart-mixed" style="color:#ff0040"></i>
+                        <p><?= lang('App.dailyperformance') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Report.Debt')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-receipt"></i>
+                        <p><?= lang('App.debt') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Report.IncomeStatement')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-money-bill-trend-up"></i>
+                        <p><?= lang('App.incomestatement') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Report.InventoryBalance')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-box-dollar"></i>
+                        <p><?= lang('App.inventorybalance') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Report.Maintenance')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-screwdriver-wrench"></i>
+                        <p><?= lang('App.maintenance') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Report.Payment')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('report/payment') ?>" class="nav-link" data-action="link" data-slug="payment">
+                        <i class="nav-icon fad fa-money-bill-wave" style="color:#80ff40"></i>
+                        <p><?= lang('App.payment') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Report.Receivable')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-file-invoice-dollar"></i>
+                        <p><?= lang('App.receivable') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
                 </ul>
               </li>
             <?php endif; ?>
             <!-- Sales -->
-            <?php if (hasAccess('Sale.View')) : ?>
+            <?php if (hasAccess(['Sale.View', 'Voucher.View'])) : ?>
               <li class="nav-item">
                 <a href="#" class="nav-link" data-slug="sale">
                   <i class="nav-icon fad fa-cash-register" style="color:#40ffff"></i>
@@ -624,6 +642,14 @@
                       <a href="<?= base_url('sale') ?>" class="nav-link" data-action="link" data-slug="invoice">
                         <i class="nav-icon fad fa-file-invoice" style="color:#ff8040"></i>
                         <p><?= lang('App.invoice') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Voucher.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('sale/voucher') ?>" class="nav-link" data-action="link" data-slug="voucher">
+                        <i class="nav-icon fad fa-file-invoice" style="color:#80ff40"></i>
+                        <p><?= lang('App.voucher') ?></p>
                       </a>
                     </li>
                   <?php endif; ?>
@@ -839,7 +865,20 @@
     }
 
     (function() {
+      // let socket = io.connect(':3000');
 
+      // socket.on('connect', () => {
+      //   console.log('Socket.io connected: ' + socket.id);
+      // });
+
+      // socket.on('notify', (message) => {
+      //   toastr.success(message);
+      // });
+
+      // socket.on('session', (data) => {
+      //   localStorage.setItem('user_id', data.userId);
+      //   socket.userId = data.userId;
+      // });
     })();
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=<?= env('API_GMAPS') ?>&libraries=places&v=weekly&callback=initmap"></script>
@@ -878,7 +917,7 @@
                 title: lang.App.success
               });
 
-              if (typeof Table !== 'undefined') Table.draw(false);
+              if (typeof erp.table !== 'undefined') erp.table.draw(false);
             },
             url: url
           });

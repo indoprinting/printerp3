@@ -36,7 +36,7 @@
             <div class="row">
               <div class="col-md-4">
                 <div class="form-group">
-                  <label for="cashier"><?= lang('App.cashier') ?> *</label>
+                  <label for="cashier"><?= lang('App.cashier') ?></label>
                   <select id="cashier" name="cashier" class="select-user" data-placeholder="<?= lang('App.cashier') ?>" style="width:100%" placeholder="<?= lang('App.cashier') ?>">
                     <option value=""></option>
                   </select>
@@ -301,20 +301,16 @@
 
     $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
 
-    try {
-      if (erp.biller) {
-        preSelect2('biller', '#biller', erp.biller);
-      }
+    if (erp.biller) {
+      preSelect2('biller', '#biller', erp.biller.id).catch(err => console.warn(err));
+    }
 
-      if (erp.warehouse) {
-        preSelect2('warehouse', '#warehouse', erp.warehouse);
-      }
+    if (erp.warehouse) {
+      preSelect2('warehouse', '#warehouse', erp.warehouse.id).catch(err => console.warn(err));
+    }
 
-      if (erp.sale.customer) {
-        preSelect2('customer', '#customer', erp.sale.customer);
-      }
-    } catch (e) {
-      console.warn(e);
+    if (erp.sale.customer) {
+      preSelect2('customer', '#customer', erp.sale.customer).catch(err => console.warn(err));
     }
 
     initModalForm({

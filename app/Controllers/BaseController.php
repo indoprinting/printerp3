@@ -148,12 +148,16 @@ class BaseController extends Controller
 	 * @param int $code Code to response.
 	 * @param array $data Respons data.
 	 */
-	protected function response(int $code, $data = [])
+	protected static function response(int $code, $data = [])
 	{
 		if (!is_array($data)) throw new \Exception('Response 2nd parameter is not an array.');
 
 		$data = array_merge(['code' => intval($code)], $data);
-		http_response_code($code);
+
+		if (!isCLI()) {
+			http_response_code($code);
+		}
+
 		sendJSON($data);
 	}
 

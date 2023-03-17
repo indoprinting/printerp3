@@ -194,9 +194,12 @@ class PaymentValidation
   {
     $createdAt = date('Y-m-d H:i:s');
     $startDate = date('Y-m-d H:i:s', strtotime('-7 day')); // We retrieve data from 7 days ago.
+    $useManual = false;
 
     // Manual Validation.
     if (isset($option['manual']) && $option['manual']) {
+      $useManual = true;
+
       if (empty($option['amount'])) {
         setLastError('Amount is empty.');
         return false;
@@ -220,14 +223,24 @@ class PaymentValidation
         return false;
       }
 
-      $pv = self::select('*')
+      if (!isset($option['mutation_id']) && !isset($option['sale_id'])) {
+        setLastError('Either mutation or sale must be selected.');
+        return false;
+      }
+
+      $q = self::select('*')
         ->whereIn('status', ['expired', 'pending'])
-        ->groupStart()
-        ->where('mutation_id', $option['mutation_id'])
-        ->orWhere('sale_id', $option['sale_id'])
-        ->groupEnd()
-        ->orderBy('id', 'DESC')
-        ->getRow();
+        ->orderBy('id', 'DESC');
+
+      if (isset($option['mutation_id'])) {
+        $q->where('mutation_id', $option['mutation_id']);
+      }
+
+      if (isset($option['sale_id'])) {
+        $q->where('sale_id', $option['sale_id']);
+      }
+
+      $pv = $q->getRow();
 
       if (!$pv) {
         setLastError('Payment validation is not found.');
@@ -251,6 +264,24 @@ class PaymentValidation
           setLastError('Sale is already paid.');
           return false;
         }
+
+        $payment = [
+          'amount'      => $pv->amount,
+          'method'      => 'Transfer',
+          'bank_id'     => $bank->id,
+          'created_at'  => $createdAt,
+          'created_by'  => $pv->created_by,
+          'type'        => 'received',
+          'note'        => $pv->note
+        ];
+
+        if (isset($option['attachment'])) {
+          $payment['attachment'] = $option['attachment'];
+        }
+
+        if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment to sales.
+          return false;
+        }
       } else if ($pv->mutation_id) {
         $mutation = BankMutation::getRow(['id' => $pv->mutation_id]);
 
@@ -264,27 +295,7 @@ class PaymentValidation
           return false;
         }
       }
-
-      $bmObject = [
-        'account_number'  => $bank->number,
-        'data_mutasi'     => [
-          [
-            'created'     => $date,
-            'type'        => 'CR',
-            'amount'      => floatval($pv->amount) + floatval($pv->unique),
-            'description' => ($option['note'] ?? '')
-          ]
-        ]
-      ];
-
-      $insertId = MutasiBank::add([
-        'data' => json_encode($bmObject)
-      ]);
-
-      if (!$insertId) {
-        return false;
-      }
-    }
+    } // End Manual Validation.
 
     $status = ['pending'];
 
@@ -323,7 +334,10 @@ class PaymentValidation
           return false;
         }
 
-        setLastError('data_mutasi object is not present. data_mutasi is deleted.');
+        setLastError("data_mutasi object is not present. data_mutasi {$mutasiBank->id} is deleted.");
+
+        DB::transComplete();
+
         return false;
       }
 
@@ -335,7 +349,10 @@ class PaymentValidation
           return false;
         }
 
-        setLastError('data_mutasi object is not an array. data_mutasi is deleted.');
+        setLastError("data_mutasi object is not an array. data_mutasi {$mutasiBank->id} is deleted.");
+
+        DB::transComplete();
+
         return false;
       }
 
@@ -355,7 +372,7 @@ class PaymentValidation
               'status'            => 'verified'
             ];
 
-            if (isset($option['manual']) && $option['manual']) {
+            if ($useManual) {
               $pvData = setCreatedBy($pvData);
               $pvData['verified_at'] = null; // Manual not verified automatically.
               $pvData['description'] = '(MANUAL) ' . $pvData['description'];
@@ -369,20 +386,18 @@ class PaymentValidation
             }
 
             if (!self::update((int)$pv->id, $pvData)) {
-              return false;
+              continue;
             }
 
             if ($pv->sale_id) {
               $sale = Sale::getRow(['id' => $pv->sale_id]);
 
               if (!$sale) {
-                setLastError('Sale is not found.');
-                return false;
+                continue;
               }
 
               if ($sale->payment_status == 'paid') {
-                setLastError('Sale is already paid.');
-                return false;
+                continue;
               }
 
               $payment = [
@@ -391,7 +406,8 @@ class PaymentValidation
                 'bank_id'     => $bank->id,
                 'created_at'  => $createdAt,
                 'created_by'  => $pv->created_by,
-                'type'        => 'received'
+                'type'        => 'received',
+                'note'        => $pv->note
               ];
 
               if (isset($option['attachment'])) {
@@ -399,7 +415,7 @@ class PaymentValidation
               }
 
               if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment to sales.
-                return false;
+                continue;
               }
 
               $validated++;
@@ -409,20 +425,18 @@ class PaymentValidation
               $mutation = BankMutation::getRow(['id' => $pv->mutation_id]);
 
               if (!$mutation) {
-                setLastError('Bank mutation is not found.');
-                return false;
+                continue;
               }
 
               if ($mutation->status == 'paid') {
-                setLastError('Bank mutation is already paid.');
-                return false;
+                continue;
               }
 
               $paymentFrom = [
                 'date'        => $mutation->date,
-                'mutation'    => $mutation->reference,
-                'bank'        => $mutation->bankfrom,
-                'biller'      => $mutation->biller,
+                'mutation_id' => $mutation->id,
+                'bank_id'     => $mutation->bankfrom_id,
+                'biller_id'   => $mutation->biller_id,
                 'method'      => 'Transfer',
                 'amount'      => $mutation->amount + $pv->unique,
                 'type'        => 'sent',
@@ -436,14 +450,14 @@ class PaymentValidation
               $insertId = Payment::add($paymentFrom);
 
               if (!$insertId) {
-                return false;
+                continue;
               }
 
               $paymentTo = [
                 'date'        => $mutation->date,
-                'mutation'    => $mutation->reference,
-                'bank'        => $mutation->bankto,
-                'biller'      => $mutation->biller,
+                'mutation_id' => $mutation->id,
+                'bank_id'     => $mutation->bankto_id,
+                'biller_id'   => $mutation->biller_id,
                 'method'      => 'Transfer',
                 'amount'      => $mutation->amount + $pv->unique,
                 'type'        => 'received',
@@ -457,7 +471,7 @@ class PaymentValidation
               $insertId = Payment::add($paymentTo);
 
               if (!$insertId) {
-                return false;
+                continue;
               }
 
               $res = BankMutation::update((int)$mutation->id, [
@@ -465,7 +479,7 @@ class PaymentValidation
               ]);
 
               if (!$res) {
-                return false;
+                continue;
               }
 
               $validated++;

@@ -8,6 +8,32 @@ use App\Models\{DB, Test1, Test2};
 
 class Debug extends BaseController
 {
+  public function array_object()
+  {
+    $rows = [
+      ['id' => 1, 'name' => 'Riyan'],
+      ['id' => 2, 'name' => 'Rizon'],
+      ['id' => 3, 'name' => 'Ridintek']
+    ];
+
+    array_splice($rows, 1, 1);
+
+    dbgprint($rows);
+  }
+
+  public function cache()
+  {
+    echo '<pre>';
+    print_r(cache('debug'));
+    echo '</pre>';
+    echo '<pre>';
+    print_r(cache('dailyPerformance22023-03'));
+    echo '</pre>';
+    echo '<pre>';
+    print_r(cache('revenueForecast2023-03'));
+    echo '</pre>';
+  }
+
   public function datetime2()
   {
     $dt = new \DateTime(''); // Return current date.

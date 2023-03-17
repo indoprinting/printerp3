@@ -110,14 +110,7 @@
   })();
 
   $(document).ready(function() {
-    erp.scope = {
-      billers: [],
-      user: [],
-      usergroups: [],
-      warehouses: []
-    };
-
-    $('#scope').val(JSON.stringify(erp.scope));
+    $('#scope').val('{}');
 
     let editor = new Quill('#editor', {
       theme: 'snow'

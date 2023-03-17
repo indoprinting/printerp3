@@ -13,31 +13,24 @@ class Sale
    */
   public static function add(array $data, array $items)
   {
-    $biller = Biller::getRow(['code' => $data['biller']]);
+    $biller = Biller::getRow(['id' => $data['biller_id']]);
 
     if (!$biller) {
       setLastError('Biller is not found.');
       return false;
     }
 
-    $customer = Customer::getRow(['phone' => $data['customer']]);
+    $customer = Customer::getRow(['id' => $data['customer_id']]);
 
     if (!$customer) {
       setLastError('Customer is not found.');
       return false;
     }
 
-    $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
+    $warehouse = Warehouse::getRow(['id' => $data['warehouse_id']]);
 
     if (!$warehouse) {
       setLastError('Warehouse is not found.');
-      return false;
-    }
-
-    $cashier = User::getRow(['phone' => $data['cashier']]);
-
-    if (!$cashier) {
-      setLastError('Cashier is not found.');
       return false;
     }
 
@@ -71,15 +64,24 @@ class Sale
     $balance = ($isSpecialCustomer ? $grandTotal : 0);
 
     // Determine use TB by biller and warehouse, if both different, then use tb (1).
-    $useTB = isTBSale($data['biller'], $data['warehouse']);
+    $useTB = isTBSale($biller->code, $warehouse->code);
 
     // Get payment term.
     $payment_term = filterDecimal($data['payment_term'] ?? 1);
     $payment_term = ($payment_term > 0 ? $payment_term : 1);
 
+    // Commit Vouchers.
+    if (!empty($data['vouchers']) && is_array($data['vouchers'])) {
+      if (empty($data['discount'])) {
+        $data['discount'] = 0;
+      }
+
+      $data['discount'] = useVouchers($data['vouchers'], $data['discount']);
+    }
+
     $saleJS = json_encode([
       'approved'                => ($data['approved'] ?? 0),
-      'cashier_by'              => $cashier->id,
+      'cashier_by'              => ($data['cashier_id'] ?? 0),
       'est_complete_date'       => ($data['due_date'] ?? ''),
       'payment_due_date'        => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days')))),
       'source'                  => ($data['source'] ?? ''),
@@ -220,7 +222,7 @@ class Sale
       'biller_id'   => $sale->biller_id,
       'amount'      => $data['amount'],
       'type'        => 'received',
-      'method'      => ($data['method'] ?? 'Transfer'),
+      'method'      => ($data['method'] ?? 'Cash'),
       'attachment'  => ($data['attachment'] ?? null)
     ]);
 
@@ -522,24 +524,24 @@ class Sale
       unset($data['approved']);
     }
 
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
+    if (isset($data['customer_id'])) {
+      $customer = Customer::getRow(['id' => $data['customer_id']]);
 
-      $data['biller_id']  = $biller->id;
+      if ($customer) {
+        $data['customer_id']    = $customer->id;
+        $data['customer_name']  = $customer->name;
+        $data['customer']       = $customer->phone;
+      }
     }
 
-    if (isset($data['customer'])) {
-      $customer = Customer::getRow(['phone' => $data['customer']]);
+    if (isset($data['cashier_id'])) {
+      $cashier = User::getRow(['id' => $data['cashier_id']]);
 
-      $data['customer_id']    = $customer->id;
-      $data['customer_name']  = $customer->name;
-    }
+      if ($cashier) {
+        $saleJS->cashier_by = $cashier->id;
+      }
 
-    if (isset($data['cashier'])) {
-      $cashier = User::getRow(['phone' => $data['cashier']]);
-      $saleJS->cashier_by = $cashier->id;
-
-      unset($data['cashier']);
+      unset($data['cashier_id']);
     }
 
     if (isset($data['est_complete_date'])) {
@@ -567,19 +569,13 @@ class Sale
       unset($data['waiting_production_date']);
     }
 
-    if (isset($data['warehouse'])) {
-      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
-
-      $data['warehouse_id'] = $warehouse->id;
-    }
-
     if ($items) {
       SaleItem::delete(['sale_id' => $sale->id]);
       Stock::delete(['sale_id' => $sale->id]);
 
       foreach ($items as $item) {
         $product  = Product::getRow(['code' => $item['code']]);
-        $operator = User::getRow(['phone' => $item['operator']]);
+        $operator = User::getRow(['id' => $item['operator']]);
 
         if (!empty($item['width']) && !empty($item['length'])) {
           $area = floatval($item['width']) * floatval($item['length']);

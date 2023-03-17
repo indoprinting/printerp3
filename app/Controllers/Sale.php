@@ -192,6 +192,67 @@ class Sale extends BaseController
     $dt->generate();
   }
 
+  public function getVouchers()
+  {
+    checkPermission('Voucher.View');
+
+    $createdBy  = getPost('created_by');
+    $startDate  = getPost('start_date');
+    $endDate    = getPost('end_date');
+
+    $dt = new DataTables('voucher');
+    $dt
+      ->select("voucher.id AS id, voucher.created_at, voucher.code, voucher.name, voucher.amount,
+      voucher.quota, voucher.valid_from, voucher.valid_to, creator.fullname")
+      ->join('users creator', 'creator.id = voucher.created_by', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-page"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('sale/voucher/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('sale/voucher/print/' . $data['id']) . '"
+                target="_blank">
+                <i class="fad fa-fw fa-print"></i> ' . lang('App.print') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('sale/voucher/view/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('sale/voucher/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
+      ->editColumn('amount', function ($data) {
+        return formatCurrency($data['amount']);
+      });
+
+    if ($startDate) {
+      $dt->where("voucher.created_at >= '{$startDate} 00:00:00'");
+    }
+
+    if ($endDate) {
+      $dt->where("voucher.created_at <= '{$endDate} 23:59:59'");
+    }
+
+    if ($createdBy) {
+      $dt->whereIn('voucher.created_by', $createdBy);
+    }
+
+    $dt->generate();
+  }
+
   public function add()
   {
     checkPermission('Sale.Add');
@@ -222,10 +283,6 @@ class Sale extends BaseController
         $this->response(400, ['message' => 'Customer is required.']);
       }
 
-      if (empty($cashier)) {
-        $this->response(400, ['message' => 'Cashier is required.']);
-      }
-
       if (empty($rawItems) || !is_array($rawItems)) {
         $this->response(400, ['message' => 'Item is empty or not valid.']);
       }
@@ -253,10 +310,10 @@ class Sale extends BaseController
 
       $data = [
         'date'          => $date,
-        'biller'        => $biller,
-        'warehouse'     => $warehouse,
-        'cashier'       => $cashier,
-        'customer'      => $customer,
+        'biller_id'     => $biller,
+        'warehouse_id'  => $warehouse,
+        'cashier_id'    => $cashier,
+        'customer_id'   => $customer,
         'due_date'      => $dueDate,
         'note'          => $note,
         'source'        => 'PrintERP3',
@@ -271,9 +328,9 @@ class Sale extends BaseController
         $data['status'] = 'draft';
       }
 
-      $data = $this->useAttachment($data);
-
       DB::transStart();
+
+      $data = $this->useAttachment($data);
 
       $insertId = Invoice::add($data, $items);
 
@@ -380,6 +437,7 @@ class Sale extends BaseController
       $warehouse  = getPost('warehouse');
       $cashier    = getPost('cashier');
       $customer   = getPost('customer');
+      $discount   = getPost('discount');
       $dueDate    = dateTimeJS(getPost('duedate'));
       $note       = getPost('note');
       $approved   = (getPost('approved') == 1 ? 1 : 0);
@@ -397,10 +455,6 @@ class Sale extends BaseController
 
       if (empty($customer)) {
         $this->response(400, ['message' => 'Customer is required.']);
-      }
-
-      if (empty($cashier)) {
-        $this->response(400, ['message' => 'Cashier is required.']);
       }
 
       if (empty($rawItems) || !is_array($rawItems)) {
@@ -432,16 +486,20 @@ class Sale extends BaseController
       unset($rawItems);
 
       $data = [
-        'date'      => $date,
-        'biller'    => $biller,
-        'warehouse' => $warehouse,
-        'cashier'   => $cashier,
-        'customer'  => $customer,
-        'due_date'  => $dueDate,
-        'note'      => $note,
-        'source'    => 'PrintERP',
-        'approved'  => $approved,
+        'date'          => $date,
+        'biller_id'     => $biller,
+        'warehouse_id'  => $warehouse,
+        'cashier_id'    => $cashier,
+        'customer_id'   => $customer,
+        'due_date'      => $dueDate,
+        'note'          => $note,
+        'source'        => 'PrintERP3',
+        'approved'      => $approved,
       ];
+
+      if ($discount) {
+        $data['discount'] = floatval($discount);
+      }
 
       if ($draft) {
         $data['status'] = 'draft';
@@ -575,5 +633,30 @@ class Sale extends BaseController
     $this->data['title']      = "Invoice {$sale->reference}";
 
     $this->response(200, ['content' => view('Sale/view', $this->data)]);
+  }
+
+  public function voucher()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    checkPermission('Voucher.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.sale'), 'slug' => 'sale', 'url' => '#'],
+        ['name' => lang('App.voucher'), 'slug' => 'voucher', 'url' => '#']
+      ],
+      'content' => 'Sale/Voucher/index',
+      'title' => lang('App.voucher')
+    ];
+
+    return $this->buildPage($this->data);
   }
 }
