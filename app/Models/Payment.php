@@ -15,26 +15,32 @@ class Payment
 
     if (isset($data['expense_id'])) {
       $inv = Expense::getRow(['id' => $data['expense_id']]);
+      $data['expense'] = $inv->reference;
     }
 
     if (isset($data['income_id'])) {
       $inv = Income::getRow(['id' => $data['income_id']]);
+      $data['income'] = $inv->reference;
     }
 
     if (isset($data['mutation_id'])) {
       $inv = BankMutation::getRow(['id' => $data['mutation_id']]);
+      $data['mutation'] = $inv->reference;
     }
 
     if (isset($data['purchase_id'])) {
       $inv = ProductPurchase::getRow(['id' => $data['purchase_id']]);
+      $data['purchase'] = $inv->reference;
     }
 
     if (isset($data['sale_id'])) {
       $inv = Sale::getRow(['id' => $data['sale_id']]);
+      $data['sale'] = $inv->reference;
     }
 
     if (isset($data['transfer_id'])) {
       $inv = ProductTransfer::getRow(['id' => $data['transfer_id']]);
+      $data['transfer'] = $inv->reference;
     }
 
     if (!$inv) {
@@ -42,15 +48,30 @@ class Payment
       return false;
     }
 
-    $data['reference']      = $inv->reference;
-    $data['reference_date'] = $inv->date;
+    if (isset($data['bank_id'])) {
+      $bank = Bank::getRow(['id' => $data['bank_id']]);
 
-    if (!isset($data['bank_id'])) {
+      if (!$bank) {
+        setLastError('Bank is not found.');
+        return false;
+      }
+
+      $data['bank'] = $bank->code;
+    } else {
       setLastError('Bank is not set.');
       return false;
     }
 
-    if (!isset($data['biller_id'])) {
+    if (isset($data['biller_id'])) {
+      $biller = Biller::getRow(['id' => $data['biller_id']]);
+
+      if (!$biller) {
+        setLastError('Biller is not found.');
+        return false;
+      }
+
+      $data['biller'] = $biller->code;
+    } else {
       setLastError('Biller is not set.');
       return false;
     }
@@ -64,6 +85,9 @@ class Payment
       setLastError('Type is empty and must be received or sent.');
       return false;
     }
+
+    $data['reference']      = $inv->reference;
+    $data['reference_date'] = $inv->date;
 
     $data = setCreatedBy($data);
 
@@ -157,6 +181,28 @@ class Payment
 
     if ($inv) {
       $data['reference']  = $inv->reference;
+    }
+
+    if (isset($data['bank_id'])) {
+      $bank = Bank::getRow(['id' => $data['bank_id']]);
+
+      if (!$bank) {
+        setLastError('Bank is not found.');
+        return false;
+      }
+
+      $data['bank'] = $bank->code;
+    }
+
+    if (isset($data['biller_id'])) {
+      $biller = Biller::getRow(['id' => $data['biller_id']]);
+
+      if (!$biller) {
+        setLastError('Biller is not found.');
+        return false;
+      }
+
+      $data['biller'] = $biller->code;
     }
 
     if (isset($data['amount']) && empty($data['amount'])) {

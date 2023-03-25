@@ -164,7 +164,7 @@
                 <?php $saleItemJS = getJSON($saleItem->json) ?>
                 <?php $operator = \App\Models\User::getRow(['id' => $saleItemJS->operator_id]); ?>
                 <tr>
-                  <td><?= $operator->fullname ?></td>
+                  <td><?= ($operator ? $operator->fullname : '') ?></td>
                   <td><span class="float-left"><?= "({$saleItem->product_code}) $saleItem->product_name" ?></span></td>
                   <td><?= $saleItemJS->spec ?></td>
                   <td><?= filterDecimal($saleItemJS->w) ?></td>
@@ -175,6 +175,38 @@
                     <td><span class="float-right"><?= formatNumber($saleItem->subtotal) ?></span></td>
                   <?php endif; ?>
                 </tr>
+                <?php if (isCompleted($saleItem->status)) : ?>
+                  <tr>
+                    <td colspan="8">
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th><?= lang('App.id') ?></th>
+                            <th><?= lang('App.item') ?></th>
+                            <th><?= lang('App.completedate') ?></th>
+                            <th><?= lang('App.completedqty') ?></th>
+                            <th><?= lang('App.status') ?></th>
+                            <th><?= lang('App.createdby') ?></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <?php $stocks = \App\Models\Stock::get(['saleitem_id' => $saleItem->id]) ?>
+                          <?php foreach ($stocks as $stock) : ?>
+                            <?php $creator = \App\Models\User::getRow(['id' => $stock->created_by]); ?>
+                            <tr>
+                              <td><?= $stock->id ?></td>
+                              <td><?= "({$stock->product_code}) " . $stock->product_name ?></td>
+                              <td><?= $stock->date ?></td>
+                              <td><?= $stock->quantity ?></td>
+                              <td><?= renderStatus($stock->status) ?></td>
+                              <td><?= $creator->fullname ?></td>
+                            </tr>
+                          <?php endforeach; ?>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                <?php endif; ?>
               <?php endforeach; ?>
             </tbody>
           </table>

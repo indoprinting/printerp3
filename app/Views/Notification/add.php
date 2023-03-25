@@ -50,6 +50,14 @@
                 </div>
               </div>
             </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <input id="pinned" name="pinned" class="form-control" type="checkbox">
+                  <label for="pinned"><?= lang('App.pinned') ?></label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -137,14 +137,14 @@
         type: 'value'
       }],
       series: [{
-          name: '<?= lang('App.revenue') ?>',
+          name: '<?= lang('App.stockvalue') ?>',
           type: 'line',
           emphasis: {
             focus: 'series'
           },
           data: []
         }, {
-          name: '<?= lang('App.stockvalue') ?>',
+          name: '<?= lang('App.revenue') ?>',
           type: 'line',
           emphasis: {
             focus: 'series'

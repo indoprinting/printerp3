@@ -161,7 +161,7 @@ class Inventory extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'          => dateTimeJS(getPost('date')),
+        'date'          => dateTimePHP(getPost('date')),
         'warehouse_id'  => getPost('warehouse'),
         'mode'          => getPost('mode'),
         'note'          => stripTags(getPost('note'))
@@ -285,7 +285,7 @@ class Inventory extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'          => dateTimeJS(getPost('date')),
+        'date'          => dateTimePHP(getPost('date')),
         'warehouse_id'  => getPost('warehouse'),
         'mode'          => getPost('mode'),
         'note'          => stripTags(getPost('note'))

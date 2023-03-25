@@ -39,6 +39,7 @@
         id: '<?= session('login')->biller_id ?>'
       },
       chart: {},
+      debug: false,
       echart: {},
       modal: [], // Stackable modal.
       sale: {
@@ -499,17 +500,17 @@
             <!-- Production -->
             <?php if (hasAccess('Sale.Complete')) : ?>
               <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon fad fa-scissors"></i>
+                <a href="#" class="nav-link" data-slug="production">
+                  <i class="nav-icon fad fa-scissors" style="color:#8080ff"></i>
                   <p><?= lang('App.production') ?> <i class="fad fa-angle-right right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
                   <?php if (hasAccess('Sale.Complete')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
-                        <i class="nav-icon fad fa-file-invoice"></i>
-                        <p><?= lang('App.invoice') ?></p>
+                      <a href="<?= base_url('production') ?>" class="nav-link" data-action="link" data-slug="saleitem">
+                        <i class="nav-icon fad fa-box-check" style="color:#80FF80"></i>
+                        <p><?= lang('App.saleitem') ?></p>
                       </a>
                     </li>
                   <?php endif; ?>
@@ -679,7 +680,7 @@
             <!-- Ticket -->
             <?php if (hasAccess('Ticket.View')) : ?>
               <li class="nav-item">
-                <a href="#" class="nav-link" data-action="link" data-slug="ticket">
+                <a href="#" class="nav-link" data-action="-link" data-slug="ticket">
                   <i class="nav-icon fad fa-ticket"></i>
                   <p><?= lang('App.ticket') ?></p>
                 </a>
@@ -728,6 +729,20 @@
             </div><!-- /.col -->
           </div><!-- /.row -->
         </div><!-- /.container-fluid -->
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-12">
+              <?php foreach (\App\Models\Notification::select('*')->orderBy('created_at', 'DESC')->get(['pinned' => 1, 'status' => 'active']) as $notif) : ?>
+                <?php if (!hasNotificationAccess(getJSON($notif->scope))) continue; ?>
+                <div class="alert alert-<?= $notif->type ?> alert-dismissible">
+                  <button class="close" data-dismiss="alert">&times;</button>
+                  <h5><?= $notif->title ?></h5>
+                  <?= $notif->note ?>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- /.content-header -->
 
@@ -924,6 +939,11 @@
         }
       });
     });
+
+    typing('nopgboss', () => {
+      erp.debug = true;
+      toastr.warning('Debug has been activated.');
+    })
   </script>
 </body>
 

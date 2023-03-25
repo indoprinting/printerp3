@@ -794,6 +794,38 @@ function strtotime(time) {
   return Date.parse(time);
 }
 
+/**
+ * Run callback after set of typing.
+ * @param {string} str 
+ * @param {function} callback 
+ * @returns 
+ */
+function typing(str, callback) {
+  let lastKey = '';
+  let x = 0;
+
+  $(document).on('keyup', function (e) {
+    if (lastKey.length == 0 && e.key == str[x]) {
+      lastKey = str[x];
+    } else if (lastKey == str[x - 1] && e.key == str[x]) {
+      if ((x + 1) == str.length) {
+        callback.call();
+        lastKey = '';
+        x = -1;
+      } else {
+        lastKey = str[x];
+      }
+    } else {
+      lastKey = '';
+      x = -1;
+    }
+
+    x = ((x + 1) % str.length);
+  });
+
+  return true;
+}
+
 function uc(str) {
   return str.toUpperCase();
 }

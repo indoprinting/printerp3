@@ -78,7 +78,7 @@ class Auth extends BaseController
     if (isLoggedIn()) {
       $this->response(200, ['message' => 'Logged in']);
     } else {
-      $this->response(200, ['message' => 'Not logged in']);
+      $this->response(403, ['message' => 'Not logged in']);
     }
   }
 }

@@ -647,7 +647,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST' && isAJAX()) {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -797,7 +797,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -915,7 +915,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -1034,7 +1034,7 @@ class Finance extends BaseController
       $attachment = Attachment::getRow(['hashname' => $income->attachment]);
 
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -1145,7 +1145,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'amount'      => filterDecimal(getPost('amount')),
         'biller_id'   => getPost('biller'),
         'bankfrom_id' => getPost('bankfrom'),
@@ -1283,7 +1283,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'amount'      => filterDecimal(getPost('amount')),
         'biller_id'   => getPost('biller'),
         'bankfrom_id' => getPost('bankfrom'),
@@ -1522,7 +1522,7 @@ class Finance extends BaseController
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      $date   = dateTimeJS(getPost('date'));
+      $date   = dateTimePHP(getPost('date'));
       $amount = filterDecimal(getPost('amount'));
       $bank   = getPost('bank');
 

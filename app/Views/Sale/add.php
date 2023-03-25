@@ -69,7 +69,7 @@
                 <?php if (hasAccess('Sale.Discount')) : ?>
                   <div class="form-group">
                     <label for="discount"><?= lang('App.discount') ?></label>
-                    <input type="number" id="discount" name="discount" class="form-control form-control-border form-control-sm" min="0" value="0">
+                    <input id="discount" name="discount" class="form-control form-control-border form-control-sm currency">
                   </div>
                 <?php endif; ?>
               </div>
@@ -102,6 +102,14 @@
                 <?php endif; ?>
               </div>
             </div>
+            <?php if (hasAccess('Sale.Voucher')) : ?>
+              <div class="row">
+                <div class="col-md-4">
+                  <label for="voucher"><?= lang('App.voucher') ?></label>
+                  <select id="voucher" name="voucher[]" class="select-voucher" data-placeholder="<?= lang('App.voucher') ?>" style="width:100%" multiple></select>
+                </div>
+              </div>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -204,6 +212,9 @@
     erp.select2.product.type = ['combo', 'service'];
     erp.select2.user.biller = ['<?= session('login')->biller ?>'];
     erp.select2.operator.warehouse = ['<?= session('login')->warehouse ?>'];
+    erp.sale.customer = {
+      id: <?= getGet('customer') ?? 0 ?>
+    };
 
     let editor = new Quill('#editor', {
       theme: 'snow'
@@ -229,8 +240,14 @@
       erp.select2.user.biller = [this.value];
     });
 
+    $('#customer').change(function() {
+      Sale.table('#table-sale').clear();
+    });
+
     $('#warehouse').change(function() {
       erp.select2.operator.warehouse = [this.value];
+
+      Sale.table('#table-sale').clear();
     });
 
     $('#draft').on('change', function() {
@@ -273,21 +290,24 @@
 
       $.ajax({
         data: {
-          code: this.value,
+          id: this.value,
           customer: customerId,
           warehouse: warehouse
         },
         success: (data) => {
+          let item = data.data[0];
+
           Sale.table('#table-sale').addItem({
-            code: data.data.code,
-            name: data.data.name,
-            category: data.data.category,
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            category: item.category,
             length: 1,
-            prices: data.data.prices,
+            prices: item.prices,
             quantity: 1,
-            ranges: data.data.ranges,
+            ranges: item.ranges,
             spec: '',
-            type: data.data.type,
+            type: item.type,
             width: 1
           }, true);
 
@@ -301,16 +321,16 @@
 
     $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
 
-    if (erp.biller) {
+    if (erp?.biller?.id) {
       preSelect2('biller', '#biller', erp.biller.id).catch(err => console.warn(err));
     }
 
-    if (erp.warehouse) {
+    if (erp?.warehouse?.id) {
       preSelect2('warehouse', '#warehouse', erp.warehouse.id).catch(err => console.warn(err));
     }
 
-    if (erp.sale.customer) {
-      preSelect2('customer', '#customer', erp.sale.customer).catch(err => console.warn(err));
+    if (erp?.sale?.customer?.id) {
+      preSelect2('customer', '#customer', erp.sale.customer.id).catch(err => console.warn(err));
     }
 
     initModalForm({

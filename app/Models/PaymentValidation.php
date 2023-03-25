@@ -215,7 +215,6 @@ class PaymentValidation
         return false;
       }
 
-      $date = ($option['date'] ?? date('Y-m-d H:i:s'));
       $bank = Bank::getRow(['id' => $option['bank_id']]);
 
       if (!$bank) {
@@ -264,24 +263,6 @@ class PaymentValidation
           setLastError('Sale is already paid.');
           return false;
         }
-
-        $payment = [
-          'amount'      => $pv->amount,
-          'method'      => 'Transfer',
-          'bank_id'     => $bank->id,
-          'created_at'  => $createdAt,
-          'created_by'  => $pv->created_by,
-          'type'        => 'received',
-          'note'        => $pv->note
-        ];
-
-        if (isset($option['attachment'])) {
-          $payment['attachment'] = $option['attachment'];
-        }
-
-        if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment to sales.
-          return false;
-        }
       } else if ($pv->mutation_id) {
         $mutation = BankMutation::getRow(['id' => $pv->mutation_id]);
 
@@ -308,8 +289,6 @@ class PaymentValidation
       setLastError('No mutasibank.');
       return false;
     }
-
-    $status = array_merge($status, ['expired']);
 
     $paymentValidations = self::select('*')
       ->whereIn('status', $status)

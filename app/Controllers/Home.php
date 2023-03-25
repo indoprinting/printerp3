@@ -222,12 +222,12 @@ class Home extends BaseController
       ],
       'series' => [
         [
-          'name' => lang('App.revenue'),
-          'data' => $revenues
-        ],
-        [
           'name' => lang('App.stockvalue'),
           'data' => $stockValues
+        ],
+        [
+          'name' => lang('App.revenue'),
+          'data' => $revenues
         ],
         [
           'name' => lang('App.receivable'),

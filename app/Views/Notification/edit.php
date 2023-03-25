@@ -50,6 +50,14 @@
                 </div>
               </div>
             </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <input id="pinned" name="pinned" class="form-control" type="checkbox" value="1">
+                  <label for="pinned"><?= lang('App.pinned') ?></label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -110,10 +118,14 @@
   })();
 
   $(document).ready(function() {
-    $('#scope').val('<?= $notification->scopes ?>');
+    $('#scope').val('<?= $notification->scope ?>');
     $('#status').val('<?= $notification->status ?>').trigger('change');
     $('#title').val('<?= $notification->title ?>');
     $('#type').val('<?= $notification->type ?>').trigger('change');
+
+    if (<?= $notification->pinned ?>) {
+      $('#pinned').iCheck('check');
+    }
 
     let editor = new Quill('#editor', {
       theme: 'snow'

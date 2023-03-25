@@ -56,9 +56,10 @@ class Payment extends BaseController
           WHEN banks.number IS NULL THEN banks.name
           WHEN banks.number IS NOT NULL THEN CONCAT(banks.name, ' (', banks.number, ')')
         END) bank_name,
-        biller.name, payments.amount, payments.type, payments.attachment")
+        biller.name, payments.amount, payments.type, creator.fullname, payments.attachment")
       ->join('banks', 'banks.id = payments.bank_id', 'left')
       ->join('biller', 'biller.id = payments.biller_id', 'left')
+      ->join('users creator', 'creator.id = payments.created_by', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -306,7 +307,7 @@ class Payment extends BaseController
 
     if (requestMethod() == 'POST' && isAJAX()) {
       $data['amount']         = filterDecimal(getPost('amount'));
-      $data['date']           = dateTimeJS(getPost('date'));
+      $data['date']           = dateTimePHP(getPost('date'));
       $data['reference']      = $inv->reference;
       $data['reference_date'] = $inv->date;
       $data['bank_id']        = getPost('bank');
@@ -436,22 +437,22 @@ class Payment extends BaseController
       $this->response(404, ['message' => 'Payment is not found.']);
     }
 
-    if ($payment->expense) {
+    if ($payment->expense_id) {
       $this->response(400, ['message' => 'Edit from Expense']);
-    } else if ($payment->income) {
+    } else if ($payment->income_id) {
       $this->response(400, ['message' => 'Edit from Income']);
-    } else if ($payment->mutation) {
+    } else if ($payment->mutation_id) {
       $this->response(400, ['message' => 'Edit from Bank Mutation']);
-    } else if ($payment->purchase) {
-    } else if ($payment->sale) {
-      $inv = Sale::getRow(['reference' => $payment->sale]);
+    } else if ($payment->purchase_id) {
+    } else if ($payment->sale_id) {
+      $inv = Sale::getRow(['id' => $payment->sale_id]);
       $this->data['modeLang'] = lang('App.invoice');
-    } else if ($payment->transfer) {
+    } else if ($payment->transfer_id) {
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
       $data['amount']         = filterDecimal(getPost('amount'));
-      $data['date']           = dateTimeJS(getPost('date'));
+      $data['date']           = dateTimePHP(getPost('date'));
       $data['reference']      = $inv->reference;
       $data['reference_date'] = $inv->date;
       $data['bank_id']        = getPost('bank');
@@ -472,7 +473,7 @@ class Payment extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        if ($payment->sale) {
+        if ($payment->sale_id) {
           Sale::sync(['id' => $inv->id]);
         }
 
@@ -483,7 +484,7 @@ class Payment extends BaseController
     }
 
     $this->data['payment']  = $payment;
-    $this->data['title']    = lang('editpayment');
+    $this->data['title']    = lang('App.editpayment');
 
     $this->response(200, ['content' => view('Payment/edit', $this->data)]);
   }

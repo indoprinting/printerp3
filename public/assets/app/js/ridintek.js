@@ -1,3 +1,59 @@
+export class SaleItem {
+  static tbody = null;
+
+  static table(table) {
+    this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('SaleItem::table() Cannot find tbody.');
+    }
+
+    return this;
+  }
+
+  static addItem(item) {
+    if (!this.tbody.length) {
+      return false;
+    }
+
+    if (item.status != 'waiting_production' && item.status != 'completed_partial') {
+      toastr.error(`Item ${item.product_code} is not in production status.`);
+      return false;
+    }
+
+    let restQty = (item.quantity - item.finished_qty);
+
+    this.tbody.prepend(`
+      <tr>
+        <input type="hidden" name="item[id][]" value="${item.id}">
+        <input type="hidden" name="item[sale_id][]" value="${item.sale_id}">
+        <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty}">
+        <input type="hidden" name="item[total_qty][]" value="${item.quantity}">
+        <input type="hidden" name="item[code][]" value="${item.product_code}">
+        <td>${item.sale}</td>
+        <td>(${item.product_code}) ${item.product_name}</td>
+        <td><input type="number" class="form-control form-control-border form-control-sm text-center" min="0" value="${filterDecimal(item.quantity)}" readonly></td>
+        <td><input type="number" class="form-control form-control-border form-control-sm text-center" min="0" value="${filterDecimal(item.finished_qty)}" readonly></td>
+        <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm text-center" min="0" value="${restQty}"></td>
+        <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
+      </tr>
+    `);
+
+    return this;
+  }
+
+  static addRow(row) {
+    this.tbody.prepend(`<tr>${row}</tr>`);
+
+    return this;
+  }
+
+  static clear() {
+    this.tbody.empty();
+
+    return this;
+  }
+}
 
 export class Notification {
   static reload() {
@@ -456,6 +512,12 @@ export class Sale {
     return this;
   }
 
+  static clear() {
+    this.tbody.empty();
+
+    calculateSale();
+  }
+
   static addItem(item, allowDuplicate = false) {
     if (!this.tbody.length) {
       return false;
@@ -465,7 +527,7 @@ export class Sale {
       let items = this.tbody.find('.item_name');
 
       for (let i of items) {
-        if (item.code == i.value) {
+        if (item.id == i.value) {
           toastr.error('Item has been added before.');
           return false;
         }
@@ -485,7 +547,8 @@ export class Sale {
     this.tbody.prepend(`
       <tr>
         <td class="col-md-3">
-          <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
+          <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
+          <input type="hidden" name="item[code][]" value="${item.code}">
           <input type="hidden" name="item[name][]" value="${item.name}">
           <input type="hidden" name="item[completed_at][]" value="${item.completed_at ?? ''}">
           <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty ?? ''}">
@@ -603,7 +666,7 @@ export class StockAdjustment {
     }
 
     if (!allowDuplicate) {
-      let items = this.tbody.find('.item_name');
+      let items = this.tbody.find('.item-id');
 
       for (let i of items) {
         if (item.code == i.value) {

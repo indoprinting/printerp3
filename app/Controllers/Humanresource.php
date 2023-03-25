@@ -312,7 +312,7 @@ class Humanresource extends BaseController
       $customerData = [
         'customer_group_id' => getPost('group'),
         'price_group_id'    => getPost('pricegroup'),
-        'name'              => $name,
+        'name'              => trim($name),
         'company'           => getPost('company'),
         'email'             => getPost('email'),
         'phone'             => $phone,
@@ -379,13 +379,24 @@ class Humanresource extends BaseController
     }
 
     if (requestMethod() == 'POST') {
+      $name   = getPost('name');
+      $phone  = filterNumber(getPost('phone'));
+
+      if (empty($name)) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($phone)) {
+        $this->response(400, ['message' => 'Phone number is required.']);
+      }
+
       $customerData = [
         'customer_group_id' => getPost('group'),
         'price_group_id'    => getPost('pricegroup'),
-        'name'              => getPost('name'),
+        'name'              => trim($name),
         'company'           => getPost('company'),
         'email'             => getPost('email'),
-        'phone'             => getPost('phone'),
+        'phone'             => trim($phone),
         'address'           => getPost('address'),
         'city'              => getPost('city'),
         'json'              => json_encode([])

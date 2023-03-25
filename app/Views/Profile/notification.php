@@ -21,24 +21,24 @@
               </thead>
               <tbody>
                 <?php foreach ($notifications as $notify) : ?>
-                  <?php $scopes = getJSON($notify->scopes) ?>
-                  <?php if (!empty($scopes->users)) : ?>
-                    <?php if (!in_array(session('login')->user_id, $scopes->users)) : ?>
+                  <?php $scope = getJSON($notify->scope) ?>
+                  <?php if (!empty($scope->users)) : ?>
+                    <?php if (!in_array(session('login')->user_id, $scope->users)) : ?>
                       <?php continue; ?>
                     <?php endif; ?>
                   <?php endif; ?>
-                  <?php if (!empty($scopes->usergroups)) : ?>
-                    <?php if (!in_array(\App\Models\UserGroup::getRow(['name' => session('login')->groups[0]])->id, $scopes->usergroups)) : ?>
+                  <?php if (!empty($scope->usergroups)) : ?>
+                    <?php if (!in_array(\App\Models\UserGroup::getRow(['name' => session('login')->groups[0]])->id, $scope->usergroups)) : ?>
                       <?php continue; ?>
                     <?php endif; ?>
                   <?php endif; ?>
-                  <?php if (!empty($scopes->billers)) : ?>
-                    <?php if (!in_array(session('login')->biller_id, $scopes->billers)) : ?>
+                  <?php if (!empty($scope->billers)) : ?>
+                    <?php if (!in_array(session('login')->biller_id, $scope->billers)) : ?>
                       <?php continue; ?>
                     <?php endif; ?>
                   <?php endif; ?>
-                  <?php if (!empty($scopes->warehouses)) : ?>
-                    <?php if (!in_array(session('login')->warehouse_id, $scopes->warehouses)) : ?>
+                  <?php if (!empty($scope->warehouses)) : ?>
+                    <?php if (!in_array(session('login')->warehouse_id, $scope->warehouses)) : ?>
                       <?php continue; ?>
                     <?php endif; ?>
                   <?php endif; ?>

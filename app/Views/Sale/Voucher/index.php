@@ -21,6 +21,8 @@
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
                 <th><?= lang('App.amount'); ?></th>
+                <th><?= lang('App.method'); ?></th>
+                <th><?= lang('App.percent'); ?></th>
                 <th><?= lang('App.quota'); ?></th>
                 <th><?= lang('App.validfrom'); ?></th>
                 <th><?= lang('App.validto'); ?></th>
@@ -34,6 +36,8 @@
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
                 <th><?= lang('App.amount'); ?></th>
+                <th><?= lang('App.method'); ?></th>
+                <th><?= lang('App.percent'); ?></th>
                 <th><?= lang('App.quota'); ?></th>
                 <th><?= lang('App.validfrom'); ?></th>
                 <th><?= lang('App.validto'); ?></th>

@@ -145,6 +145,24 @@ $(document).ready(function () {
     }
   });
 
+  $(document).on('change', '.checkbox-parent', function (e) {
+    let that = this;
+
+    if (this.checked) {
+      $('.checkbox-parent').iCheck('check');
+    } else {
+      $('.checkbox-parent').iCheck('uncheck');
+    }
+
+    $('.checkbox').each(function () {
+      if (that.checked) {
+        $(this).iCheck('check');
+      } else {
+        $(this).iCheck('uncheck');
+      }
+    });
+  });
+
   $(document).on('change', '.saleitem', function (e) {
     let area = $(this).closest('tr').find('[name="item[area][]"]');
     let price = $(this).closest('tr').find('[name="item[price][]"]');
@@ -171,8 +189,8 @@ $(document).ready(function () {
 
       SweetAlert.fire({
         icon: 'error',
-        title: 'Ketahuan deh!',
-        text: 'Hayoo mau ngapain? Tak laporin loh!'
+        title: 'Gagal',
+        text: 'Item jasa tidak bisa berupa floating point.'
       });
 
       return false;
@@ -637,6 +655,14 @@ $(document).ready(function () {
 
     calculateSale();
   });
+
+  setInterval(() => {
+    fetch(base_url + '/auth/status').then((response) => {
+      if (response.status == 403) {
+        location.reload();
+      }
+    });
+  }, 60 * 1000);
 
   $.extend(true, $.fn.DataTable.defaults, {
     drawCallback: function (settings) {

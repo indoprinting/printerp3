@@ -71,7 +71,7 @@
                 <?php if (hasAccess('Sale.Discount')) : ?>
                   <div class="form-group">
                     <label for="discount"><?= lang('App.discount') ?></label>
-                    <input type="number" id="discount" name="discount" class="form-control form-control-border form-control-sm" min="0" value="0">
+                    <input id="discount" name="discount" class="form-control form-control-border form-control-sm currency">
                   </div>
                 <?php endif; ?>
               </div>
@@ -102,6 +102,12 @@
                     <label for="draft"><?= lang('App.draft') ?></label>
                   </div>
                 <?php endif; ?>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <label for="voucher"><?= lang('App.voucher') ?></label>
+                <select id="voucher" name="voucher[]" class="select-voucher" data-placeholder="<?= lang('App.voucher') ?>" style="width:100%" multiple></select>
               </div>
             </div>
           </div>
@@ -219,6 +225,7 @@
 
     for (let item of items) {
       Sale.table('#table-sale').addItem({
+        id: item.id,
         code: item.code,
         name: item.name,
         category: item.category,
@@ -308,22 +315,25 @@
 
       $.ajax({
         data: {
-          code: this.value,
+          id: this.value,
           customer: customerId,
           warehouse: warehouse
         },
         success: (data) => {
+          let item = data.data[0];
+
           Sale.table('#table-sale').addItem({
-            code: data.data.code,
-            name: data.data.name,
-            category: data.data.category,
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            category: item.category,
             width: 1,
             length: 1,
             quantity: 1,
             spec: '',
-            type: data.data.type,
-            prices: data.data.prices,
-            ranges: data.data.ranges
+            type: item.type,
+            prices: item.prices,
+            ranges: item.ranges
           }, true);
 
           initControls();
@@ -336,13 +346,13 @@
 
     $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
     $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
-    $('#discount').val('<?= filterDecimal($sale->discount) ?>');
+    $('#discount').val('<?= formatCurrency($sale->discount) ?>');
 
     preSelect2('biller', '#biller', '<?= $sale->biller_id ?>').catch(err => console.warn(err));
     preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse_id ?>').catch(err => console.warn(err));
     preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>').catch(err => console.warn(err));
     preSelect2('customer', '#customer', '<?= $sale->customer_id ?>').catch(err => console.warn(err));
-
+    preSelect2('voucher', '#voucher', JSON.parse('<?= json_encode($saleJS->vouchers ?? '[]') ?>')).catch(err => console.warn(err));
 
     initModalForm({
       form: '#form',

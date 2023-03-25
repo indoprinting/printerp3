@@ -20,41 +20,7 @@ class Profile extends BaseController
       ->rowCallback(function ($row) {
         $scope = getJSON($row['scopes']);
 
-        if (!empty($scope->billers) && session('login')->biller_id) {
-          if (!in_array(session('login')->biller_id, $scope->billers)) {
-            return false;
-          }
-        }
-
-        if (!empty($scope->users)) {
-          if (!in_array(session('login')->user_id, $scope->users)) {
-            return false;
-          }
-        }
-
-        if (!empty($scope->usergroups)) {
-          $hasAccess = false;
-
-          foreach (session('login')->groups as $group) {
-            $userGroup = UserGroup::getRow(['code' => $group]);
-
-            if (!in_array($userGroup, $scope->usergroups)) {
-              $hasAccess = true;
-            }
-          }
-
-          if (!$hasAccess) {
-            return false;
-          }
-        }
-
-        if (!empty($scope->warehouses) && session('login')->warehouse_id) {
-          if (!in_array(session('login')->warehouse_id, $scope->warehouses)) {
-            return false;
-          }
-        }
-
-        return $row;
+        return (hasNotificationAccess($scope) ? $row : false);
       });
 
     $dt->generate();

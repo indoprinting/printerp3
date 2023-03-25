@@ -14,6 +14,7 @@ use App\Models\{
   Sale,
   SaleItem,
   User,
+  Voucher,
   Warehouse
 };
 use Config\Services;
@@ -103,8 +104,9 @@ function checkPermission(string $permission = null)
  * Convert JS time to PHP time or vice versa.
  * @param string $dateTime dateTime.
  * @param int $currentDate Return current date if dateTime is empty.
+ * @param string $mode Return mode default 'auto'. Options: auto|js|php
  */
-function dateTimeJS(string $dateTime, bool $currentDate = true)
+function dateTimeJS(string $dateTime = null, bool $currentDate = true)
 {
   if ($currentDate && empty($dateTime)) {
     $dateTime = date('Y-m-d H:i:s');
@@ -114,11 +116,20 @@ function dateTimeJS(string $dateTime, bool $currentDate = true)
     return null;
   }
 
-  if (strlen($dateTime) && strpos($dateTime, 'T') !== false) {
-    return str_replace('T', ' ', $dateTime);
+  return str_replace(' ', 'T', $dateTime);
+}
+
+function dateTimePHP(string $dateTime = null, bool $currentDate = true)
+{
+  if ($currentDate && empty($dateTime)) {
+    $dateTime = date('Y-m-d H:i:s');
   }
 
-  return str_replace(' ', 'T', $dateTime);
+  if (empty($dateTime)) {
+    return null;
+  }
+
+  return str_replace('T', ' ', $dateTime);
 }
 
 /**
@@ -755,6 +766,45 @@ function hasAccess($permission)
   return false;
 }
 
+function hasNotificationAccess(object $scope)
+{
+  if (!empty($scope->billers) && session('login')->biller_id) {
+    if (!in_array(session('login')->biller_id, $scope->billers)) {
+      return false;
+    }
+  }
+
+  if (!empty($scope->users)) {
+    if (!in_array(session('login')->user_id, $scope->users)) {
+      return false;
+    }
+  }
+
+  if (!empty($scope->usergroups)) {
+    $hasAccess = false;
+
+    foreach (session('login')->groups as $group) {
+      $userGroup = \App\Models\UserGroup::getRow(['code' => $group]);
+
+      if (!in_array($userGroup, $scope->usergroups)) {
+        $hasAccess = true;
+      }
+    }
+
+    if (!$hasAccess) {
+      return false;
+    }
+  }
+
+  if (!empty($scope->warehouses) && session('login')->warehouse_id) {
+    if (!in_array(session('login')->warehouse_id, $scope->warehouses)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /**
  * Convert html string into readable note.
  */
@@ -988,10 +1038,11 @@ function renderStatus(string $status)
   ];
   $info = [
     'calling', 'completed_partial', 'confirmed', 'delivered', 'excellent', 'finished',
-    'installed_partial', 'ordered', 'partial', 'preparing', 'received', 'received_partial', 'serving'
+    'installed_partial', 'ordered', 'partial', 'percent', 'preparing', 'received',
+    'received_partial', 'serving'
   ];
   $success = [
-    'active', 'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
+    'active', 'approved', 'completed', 'currency', 'increase', 'formula', 'good', 'installed', 'paid',
     'sent', 'served', 'verified'
   ];
   $warning = [
@@ -1206,8 +1257,10 @@ function stripTags(string $text)
 /**
  * Return vouchers total amount.
  * @param array $vouchers Array of voucher id.
+ * @param float $grandTotal Grand total of invoice. Required if voucher's method is percent.
+ * @param float $lastDiscount Last discount of invoice if any.
  */
-function useVouchers(array $vouchers, int $lastDiscount = 0)
+function useVouchers(array $vouchers, float $grandTotal, float $lastDiscount = 0.0)
 {
   $discount = $lastDiscount;
 
@@ -1227,7 +1280,11 @@ function useVouchers(array $vouchers, int $lastDiscount = 0)
     }
 
     if (Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1])) {
-      $discount += $voucher->amount;
+      if ($voucher->method == 'currency') {
+        $discount += floatval($voucher->amount);
+      } else if ($voucher->method == 'percent') {
+        $discount += floatval($grandTotal * ($voucher->percent * 0.01));
+      }
     }
   }
 

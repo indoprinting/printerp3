@@ -15,6 +15,7 @@
         <th><?= lang('App.biller') ?></th>
         <th><?= lang('App.amount') ?></th>
         <th><?= lang('App.type') ?></th>
+        <th><?= lang('App.createdby') ?></th>
         <th><?= lang('App.attachment') ?></th>
       </tr>
     </thead>
@@ -25,8 +26,9 @@
         <th><?= lang('App.reference') ?></th>
         <th><?= lang('App.bankaccount') ?></th>
         <th><?= lang('App.biller') ?></th>
-        <th></th>
+        <th><?= lang('App.amount') ?></th>
         <th><?= lang('App.type') ?></th>
+        <th><?= lang('App.createdby') ?></th>
         <th><?= lang('App.attachment') ?></th>
       </tr>
     </tfoot>
