@@ -55,6 +55,7 @@ class Sale extends BaseController
     checkPermission('Sale.View');
 
     $billers        = getPost('biller');
+    $customers      = getPost('customer');
     $warehouses     = getPost('warehouse');
     $status         = getPost('status');
     $paymentStatus  = getPost('payment_status');
@@ -120,6 +121,11 @@ class Sale extends BaseController
                 <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.manualvalidation') . '
               </a>
               <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('sale/reset/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-undo"></i> ' . lang('App.resetcomplete') . '
+              </a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="' . base_url('sale/delete/' . $data['id']) . '"
                 data-action="confirm">
                 <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
@@ -166,6 +172,10 @@ class Sale extends BaseController
 
     if ($billers) {
       $dt->whereIn('sales.biller', $billers);
+    }
+
+    if ($customers) {
+      $dt->whereIn('sales.customer_id', $customers);
     }
 
     if ($warehouses) {
@@ -419,14 +429,14 @@ class Sale extends BaseController
   {
     $sale = Invoice::getRow(['id' => $id]);
 
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
     if ($sale->status == 'draft' && session('login')->user_id == $sale->created_by) {
       checkPermission('Sale.Draft');
     } else {
       checkPermission('Sale.Edit');
-    }
-
-    if (!$sale) {
-      $this->response(404, ['message' => 'Invoice is not found.']);
     }
 
     $customer = Customer::getRow(['id' => $sale->customer_id]);
@@ -470,9 +480,9 @@ class Sale extends BaseController
       $items = [];
 
       for ($a = 0; $a < count($rawItems['code']); $a++) {
-        if (empty($rawItems['operator'][$a])) {
-          $this->response(400, ['message' => "Operator is empty for {$rawItems['code'][$a]}. Please set operator!"]);
-        }
+        // if (empty($rawItems['operator'][$a])) {
+        //   $this->response(400, ['message' => "Operator is empty for {$rawItems['code'][$a]}. Please set operator!"]);
+        // }
 
         $items[] = [
           'id'            => $rawItems['id'][$a],
@@ -481,10 +491,11 @@ class Sale extends BaseController
           'spec'          => $rawItems['spec'][$a],
           'price'         => filterDecimal($rawItems['price'][$a]),
           'quantity'      => $rawItems['quantity'][$a],
-          'completed_at'  => $rawItems['completed_at'][$a],
           'operator_id'   => $rawItems['operator'][$a],
           'status'        => $rawItems['status'][$a],
           'finished_qty'  => $rawItems['finished_qty'][$a],
+          'complete'      => getJSON($rawItems['complete'][$a]),
+          'completed_at'  => $rawItems['completed_at'][$a]
         ];
       }
 
@@ -558,11 +569,6 @@ class Sale extends BaseController
       $product      = Product::getRow(['code' => $saleItem->product]);
       $saleItemJS   = getJSON($saleItem->json);
       $operator     = User::getRow(['id' => $saleItemJS->operator_id]);
-      // $priceGroup   = PriceGroup::getRow(['id' => $customer->price_group_id ?? 1]);
-      // $productPrice = ProductPrice::getRow([
-      //   'product_id'      => $product->id,
-      //   'price_group_id'  => $priceGroup->id
-      // ]);
 
       $items[] = [
         'id'            => $saleItem->product_id,
@@ -574,9 +580,10 @@ class Sale extends BaseController
         'quantity'      => floatval($saleItemJS->sqty),
         'finished_qty'  => floatval($saleItem->finished_qty),
         'spec'          => $saleItemJS->spec,
+        'complete'      => ($saleItemJS->complete ?? []),
         'completed_at'  => $saleItemJS->completed_at,
         'operator'      => ($operator ? $operator->phone : ''),
-        'status'        => $saleItemJS->status,
+        'status'        => $saleItem->status,
         'type'          => $saleItem->product_type,
         'ranges'        => getJSON($product->price_ranges_value),
         'prices'        => [
@@ -619,6 +626,55 @@ class Sale extends BaseController
     $this->data['title']      = "Invoice {$sale->reference}";
 
     return view('Sale/print', $this->data);
+  }
+
+  public function reset($id = null)
+  {
+    checkPermission('Sale.ResetComplete');
+
+    $sale = Invoice::getRow(['id' => $id]);
+
+    if (!$sale) {
+      $this->response(404, ['message' => 'Invoice is not found.']);
+    }
+
+    DB::transStart();
+
+    Stock::delete(['sale_id' => $id]);
+
+    $res = Invoice::update((int)$id, ['status' => 'waiting_production']);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    foreach (SaleItem::get(['sale_id' => $id]) as $saleItem) {
+      $saleItemJS = getJSON($saleItem->json);
+
+      $saleItemJS->complete = [];
+      // Deprecated: 2 lines below.
+      $saleItemJS->completed_at = '';
+      $saleItemJS->operator_id = 0;
+
+      $json = json_encode($saleItemJS);
+
+      SaleItem::update((int)$saleItem->id, [
+        'finished_qty'  => 0,
+        'status'        => 'waiting_production',
+        'json'          => $json,
+        'json_data'     => $json
+      ]);
+    }
+
+    Invoice::sync(['id' => $id]);
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Invoice complete has been reset.']);
+    }
+
+    $this->response(400, ['message' => getLastError()]);
   }
 
   public function view($id = null)

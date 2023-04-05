@@ -8,6 +8,19 @@ use App\Models\{DB, Test1, Test2};
 
 class Debug extends BaseController
 {
+  public function log()
+  {
+    log_message('info', 'INFO OK');
+    log_message('debug', 'DEBUG OK');
+    log_message('error', 'ERROR OK');
+    log_message('notice', 'NOTICE OK');
+    log_message('warning', 'WARNING OK');
+    $s = "RizonBarns";
+
+
+    echo $s;
+  }
+
   public function array_object()
   {
     $rows = [
@@ -164,6 +177,23 @@ class Debug extends BaseController
   public function model()
   {
     \App\Models\Debug::add('HALO');
+  }
+
+  public function nullcoalesce()
+  {
+    $orang = (object)[];
+
+    if (isset($orang->kepala)) {
+      echo 'ada kepala';
+    } else {
+      $orang->kepala = 'botak';
+      echo 'Kepala: ' . $orang->kepala . '<br>';
+    }
+
+    $badan = ($orang->badan ?? 'gak ada'); // OK
+    // $badan = $orang?->badan // Error
+
+    echo 'Badan: ' . $badan;
   }
 
   public function page()

@@ -209,12 +209,18 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.select2.biller = {};
+    erp.select2.product = {};
+    erp.select2.user = {};
+    erp.select2.operator = {};
+    erp.select2.customer = {};
+    erp.select2.warehouse = {};
+
     erp.select2.product.type = ['combo', 'service'];
     erp.select2.user.biller = ['<?= session('login')->biller ?>'];
     erp.select2.operator.warehouse = ['<?= session('login')->warehouse ?>'];
-    erp.sale.customer = {
-      id: <?= getGet('customer') ?? 0 ?>
-    };
+
+    let customer = <?= getGet('customer') ?? 0 ?>;
 
     let editor = new Quill('#editor', {
       theme: 'snow'
@@ -302,6 +308,7 @@
             code: item.code,
             name: item.name,
             category: item.category,
+            complete: [],
             length: 1,
             prices: item.prices,
             quantity: 1,
@@ -329,8 +336,9 @@
       preSelect2('warehouse', '#warehouse', erp.warehouse.id).catch(err => console.warn(err));
     }
 
-    if (erp?.sale?.customer?.id) {
-      preSelect2('customer', '#customer', erp.sale.customer.id).catch(err => console.warn(err));
+    // Used from QMS Counter.
+    if (customer) {
+      preSelect2('customer', '#customer', customer).catch(err => console.warn(err));
     }
 
     initModalForm({

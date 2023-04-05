@@ -66,6 +66,21 @@ class Product
   }
 
   /**
+   * Sync product quantity.
+   */
+  public static function sync(int $productId, int $warehouseId)
+  {
+    $whp = WarehouseProduct::getRow(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
+
+    if (!$whp) return false;
+
+    return WarehouseProduct::update(
+      (int)$whp->id,
+      ['quantity' => Stock::totalQuantity($productId, $warehouseId)]
+    );
+  }
+
+  /**
    * Update Product.
    */
   public static function update(int $id, array $data)

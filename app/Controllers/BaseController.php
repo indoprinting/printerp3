@@ -135,10 +135,15 @@ class BaseController extends Controller
 			$data['page']['content'] = view($data['page']['content'], $data);
 			$data['page']['url'] = $currentUrl;
 
+			if (isLoggedIn()) {
+				$user = User::getRow(['id' => session('login')->user_id]);
+				log_message('notice', "Page: {$user->fullname}({$user->id}) => {$data['page']['url']}.");
+			}
+
 			$this->response(200, $data['page']);
 		} else if (requestMethod() == 'GET') {
 			if (isLoggedIn()) {
-				echo view('content', $data);
+				return view('content', $data);
 			}
 		}
 	}

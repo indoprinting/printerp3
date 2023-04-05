@@ -108,12 +108,12 @@
           <div class="card-body">
             <div class="form-group">
               <label for="billers"><?= lang('App.billeraccess') ?></label>
-              <select id="billers" name="billers[]" class="select-biller" style="width:100%" multiple>
+              <select id="billers" name="billers[]" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%" multiple>
               </select>
             </div>
             <div class="form-group">
               <label for="warehouses"><?= lang('App.warehouseaccess') ?></label>
-              <select id="warehouses" name="warehouses[]" class="select-warehouse" style="width:100%" multiple>
+              <select id="warehouses" name="warehouses[]" class="select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" multiple>
               </select>
             </div>
           </div>
@@ -157,8 +157,8 @@
     $('#gender').val('<?= $user->gender ?>').trigger('change');
     $('#groups').val('<?= $user->groups ?>'.split(',')).trigger('change');
     $('#warehouse').val('<?= $user->warehouse ?>').trigger('change');
-    preSelect2('biller', '#billers', <?= isset($userJS->billers) ? json_encode($userJS?->billers) : '[]' ?>);
-    preSelect2('warehouse', '#warehouses', <?= isset($userJS->warehouses) ? json_encode($userJS?->warehouses) : '[]' ?>);
+    preSelect2('biller', '#billers', <?= isset($userJS->billers) ? json_encode($userJS?->billers) : '[]' ?>).catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehouses', <?= isset($userJS->warehouses) ? json_encode($userJS?->warehouses) : '[]' ?>).catch(err => console.warn(err));
 
     initModalForm({
       form: '#form',

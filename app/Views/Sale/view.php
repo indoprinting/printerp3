@@ -178,32 +178,28 @@
                 <?php if (isCompleted($saleItem->status)) : ?>
                   <tr>
                     <td colspan="8">
-                      <table class="table">
-                        <thead>
-                          <tr>
-                            <th><?= lang('App.id') ?></th>
-                            <th><?= lang('App.item') ?></th>
-                            <th><?= lang('App.completedate') ?></th>
-                            <th><?= lang('App.completedqty') ?></th>
-                            <th><?= lang('App.status') ?></th>
-                            <th><?= lang('App.createdby') ?></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <?php $stocks = \App\Models\Stock::get(['saleitem_id' => $saleItem->id]) ?>
-                          <?php foreach ($stocks as $stock) : ?>
-                            <?php $creator = \App\Models\User::getRow(['id' => $stock->created_by]); ?>
-                            <tr>
-                              <td><?= $stock->id ?></td>
-                              <td><?= "({$stock->product_code}) " . $stock->product_name ?></td>
-                              <td><?= $stock->date ?></td>
-                              <td><?= $stock->quantity ?></td>
-                              <td><?= renderStatus($stock->status) ?></td>
-                              <td><?= $creator->fullname ?></td>
-                            </tr>
-                          <?php endforeach; ?>
-                        </tbody>
-                      </table>
+                      <div class="row text-bold">
+                        <!-- <div class="col-md-1"><?= lang('App.id') ?></div> -->
+                        <div class="col-md-4"><?= lang('App.completeditem') ?></div>
+                        <div class="col-md-3"><?= lang('App.completeddate') ?></div>
+                        <div class="col-md-2"><?= lang('App.completedqty') ?></div>
+                        <div class="col-md-1"><?= lang('App.status') ?></div>
+                        <div class="col-md-2"><?= lang('App.createdby') ?></div>
+                      </div>
+                      <?php $stocks = \App\Models\Stock::get(['saleitem_id' => $saleItem->id]) ?>
+                      <?php foreach ($stocks as $stock) : ?>
+                        <?php $creator = \App\Models\User::getRow(['id' => $stock->created_by]); ?>
+                        <div class="row">
+                          <!-- <div class="col-md-1"><?= $stock->id ?></div> -->
+                          <div class="col-md-4 use-tooltip" title="<?= '(' . $stock->product_code . ') ' . $stock->product_name ?>">
+                            <?= getExcerpt("({$stock->product_code}) " . $stock->product_name, 30) ?>
+                          </div>
+                          <div class="col-md-3"><?= formatDateTime($stock->date) ?></div>
+                          <div class="col-md-2"><?= $stock->quantity ?></div>
+                          <div class="col-md-1"><?= renderStatus($stock->status) ?></div>
+                          <div class="col-md-2"><?= $creator->fullname ?></div>
+                        </div>
+                      <?php endforeach; ?>
                     </td>
                   </tr>
                 <?php endif; ?>

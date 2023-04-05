@@ -77,7 +77,7 @@ class SaleItem
         'sqty'          => $subQty,
         'status'        => $status, // Backward PrintERP 2 compatibility.
         'w'             => $width,
-        'completed'     => getJSON('{}'), // [{"date": "", "quantity":"", "created_by":""}]
+        'complete'      => ($item['complete'] ?? []), // [{"created_at": "", "created_by":"", "quantity":""}]
       ]);
 
       $data = [
@@ -104,10 +104,11 @@ class SaleItem
         $insertId = DB::insertID();
 
         $insertIds[] = $insertId;
-
         $saleItem = self::getRow(['id' => $insertId]);
+        $isAutoComplete = (isset($productJS->autocomplete) && $productJS->autocomplete == 1);
 
-        if (isCompleted($saleItem->status) || (isset($productJS->autocomplete) && $productJS->autocomplete == 1)) {
+
+        if (isCompleted($saleItem->status) || $isAutoComplete) {
           $sysUser = User::getRow(['username' => 'system']);
 
           if (!$sysUser) {
@@ -115,14 +116,37 @@ class SaleItem
             return false;
           }
 
-          $res = self::complete((int)$saleItem->id, [
-            'quantity'  => $saleItem->quantity,
-            'spec'      => 'AUTOCOMPLETE',
-            'completed_by'  => $sysUser->id
-          ]);
+          if (isset($productJS->autocomplete) && $productJS->autocomplete == 1) {
+            $spec = 'Completed by system.';
+          } else {
+            $saleItemJS = getJSON($saleItem->json);
+            $spec = $saleItemJS->spec;
+          }
 
-          if (!$res) {
-            return false;
+          if (!empty($saleItemJS->complete) && is_array($saleItemJS->complete)) {
+            foreach ($saleItemJS->complete as $complete) {
+              $res = self::complete((int)$saleItem->id, [
+                'completed_at'  => $complete->completed_at,
+                'completed_by'  => ($isAutoComplete ? $sysUser->id : $complete->completed_by),
+                'quantity'      => $complete->quantity,
+                'spec'          => $spec,
+              ]);
+
+              if (!$res) {
+                return false;
+              }
+            }
+          } else if (isCompleted($saleItem->status) && !empty($saleItemJS->completed_at)) {
+            $res = self::complete((int)$saleItem->id, [
+              'completed_at'  => $saleItemJS->completed_at,
+              'completed_by'  => ($isAutoComplete ? $sysUser->id : $saleItemJS->operator_id),
+              'quantity'      => $saleItem->finished_qty,
+              'spec'          => $spec,
+            ]);
+
+            if (!$res) {
+              return false;
+            }
           }
         }
       } else {
@@ -135,127 +159,6 @@ class SaleItem
   }
 
   /**
-   * Add new SaleItem.
-   */
-  public static function add_(array $data)
-  {
-    if (isset($data['sale'])) {
-      $sale = Sale::getRow(['reference' => $data['sale']]);
-
-      if (!$sale) {
-        setLastError("Sale {$data['sale']} is not found.");
-        return false;
-      }
-
-      $data['sale_id'] = $sale->id;
-    } else {
-      setLastError("Sale is not set.");
-      return false;
-    }
-
-    if (isset($data['product'])) {
-      $product = Product::getRow(['code' => $data['product']]);
-
-      if (!$product) {
-        setLastError("Product {$data['product']} is not found.");
-        return false;
-      }
-
-      $data['product_id']   = $product->id;
-      $data['product_code'] = $product->code;
-      $data['product_name'] = $product->name;
-      $data['product_type'] = $product->type;
-    } else {
-      setLastError("Product is not set.");
-      return false;
-    }
-
-    DB::table('sale_items')->insert($data);
-
-    if (DB::error()['code'] == 0) {
-      $insertId = DB::insertID();
-
-      $saleItem   = self::getRow(['id' => $insertId]);
-      $saleItemJS = getJSON($saleItem->json);
-
-      if (isCompleted($saleItem->status)) {
-        if ($product->type == 'combo') {
-          $comboItems = ComboItem::get(['product_id' => $product->id]);
-
-          foreach ($comboItems as $comboItem) {
-            $rawItem = Product::getRow(['code' => $comboItem->item_code]);
-
-            if ($rawItem->type == 'standard') {
-              $res = Stock::decrease([
-                'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-                'sale'        => $sale->reference,
-                'saleitem_id' => $saleItem->id,
-                'product'     => $rawItem->code,
-                'quantity'    => ($saleItem->finished_qty * $comboItem->quantity),
-                'warehouse'   => $sale->warehouse,
-                'created_by'  => $saleItemJS->operator_id
-              ]);
-
-              if (!$res) {
-                return false;
-              }
-            } else if ($rawItem->type == 'service') {
-              $res = Stock::increase([
-                'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-                'sale'        => $sale->reference,
-                'saleitem_id' => $saleItem->id,
-                'product'     => $rawItem->code,
-                'quantity'    => ($saleItem->finished_qty * $comboItem->quantity),
-                'warehouse'   => $sale->warehouse,
-                'created_by'  => $saleItemJS->operator_id
-              ]);
-
-              if (!$res) {
-                return false;
-              }
-            }
-          }
-        } else if ($product->type == 'service') {
-          $res = Stock::increase([
-            'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-            'sale'        => $sale->reference,
-            'saleitem_id' => $saleItem->id,
-            'product'     => $product->code,
-            'quantity'    => $saleItem->finished_qty,
-            'warehouse'   => $sale->warehouse,
-            'created_by'  => $saleItemJS->operator_id
-          ]);
-
-          if (!$res) {
-            return false;
-          }
-        } else if ($product->type == 'standard') {
-          $res = Stock::decrease([
-            'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-            'sale'        => $sale->reference,
-            'saleitem_id' => $saleItem->id,
-            'product'     => $product->code,
-            'quantity'    => $saleItem->finished_qty,
-            'warehouse'   => $sale->warehouse,
-            'created_by'  => $saleItemJS->operator_id
-          ]);
-
-          if (!$res) {
-            return false;
-          }
-        }
-      }
-
-      return $insertId;
-    }
-
-    setLastError(DB::error()['message']);
-
-    return false;
-  }
-
-
-  /**
    * Complete sale item.
    * @param int $id Sale item ID.
    * @param array $data [ *quantity, spec, completed_at, completed_by ]
@@ -266,10 +169,9 @@ class SaleItem
     $saleItem = self::getRow(['id' => $id]);
 
     if ($saleItem) {
-      $completedQty = $data['quantity']; // Quantity to complete.
+      $completedQty = floatval($data['quantity']); // Quantity to complete.
       $sale         = Sale::getRow(['id' => $saleItem->sale_id]);
-      $saleItemJS   = getJSON($saleItem->json_data);
-      $status       = ($saleItemJS ? $saleItem->status : 'waiting_production'); // Default status.
+      $saleItemJS   = getJSON($saleItem->json);
 
       if (empty($data['quantity'])) {
         setLastError("Quantity is missing?");
@@ -287,21 +189,28 @@ class SaleItem
       // Get completed date. Default current date.
       $completedDate = new \DateTime($data['completed_at'] ?? date('Y-m-d H:i:s'));
 
-      if (($completedQty + $saleItem->finished_qty) < $saleItem->quantity) { // If completed partial.
-        $status = 'completed_partial';
-      } else if (($completedQty + $saleItem->finished_qty) == $saleItem->quantity) { // If fully completed.
-        $status = 'completed';
-      } else {
-        setLastError("Complete is more than requested. Complete: {$completedQty}, " .
-          "Finished: {$saleItem->finished_qty}, Quantity: {$saleItem->quantity}");
-        return false;
-      }
-
       // Set Completed date and Operator who completed it.
 
-      $saleItemJS->completed_at = $completedDate->format('Y-m-d H:i:s'); // Completed date.
-      $saleItemJS->operator_id  = $operator->id; // Change PIC who completed it.
-      $saleItemJS->status       = $status; // Restore status as completed or completed_partial.
+      // Reset if full.
+      if ($saleItem->finished_qty == $saleItem->quantity) {
+        $saleItem->finished_qty = 0;
+        $saleItemJS->complete = [];
+      }
+
+      if (isset($saleItemJS->complete) && is_array($saleItemJS->complete)) {
+        $saleItemJS->complete[] = [
+          'completed_at'  => $completedDate->format('Y-m-d H:i:s'), // Completed date.
+          'completed_by'  => intval($operator->id),
+          'quantity'      => $completedQty
+        ];
+      } else {
+        $saleItemJS->complete = [];
+        $saleItemJS->complete[] = [
+          'completed_at'  => $completedDate->format('Y-m-d H:i:s'), // Completed date.
+          'completed_by'  => intval($operator->id),
+          'quantity'      => $completedQty
+        ];
+      }
 
       if (isset($data['spec'])) {
         $saleItemJS->spec = $data['spec'];
@@ -313,7 +222,6 @@ class SaleItem
       $saleItemJSON = json_encode($saleItemJS);
 
       $saleItemData = [
-        'status'        => $status,
         'finished_qty'  => ($saleItem->finished_qty + $completedQty),
         'json'          => $saleItemJSON,
         'json_data'     => $saleItemJSON
@@ -367,7 +275,7 @@ class SaleItem
 
                 $res = Stock::increase([
                   'date'          => $completedDate->format('Y-m-d H:i:s'),
-                  'sale_id'       => $sale->reference,
+                  'sale_id'       => $sale->id,
                   'saleitem_id'   => $saleItem->id,
                   'product_id'    => $rawItem->id,
                   'price'         => $saleItem->price,
@@ -393,7 +301,7 @@ class SaleItem
 
           $res = Stock::increase([
             'date'          => $completedDate->format('Y-m-d H:i:s'),
-            'sale_id'       => $sale->reference,
+            'sale_id'       => $sale->id,
             'saleitem_id'   => $saleItem->id,
             'product_id'    => $saleItem->product_id,
             'price'         => $saleItem->price,

@@ -107,12 +107,12 @@
           <div class="card-body">
             <div class="form-group">
               <label for="billers"><?= lang('App.billeraccess') ?></label>
-              <select name="billers[]" class="select-biller" style="width:100%" multiple>
+              <select name="billers[]" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%" multiple>
               </select>
             </div>
             <div class="form-group">
               <label for="warehouses"><?= lang('App.warehouseaccess') ?></label>
-              <select name="warehouses[]" class="select-warehouse" style="width:100%" multiple>
+              <select name="warehouses[]" class="select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" multiple>
               </select>
             </div>
           </div>

@@ -57,6 +57,7 @@
         bankfrom: {},
         bankto: {},
         biller: {},
+        machine: {},
         operator: {},
         product: {},
         user: {},
@@ -91,7 +92,7 @@
           <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" data-action="darkmode" href="#" role="button"><i class="fad <?= session('login')->dark_mode ? 'fa-sun' : 'fa-moon' ?>"></i></a>
+          <a class="nav-link use-tooltip" data-action="darkmode" title="<?= lang('App.toggledarklightmode') ?>" href="#" role="button"><i class="fad <?= session('login')->dark_mode ? 'fa-sun' : 'fa-moon' ?>"></i></a>
         </li>
       </ul>
 
@@ -119,16 +120,22 @@
           </div>
         </li>
 
+        <li class="nav-item">
+          <a class="nav-link use-tooltip" href="#" data-action="clear-notification" title="<?= lang('App.clearnotification') ?>">
+            <i class="fad fa-exclamation-circle"></i>
+          </a>
+        </li>
+
         <!-- Notifications Dropdown Menu -->
         <li class="nav-item">
-          <a class="nav-link" href="<?= base_url('profile/notification') ?>" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <a class="nav-link use-tooltip" href="<?= base_url('profile/notification') ?>" data-toggle="modal" data-target="#ModalDefault" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable" title="<?= lang('App.notification') ?>">
             <i class="fad fa-bell"></i>
           </a>
         </li>
 
         <!-- Locale -->
         <li class="nav-item dropdown">
-          <a class="nav-link" data-toggle="dropdown" href="#">
+          <a class="nav-link use-tooltip" data-toggle="dropdown" href="#" title="<?= lang('App.language') ?>">
             <i class="flag-icon flag-icon-<?= App\Models\Locale::getRow(['code' => session('login')->lang])->flag ?>"></i>
           </a>
           <div class="dropdown-menu dropdown-menu-right">
@@ -144,7 +151,7 @@
           </div>
         </li>
         <li class="nav-item">
-          <a class="nav-link" data-action="logout" href="#" title="Logout">
+          <a class="nav-link use-tooltip" data-action="logout" href="#" title="<?= lang('App.logout') ?>">
             <i class="fad fa-door-open"></i>
           </a>
         </li>
@@ -366,7 +373,11 @@
               </li>
             <?php endif; ?>
             <!-- Inventory -->
-            <?php if (hasAccess(['Product.View'])) : ?>
+            <?php if (hasAccess([
+              'InternalUse.View', 'Product.History', 'Product.View',
+              'ProductCategory.View', 'ProductMutation.View', 'ProductTransfer.View',
+              'StockAdjustment.View', 'StockOpname.View'
+            ])) : ?>
               <li class="nav-item">
                 <a href="#" class="nav-link" data-slug="inventory">
                   <i class="nav-icon fad fa-box-open-full" style="color:#ffff00"></i>
@@ -374,60 +385,78 @@
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-cloud-arrow-down"></i>
-                      <p><?= lang('App.sync') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-hand-holding-box"></i>
-                      <p><?= lang('App.internaluse') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-boxes-packing"></i>
-                      <p><?= lang('App.category') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-cart-flatbed-boxes"></i>
-                      <p><?= lang('App.mutation') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="<?= base_url('inventory/product') ?>" class="nav-link" data-action="link" data-slug="product">
-                      <i class="nav-icon fad fa-box-up"></i>
-                      <p><?= lang('App.product') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="<?= base_url('inventory/stockadjustment') ?>" class="nav-link" data-action="link" data-slug="stockadjustment">
-                      <i class="nav-icon fad fa-sliders" style="color:#ffff40"></i>
-                      <p><?= lang('App.stockadjustment') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-box-check"></i>
-                      <p><?= lang('App.stockopname') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-exchange"></i>
-                      <p><?= lang('App.transfer') ?></p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon fad fa-box-ballot"></i>
-                      <p><?= lang('App.usagehistory') ?></p>
-                    </a>
-                  </li>
+                  <?php if (hasAccess('Product.Sync')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-cloud-check"></i>
+                        <p><?= lang('App.sync') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('InternalUse.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('inventory/internaluse') ?>" class="nav-link" data-action="link" data-slug="internaluse">
+                        <i class="nav-icon fad fa-hand-holding-box" style="color:#ff8040"></i>
+                        <p><?= lang('App.internaluse') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('ProductCategory.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('inventory/category') ?>" class="nav-link" data-action="link" data-slug="category">
+                        <i class="nav-icon fad fa-boxes-packing" style="color:#ff0040"></i>
+                        <p><?= lang('App.category') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('ProductMutation.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-cart-flatbed-boxes"></i>
+                        <p><?= lang('App.mutation') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Product.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('inventory/product') ?>" class="nav-link" data-action="link" data-slug="product">
+                        <i class="nav-icon fad fa-box-up" style="color:#40ffff"></i>
+                        <p><?= lang('App.product') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('StockAdjustment.View')) : ?>
+                    <li class="nav-item">
+                      <a href="<?= base_url('inventory/stockadjustment') ?>" class="nav-link" data-action="link" data-slug="stockadjustment">
+                        <i class="nav-icon fad fa-sliders" style="color:#ffff40"></i>
+                        <p><?= lang('App.stockadjustment') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('StockOpname.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-box-check"></i>
+                        <p><?= lang('App.stockopname') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('ProductTransfer.View')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-exchange"></i>
+                        <p><?= lang('App.transfer') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
+                  <?php if (hasAccess('Product.History')) : ?>
+                    <li class="nav-item">
+                      <a href="#" class="nav-link">
+                        <i class="nav-icon fad fa-box-ballot"></i>
+                        <p><?= lang('App.usagehistory') ?></p>
+                      </a>
+                    </li>
+                  <?php endif; ?>
                 </ul>
               </li>
             <?php endif; ?>
@@ -709,29 +738,25 @@
             <?php endif; ?>
           </ul>
         </nav>
-        <!-- /.sidebar-menu -->
       </div>
-      <!-- /.sidebar -->
     </aside>
 
-    <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper">
-      <!-- Content Header (Page header) -->
       <div class="content-header">
         <div class="container-fluid">
           <div class="row mb-2">
             <div class="col-sm-6">
               <h1 class="m-0" data-type="title"></h1>
-            </div><!-- /.col -->
+            </div>
             <div class="col-sm-6">
               <ol class="breadcrumb float-sm-right" data-type="breadcrumb">
               </ol>
-            </div><!-- /.col -->
-          </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
+            </div>
+          </div>
+        </div>
         <div class="container-fluid">
           <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-12" data-type="notification">
               <?php foreach (\App\Models\Notification::select('*')->orderBy('created_at', 'DESC')->get(['pinned' => 1, 'status' => 'active']) as $notif) : ?>
                 <?php if (!hasNotificationAccess(getJSON($notif->scope))) continue; ?>
                 <div class="alert alert-<?= $notif->type ?> alert-dismissible">
@@ -901,48 +926,15 @@
   <script src="<?= base_url() ?>/assets/app/js/app.js?v=<?= $resver ?>"></script>
   <script src="<?= base_url() ?>/assets/app/js/common.js?v=<?= $resver ?>"></script>
   <script>
-    $(document).on('click', '[data-action="confirm"]', function(e) {
-      e.preventDefault();
-
-      let url = e.target.href;
-
-      Swal.fire({
-        icon: 'warning',
-        text: lang.Msg.areYouSure,
-        title: lang.Msg.areYouSure,
-        showCancelButton: true,
-      }).then((result) => {
-        if (result.isConfirmed) {
-          $.ajax({
-            data: {
-              <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-            },
-            error: (xhr) => {
-              Swal.fire({
-                icon: 'error',
-                text: xhr.responseJSON.message,
-                title: lang.App.failed
-              });
-            },
-            method: 'POST',
-            success: (data) => {
-              Swal.fire({
-                icon: 'success',
-                text: data.message,
-                title: lang.App.success
-              });
-
-              if (typeof erp.table !== 'undefined') erp.table.draw(false);
-            },
-            url: url
-          });
-        }
-      });
-    });
-
     typing('nopgboss', () => {
-      erp.debug = true;
-      toastr.warning('Debug has been activated.');
+
+      if (erp.debug) {
+        erp.debug = false;
+        toastr.info('Debug has been deactivated.');
+      } else {
+        erp.debug = true;
+        toastr.info('Debug has been activated.');
+      }
     })
   </script>
 </body>

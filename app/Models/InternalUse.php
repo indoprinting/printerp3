@@ -4,17 +4,84 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Product;
+
 class InternalUse
 {
   /**
    * Add new InternalUse.
    */
-  public static function add(array $data)
+  public static function add(array $data, array $items)
   {
+
+    $data['counter']      = '';
+    $data['grand_total']  = 0;
+    $data['items']        = '';
+
+    foreach ($items as $item) {
+      $product = Product::getRow(['id' => $item['id']]);
+
+      if (!$product) {
+        setLastError("Product id {$product->id} is not found.");
+        return false;
+      }
+
+      $data['counter']      .= $item['counter'] . '<br>';
+      $data['grand_total']  += floatval(getMarkonPrice($product->cost, $product->markon) * $item['quantity']);
+      $data['items']        .= '- ' . getExcerpt($product->name) . '<br>';
+    }
+
+    $data['reference'] = OrderRef::getReference('iuse');
+    $data = setCreatedBy($data);
+
     DB::table('internal_uses')->insert($data);
 
     if (DB::error()['code'] == 0) {
-      return DB::insertID();
+      $insertId = DB::insertID();
+
+      foreach ($items as $item) {
+        $product = Product::getRow(['id' => $item['id']]);
+
+        if (!$product) {
+          setLastError("Product id {$product->id} is not found.");
+          return false;
+        }
+
+        $item = nulling($item, ['counter', 'machine_id', 'ucr']);
+
+        if (inStatus($data['status'], ['cancelled', 'completed', 'installed', 'packing'])) {
+          $res = Stock::decrease([
+            'date'            => ($data['date'] ?? date('Y-m-d H:i:s')),
+            'internal_use_id' => $insertId,
+            'machine_id'      => $item['machine_id'],
+            'product_id'      => $product->id,
+            'quantity'        => $item['quantity'],
+            'spec'            => $item['counter'], // Spec is counter in InternalUse.
+            'ucr'             => $item['ucr'],
+            'warehouse_id'    => $data['from_warehouse_id'],
+          ]);
+
+          if (!$res) {
+            return false;
+          }
+        } else {
+          $res = Stock::add([
+            'date'            => ($data['date'] ?? date('Y-m-d H:i:s')),
+            'internal_use_id' => $insertId,
+            'machine_id'      => $item['machine_id'],
+            'product_id'      => $product->id,
+            'quantity'        => $item['quantity'],
+            'spec'            => $item['counter'], // Spec is counter in InternalUse.
+            'status'          => $data['status'],
+            'ucr'             => $item['ucr'],
+            'warehouse_id'    => $data['from_warehouse_id'],
+          ]);
+        }
+      }
+
+      OrderRef::updateReference('iuse');
+
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);

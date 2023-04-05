@@ -158,6 +158,11 @@ class Sale
   {
     $sale = self::getRow(['id' => $saleId]);
 
+    if ($sale->payment_status == 'paid') {
+      setLastError('Invoice is already paid.');
+      return false;
+    }
+
     $insertId = Payment::add([
       'sale_id'     => $sale->id,
       'bank_id'     => $data['bank_id'],
@@ -165,7 +170,8 @@ class Sale
       'amount'      => $data['amount'],
       'type'        => 'received',
       'method'      => ($data['method'] ?? 'Cash'),
-      'attachment'  => ($data['attachment'] ?? null)
+      'attachment'  => ($data['attachment'] ?? null),
+      'created_by'  => ($data['created_by'] ?? null)
     ]);
 
     if (!$insertId) {
@@ -289,10 +295,10 @@ class Sale
 
       foreach ($saleItems as $saleItem) {
         $saleItemStatus = $saleItem->status;
-        $totalSaleItems++;
-        $total += round($saleItem->price * $saleItem->quantity);
         $isItemFinished = ($saleItem->quantity == $saleItem->finished_qty ? true : false);
         $isItemFinishedPartial = ($saleItem->finished_qty > 0 && $saleItem->quantity > $saleItem->finished_qty ? true : false);
+        $total += round($saleItem->price * $saleItem->quantity);
+        $totalSaleItems++;
 
         if ($saleItemStatus == 'delivered') {
           $completedItems++;

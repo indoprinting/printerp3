@@ -107,6 +107,13 @@ class Stock
       $data['subtotal'] = filterDecimal($data['price']) * filterDecimal($data['quantity']);
     }
 
+    // UCR (Unique Code Replacement) for Internal Use only.
+    if (isset($data['ucr']) && empty($data['unique_code'])) {
+      $data['unique_code'] = $data['ucr'];
+    } else if (isset($data['unique_code']) && empty($data['ucr'])) {
+      $data['ucr'] = $data['unique_code'];
+    }
+
     // Cost = Vendor price (Purchase). Price = Mark On Price (Transfer).
     if (!isset($data['cost']))  $data['cost']   = $product->cost;
     if (!isset($data['price'])) $data['price']  = $product->price;

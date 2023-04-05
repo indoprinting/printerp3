@@ -1,57 +1,108 @@
-export class SaleItem {
+
+export class InternalUse {
   static tbody = null;
 
   static table(table) {
     this.tbody = $(table).find('tbody');
 
     if (!this.tbody.length) {
-      console.log('SaleItem::table() Cannot find tbody.');
+      console.log('InternalUse::table() Cannot find tbody.');
     }
 
     return this;
   }
 
-  static addItem(item) {
+  static addItem(item, allowDuplicate = false) {
     if (!this.tbody.length) {
       return false;
     }
 
-    if (item.status != 'waiting_production' && item.status != 'completed_partial') {
-      toastr.error(`Item ${item.product_code} is not in production status.`);
-      return false;
+    if (!allowDuplicate) {
+      let items = this.tbody.find('.item-id');
+
+      for (let i of items) {
+        if (item.code == i.value) {
+          toastr.error('Item has been added before.');
+          return false;
+        }
+      }
     }
 
-    let restQty = (item.quantity - item.finished_qty);
+    let option = `<option value="">${lang.App.allmachine}</option>`;
+
+    item.hash = randomString();
+
+    if (erp.machine && isArray(erp.machine)) {
+
+      erp.machine.forEach((machine) => {
+        option += `<option value="${machine.id}">${machine.name}</option>`;
+      });
+    }
 
     this.tbody.prepend(`
       <tr>
-        <input type="hidden" name="item[id][]" value="${item.id}">
-        <input type="hidden" name="item[sale_id][]" value="${item.sale_id}">
-        <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty}">
-        <input type="hidden" name="item[total_qty][]" value="${item.quantity}">
-        <input type="hidden" name="item[code][]" value="${item.product_code}">
-        <td>${item.sale}</td>
-        <td>(${item.product_code}) ${item.product_name}</td>
-        <td><input type="number" class="form-control form-control-border form-control-sm text-center" min="0" value="${filterDecimal(item.quantity)}" readonly></td>
-        <td><input type="number" class="form-control form-control-border form-control-sm text-center" min="0" value="${filterDecimal(item.finished_qty)}" readonly></td>
-        <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm text-center" min="0" value="${restQty}"></td>
+        <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
+        <input type="hidden" name="item[code][]" value="${item.code}">
+        <td>(${item.code}) ${item.name}</td>
+        <td>
+          <div class="card card-dark card-tabs">
+            <div class="card-header bg-gradient-dark p-0 pt-1">
+              <ul class="nav nav-tabs">
+                <li class="nav-item">
+                  <a href="#tab-machine-${item.hash}" class="nav-link active" data-toggle="pill">${lang.App.machine}</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tab-counter-${item.hash}" class="nav-link" data-toggle="pill">${lang.App.counter}</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tab-ucr-${item.hash}" class="nav-link" data-toggle="pill">${lang.App.ucr}</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#tab-quantity-${item.hash}" class="nav-link" data-toggle="pill">${lang.App.quantity}</a>
+                </li>
+              </ul>
+            </div>
+            <div class="card-body">
+              <div class="tab-content">
+                <div class="tab-pane fade active show" id="tab-machine-${item.hash}">
+                  <div class="form-group">
+                    <label>${lang.App.machine}</label>
+                    <select id="item-machine-${item.hash}" name="item[machine][]" class="select" data-placeholder="${lang.App.machine}" style="width:100%">
+                      ${option}
+                    </select>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-counter-${item.hash}">
+                  <div class="form-group">
+                    <label>${lang.App.counter}</label>
+                    <input name="item[counter][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.counter}" value="${item.counter}">
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-ucr-${item.hash}">
+                  <div class="form-group">
+                    <label>${lang.App.uniquecodereplacement}</label>
+                    <input name="item[ucr][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.uniquecodereplacement}" value="${item.ucr}">
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="tab-quantity-${item.hash}">
+                  <div class="form-group">
+                    <label>${lang.App.quantity}</label>
+                    <input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td>${item.unit}</td>
+        <td>${formatNumber(item.current_qty)}</td>
         <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);
 
-    return this;
-  }
-
-  static addRow(row) {
-    this.tbody.prepend(`<tr>${row}</tr>`);
-
-    return this;
-  }
-
-  static clear() {
-    this.tbody.empty();
-
-    return this;
+    if (item.machine) {
+      preSelect2('product', `#item-machine-${item.hash}`, item.machine).catch(err => console.warn(err));
+    }
   }
 }
 
@@ -524,7 +575,7 @@ export class Sale {
     }
 
     if (!allowDuplicate) {
-      let items = this.tbody.find('.item_name');
+      let items = this.tbody.find('.item-id');
 
       for (let i of items) {
         if (item.id == i.value) {
@@ -539,7 +590,7 @@ export class Sale {
     item.price = getSalePrice(item.area * item.quantity, item.ranges, item.prices);
     item.subtotal = item.area * item.price * item.quantity;
 
-    // console.log(item);
+    console.log(item);
 
     let readOnly = (item.category != 'DPI' ? ' readonly' : '');
     let priceReadOnly = (hasAccess('Sale.EditPrice') ? '' : ' readonly');
@@ -550,8 +601,9 @@ export class Sale {
           <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
           <input type="hidden" name="item[code][]" value="${item.code}">
           <input type="hidden" name="item[name][]" value="${item.name}">
-          <input type="hidden" name="item[completed_at][]" value="${item.completed_at ?? ''}">
-          <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty ?? ''}">
+          <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty ?? 0}">
+          <input type="hidden" name="item[complete][]" value="${htmlEscape(JSON.stringify(item.complete))}">
+          <input type="hidden" name="item[completed_at][]" value="${item.completed_at ?? 0}">
           <input type="hidden" name="item[prices][]" value="${JSON.stringify(item.prices)}">
           <input type="hidden" name="item[ranges][]" value="${JSON.stringify(item.ranges)}">
           <input type="hidden" name="item[status][]" value="${item.status ?? ''}">
@@ -636,14 +688,67 @@ export class Sale {
     `);
 
     if (item.operator) {
-      try {
-        preSelect2('user', `#item-opr-${item.hash}`, item.operator);
-      } catch (e) {
-        console.warn(e);
-      }
+      preSelect2('user', `#item-opr-${item.hash}`, item.operator).catch(err => console.warn(err));
     }
 
     calculateSale();
+  }
+}
+
+export class SaleItem {
+  static tbody = null;
+
+  static table(table) {
+    this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('SaleItem::table() Cannot find tbody.');
+    }
+
+    return this;
+  }
+
+  static addItem(item) {
+    if (!this.tbody.length) {
+      return false;
+    }
+
+    if (item.status != 'waiting_production' && item.status != 'completed_partial') {
+      toastr.error(`Item ${item.product_code} is not in production status.`);
+      return false;
+    }
+
+    let restQty = (item.quantity - item.finished_qty);
+
+    this.tbody.prepend(`
+      <tr>
+        <input type="hidden" name="item[id][]" value="${item.id}">
+        <input type="hidden" name="item[sale_id][]" value="${item.sale_id}">
+        <input type="hidden" name="item[finished_qty][]" value="${item.finished_qty}">
+        <input type="hidden" name="item[total_qty][]" value="${item.quantity}">
+        <input type="hidden" name="item[code][]" value="${item.product_code}">
+        <td>${item.sale}</td>
+        <td>(${item.product_code}) ${item.product_name}</td>
+        <td><input type="number" class="form-control form-control-border form-control-sm text-center" min="0" value="${filterDecimal(item.quantity)}" readonly></td>
+        <td><input type="number" class="form-control form-control-border form-control-sm text-center" min="0" value="${filterDecimal(item.finished_qty)}" readonly></td>
+        <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm text-center" min="0" value="${restQty}"></td>
+        <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
+      </tr>
+    `);
+
+    return this;
+  }
+
+  static addRow(row) {
+    this.tbody.prepend(`<tr>${row}</tr>`);
+
+    return this;
+  }
+
+  static clear() {
+    this.tbody.empty();
+
+    return this;
   }
 }
 
@@ -678,7 +783,7 @@ export class StockAdjustment {
 
     this.tbody.prepend(`
       <tr>
-        <input type="hidden" name="item[code][]" class="item_name" value="${item.code}">
+        <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
         <td>(${item.code}) ${item.name}</td>
         <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
         <td>${formatNumber(item.current_qty)}</td>

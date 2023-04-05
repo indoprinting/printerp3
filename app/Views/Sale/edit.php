@@ -209,6 +209,11 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.select2.product = {};
+    erp.select2.user = {};
+    erp.select2.operator = {};
+    erp.select2.customer = {};
+    
     erp.select2.product.type = ['combo', 'service'];
     erp.select2.user.biller = ['<?= $sale->biller ?>'];
     erp.select2.operator.warehouse = ['<?= $sale->warehouse ?>'];
@@ -229,16 +234,17 @@
         code: item.code,
         name: item.name,
         category: item.category,
+        complete: item.complete,
         completed_at: item.completed_at,
         finished_qty: item.finished_qty,
         length: item.length,
         operator: item.operator,
         prices: item.prices,
         quantity: item.quantity,
+        ranges: item.ranges,
         spec: item.spec,
         status: item.status,
         type: item.type,
-        ranges: item.ranges,
         width: item.width
       }, true);
 
@@ -327,13 +333,13 @@
             code: item.code,
             name: item.name,
             category: item.category,
-            width: 1,
             length: 1,
+            prices: item.prices,
             quantity: 1,
+            ranges: item.ranges,
             spec: '',
             type: item.type,
-            prices: item.prices,
-            ranges: item.ranges
+            width: 1
           }, true);
 
           initControls();
@@ -345,7 +351,7 @@
     });
 
     $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
-    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
+    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? null, false) ?>');
     $('#discount').val('<?= formatCurrency($sale->discount) ?>');
 
     preSelect2('biller', '#biller', '<?= $sale->biller_id ?>').catch(err => console.warn(err));

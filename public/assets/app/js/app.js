@@ -145,6 +145,7 @@ $(document).ready(function () {
     }
   });
 
+  // iCheck multicheck.
   $(document).on('change', '.checkbox-parent', function (e) {
     let that = this;
 
@@ -210,12 +211,22 @@ $(document).ready(function () {
     calculateSale();
   });
 
+  $(document).on('click', '[data-action="clear-notification"]', function (e) {
+    e.preventDefault();
+
+    $('[data-type="notification"]').slideUp(function () {
+      $(this).empty();
+    })
+  });
+
   $(document).on('click', '[data-action="confirm"]', function (e) {
     e.preventDefault();
 
-    let url = this.href;
-    let fa = $(this).find('i')[0];
-    let faClass = fa.className;
+    let text            = this.dataset.text;
+    let title           = this.dataset.title;
+    let url             = this.href;
+    let fa              = $(this).find('i')[0];
+    let faClass         = fa.className;
     let faClassProgress = 'fad fa-spinner-third fa-spin';
 
     if (this.dataset.progress == 'true') {
@@ -224,8 +235,8 @@ $(document).ready(function () {
 
     Swal.fire({
       icon: 'warning',
-      text: lang.Msg.areYouSure,
-      title: lang.Msg.areYouSure,
+      text: (text ?? lang.Msg.areYouSure),
+      title: (title ?? lang.Msg.areYouSure),
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
@@ -233,10 +244,19 @@ $(document).ready(function () {
 
         $(fa).removeClass(faClass).addClass(faClassProgress);
 
+        let data = {
+          id: [],
+          __: __
+        };
+
+        $('.checkbox').each(function () {
+          if (this.checked) {
+            data.id.push(this.value);
+          }
+        });
+
         $.ajax({
-          data: {
-            __: __
-          },
+          data: data,
           error: (xhr) => {
             Swal.fire({
               icon: 'error',
@@ -244,7 +264,9 @@ $(document).ready(function () {
               title: lang.App.failed
             });
 
+
             $(fa).removeClass(faClassProgress).addClass(faClass);
+            delete this.dataset.progress;
           },
           method: 'POST',
           success: (data) => {
@@ -255,6 +277,7 @@ $(document).ready(function () {
             });
 
             $(fa).removeClass(faClassProgress).addClass(faClass);
+            delete this.dataset.progress;
 
             if (typeof erp.table !== 'undefined') erp.table.draw(false);
             if (typeof erp.modalTable !== 'undefined') erp.modalTable.draw(false);
@@ -656,13 +679,17 @@ $(document).ready(function () {
     calculateSale();
   });
 
-  setInterval(() => {
-    fetch(base_url + '/auth/status').then((response) => {
-      if (response.status == 403) {
-        location.reload();
-      }
-    });
-  }, 60 * 1000);
+  // setInterval(() => {
+  //   fetch(base_url + '/auth/status').then((response) => {
+  //     if (response.status == 403) {
+  //       location.reload();
+  //     }
+
+  //     response.json().then((response) => {
+
+  //     });
+  //   });
+  // }, 60 * 1000);
 
   $.extend(true, $.fn.DataTable.defaults, {
     drawCallback: function (settings) {

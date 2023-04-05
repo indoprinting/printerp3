@@ -23,7 +23,7 @@ class Production extends BaseController
 
     $dt = new DataTables('sale_items');
     $dt
-      ->select("sale_items.id AS id, sale_items.id AS cid, sale_items.date,
+      ->select("sale_items.id AS id, sale_items.date,
         sales.reference, operator.fullname AS operator_name,
         biller.name AS biller_name, warehouse.name AS warehouse_name,
         CONCAT(customers.name, ' (', customers.phone, ')') AS customer_name,
@@ -36,57 +36,7 @@ class Production extends BaseController
       ->whereIn('sale_items.status', ['completed_partial', 'waiting_production'])
       ->where("sales.date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
       ->editColumn('id', function ($data) {
-        return '
-          <div class="btn-group btn-action">
-            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
-              <i class="fad fa-gear"></i>
-            </a>
-            <div class="dropdown-menu">
-              <a class="dropdown-item" href="' . base_url('sale/edit/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
-              </a>
-              <a class="dropdown-item" href="' . base_url('sale/print/' . $data['id']) . '"
-                target="_blank">
-                <i class="fad fa-fw fa-print"></i> ' . lang('App.print') . '
-              </a>
-              <a class="dropdown-item" href="' . base_url('sale/print/' . $data['id']) . '?deliverynote=1"
-                target="_blank">
-                <i class="fad fa-fw fa-print"></i> ' . lang('App.deliverynote') . '
-              </a>
-              <a class="dropdown-item" href="' . base_url('sale/view/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-edit"></i> ' . lang('App.view') . '
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="' . base_url('payment/add/sale/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.addpayment') . '
-              </a>
-              <a class="dropdown-item" href="' . base_url('payment/view/sale/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.viewpayment') . '
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="' . base_url('finance/validation/manual/sale/' . $data['id']) . '"
-                data-toggle="modal" data-target="#ModalStatic"
-                data-modal-class="modal-dialog-centered modal-dialog-scrollable">
-                <i class="fad fa-fw fa-money-bill"></i> ' . lang('App.manualvalidation') . '
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="' . base_url('sale/delete/' . $data['id']) . '"
-                data-action="confirm">
-                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
-              </a>
-            </div>
-          </div>';
-      })
-      ->editColumn('cid', function ($data) {
-        return '<input class="checkbox" type="checkbox" value="' . $data['cid'] . '">';
+        return '<input class="checkbox" type="checkbox" value="' . $data['id'] . '">';
       })
       ->editColumn('status', function ($data) {
         return renderStatus($data['status']);
@@ -225,6 +175,8 @@ class Production extends BaseController
         if (!$res) {
           $this->response(400, ['message' => getLastError()]);
         }
+
+        Sale::sync(['id' => $sale->id]);
       }
 
       DB::transComplete();

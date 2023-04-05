@@ -305,6 +305,16 @@ class PaymentValidation
     foreach ($mutasiBanks as $mutasiBank) {
       $mb = getJSON($mutasiBank->data);
 
+      if (isset($mb->api_key)) {
+        if ($mb->api_key != 'tikXCBSpl2JGVr49ILhme7dHfbaQuOPFYNozMEc6') {
+          setLastError('API key is unauthorized.');
+          return false;
+        }
+      } else {
+        setLastError('API key is required.');
+        return false;
+      }
+
       if (!isset($mb->data_mutasi)) {
         $res = MutasiBank::delete(['id' => $mutasiBank->id]);
 
@@ -392,6 +402,9 @@ class PaymentValidation
               if (isset($option['attachment'])) {
                 $payment['attachment'] = $option['attachment'];
               }
+
+              // Problem double payment. See if there is a double validate.
+              log_message('notice', "PaymentValidation::validate(): Sale [{$sale->id}] {$sale->reference}: {$pv->amount}");
 
               if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment to sales.
                 continue;

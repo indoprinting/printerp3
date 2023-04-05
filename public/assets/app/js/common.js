@@ -308,6 +308,7 @@ function getTimeDifference(timestr1, timestr2) {
 function hasAccess(access) {
   if (typeof permissions == 'undefined' || !isArray(permissions)) {
     console.error('Const permissions is not defined.');
+    return false;
   }
 
   if (permissions.indexOf('All') >= 0) {
@@ -329,6 +330,24 @@ function hasAccess(access) {
   }
 
   return false;
+}
+
+function htmlEscape(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/\"/g, '&quot;')
+    .replace(/\</g, '&lt;')
+    .replace(/\>/g, '&gt;')
+    .replace(/\'/g, '&#039;')
+}
+
+function htmlUnescape(str) {
+  return str
+    .replace(new RegExp('&amp;', 'g'), '&')
+    .replace(new RegExp('&quot;', 'g'), '"')
+    .replace(new RegExp('&lt;', 'g'), '<')
+    .replace(new RegExp('&gt;', 'g'), '>')
+    .replace(new RegExp('&#039;', 'g'), "'")
 }
 
 function initControls() {
@@ -392,11 +411,11 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.select2.bankfrom?.biller !== 'undefined') {
+          if (erp?.select2.bankfrom?.biller) {
             params.biller = erp.select2.bankfrom.biller;
           }
 
-          if (typeof erp?.select2?.bankfrom?.type !== 'undefined') {
+          if (erp?.select2?.bankfrom?.type) {
             params.type = erp.select2.bankfrom.type;
           }
 
@@ -410,11 +429,11 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.select2.bankto?.biller !== 'undefined') {
+          if (erp?.select2.bankto?.biller) {
             params.biller = erp.select2.bankto.biller;
           }
 
-          if (typeof erp?.select2.bankto?.type !== 'undefined') {
+          if (erp?.select2.bankto?.type) {
             params.type = erp.select2.bankto.type;
           }
 
@@ -434,6 +453,13 @@ function initControls() {
     $('.select-biller').select2({
       allowClear: true,
       ajax: {
+        data: (params) => {
+          if (erp?.select2?.biller?.id) {
+            params.id = erp.select2.biller.id;
+          }
+
+          return params;
+        },
         delay: 1000,
         url: base_url + '/select2/biller'
       }
@@ -449,11 +475,11 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.select2?.operator?.biller !== 'undefined') {
+          if (erp?.select2?.operator?.biller) {
             params.biller = erp.select2.operator.biller;
           }
 
-          if (typeof erp?.select2?.operator?.warehouse !== 'undefined') {
+          if (erp?.select2?.operator?.warehouse) {
             params.warehouse = erp.select2.operator.warehouse;
           }
 
@@ -467,8 +493,16 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.select2?.product?.type !== 'undefined') {
+          if (erp?.select2?.product?.type) {
             params.type = erp.select2.product.type;
+          }
+
+          if (erp?.select2?.product?.iuse_type) {
+            params.iuse_type = erp.select2.product.iuse_type;
+          }
+
+          if (erp?.select2?.product?.warehouse) {
+            params.warehouse = erp.select2.product.warehouse;
           }
 
           return params;
@@ -477,11 +511,33 @@ function initControls() {
         url: base_url + '/select2/product'
       }
     });
+    $('.select-product-category').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (erp?.select2?.product?.category) {
+            params.category = erp.select2.product.category;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/product/category'
+      }
+    });
     $('.select-product-standard').select2({
       allowClear: true,
       ajax: {
         data: (params) => {
           params.type = ['standard'];
+
+          if (erp?.select2?.product?.iuse_type) {
+            params.iuse_type = erp.select2.product.iuse_type;
+          }
+
+          if (erp?.select2?.product?.warehouse) {
+            params.warehouse = erp.select2.product.warehouse;
+          }
 
           return params;
         },
@@ -496,15 +552,33 @@ function initControls() {
         url: base_url + '/select2/supplier'
       }
     });
+    $('.select-team-support').select2({
+      allowClear: true,
+      ajax: {
+        data: (params) => {
+          if (erp?.select2?.teamsupport?.biller) {
+            params.biller = erp.select2.user.biller;
+          }
+
+          if (erp?.select2?.teamsupport?.warehouse) {
+            params.warehouse = erp.select2.user.warehouse;
+          }
+
+          return params;
+        },
+        delay: 1000,
+        url: base_url + '/select2/teamsupport'
+      }
+    });
     $('.select-user').select2({
       allowClear: true,
       ajax: {
         data: (params) => {
-          if (typeof erp?.select2?.user?.biller !== 'undefined') {
+          if (erp?.select2?.user?.biller) {
             params.biller = erp.select2.user.biller;
           }
 
-          if (typeof erp?.select2?.user?.warehouse !== 'undefined') {
+          if (erp?.select2?.user?.warehouse) {
             params.warehouse = erp.select2.user.warehouse;
           }
 
@@ -531,6 +605,11 @@ function initControls() {
     $('.select-warehouse').select2({
       allowClear: true,
       ajax: {
+        data: (params) => {
+          if (erp?.select2?.warehouse?.id) {
+            params.id = erp.select2.warehouse.id;
+          }
+        },
         delay: 1000,
         url: base_url + '/select2/warehouse'
       }
@@ -776,13 +855,15 @@ function separateChar(char) {
   return buff;
 }
 
-function showPass(show = false) {
+function showPass(elm, show = false) {
+  let input = $(elm).closest('.input-group-append').siblings('input');
+
   if (show) {
-    $('.pass').prop('type', 'text');
-    $('.fa-eye-slash').addClass('fa-eye').removeClass('fa-eye-slash');
+    $(input).prop('type', 'text');
+    $(elm).addClass('fa-eye').removeClass('fa-eye-slash');
   } else {
-    $('.pass').prop('type', 'password');
-    $('.fa-eye').addClass('fa-eye-slash').removeClass('fa-eye');
+    $(input).prop('type', 'password');
+    $(elm).addClass('fa-eye-slash').removeClass('fa-eye');
   }
 }
 
@@ -885,17 +966,17 @@ let UserAgent = function () {
 };
 
 $(document).on('mousedown', '.show-pass', function () {
-  showPass(1);
+  showPass(this, 1);
 });
 
 $(document).on('touchstart', '.show-pass', function () {
-  showPass(1);
+  showPass(this, 1);
 });
 
 $(document).on('touchend', '.show-pass', function () {
-  showPass(0);
+  showPass(this, 0);
 });
 
 $(document).on('mouseup', '.show-pass', function () {
-  showPass(0);
+  showPass(this, 0);
 });

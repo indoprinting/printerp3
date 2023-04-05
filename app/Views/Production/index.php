@@ -16,7 +16,6 @@
           <table id="Table" class="table table-bordered table-hover" style="width:100%;">
             <thead>
               <tr>
-                <th></th>
                 <th><input class="checkbox-parent" type="checkbox"></th>
                 <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
@@ -31,7 +30,6 @@
             </thead>
             <tfoot>
               <tr>
-                <th></th>
                 <th><input class="checkbox-parent" type="checkbox"></th>
                 <th><?= lang('App.date'); ?></th>
                 <th><?= lang('App.reference'); ?></th>
@@ -255,7 +253,7 @@
         url: base_url + '/production/getSaleItems'
       },
       columnDefs: [{
-        targets: [0, 1],
+        targets: [0],
         orderable: false
       }],
       fixedHeader: false,
@@ -264,7 +262,7 @@
         [10, 25, 50, 100, lang.App.all]
       ],
       order: [
-        [2, 'desc']
+        [1, 'desc']
       ],
       processing: true,
       responsive: true,

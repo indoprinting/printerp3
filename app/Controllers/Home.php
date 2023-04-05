@@ -13,6 +13,7 @@ use App\Models\{
   ExpenseCategory,
   Locale,
   Product,
+  ProductCategory,
   ProductTransfer,
   Sale,
   Supplier,
@@ -496,10 +497,13 @@ class Home extends BaseController
         $results = $this->select2_expense($submode);
         break;
       case 'product':
-        $results = $this->select2_product();
+        $results = $this->select2_product($submode);
         break;
       case 'supplier':
         $results = $this->select2_supplier();
+        break;
+      case 'teamsupport':
+        $results = $this->select2_teamsupport();
         break;
       case 'user':
         $results = $this->select2_user();
@@ -571,6 +575,7 @@ class Home extends BaseController
   {
     $limit  = getGet('limit');
     $term   = getGet('term');
+    $id     = getGet('id');
 
     $q = Biller::select("id, name text")
       ->where('active', 1);
@@ -593,6 +598,10 @@ class Home extends BaseController
         ->orWhereIn('code', $term)
         ->orWhereIn('name', $term)
         ->groupEnd();
+    }
+
+    if ($id) {
+      $q->whereIn('id', $id);
     }
 
     return $q->get();
@@ -659,14 +668,41 @@ class Home extends BaseController
       return $q->get();
     }
 
-    return []; // Reserved
+    return []; // Reserved for expense list.
   }
 
-  protected function select2_product()
+  protected function select2_product($submode = null)
   {
-    $limit  = getGet('limit');
-    $term   = getGet('term');
-    $types  = getGet('type');
+    $limit      = getGet('limit');
+    $term       = getGet('term');
+    $types      = getGet('type');
+    $iuseTypes  = getGet('iuse_type');
+
+    if ($submode == 'category') {
+      $q = ProductCategory::select("id, CONCAT('(', code, ') ', name) text");
+
+      if ($limit) {
+        $q->limit(intval($limit));
+      } else {
+        $q->limit(30);
+      }
+
+      if ($term && is_string($term)) {
+        $q->groupStart()
+          ->where('id', $term)
+          ->orLike('name', $term, 'both')
+          ->orLike('code', $term, 'both')
+          ->groupEnd();
+      } else if ($term && is_array($term)) {
+        $q->groupStart()
+          ->whereIn('id', $term)
+          ->orWhereIn('name', $term)
+          ->orWhereIn('code', $term)
+          ->groupEnd();
+      }
+
+      return $q->get();
+    }
 
     $q = Product::select("id, CONCAT('(', code, ') ', name) text")
       ->where('active', 1);
@@ -689,6 +725,10 @@ class Home extends BaseController
         ->orWhereIn('code', $term)
         ->orWhereIn('name', $term)
         ->groupEnd();
+    }
+
+    if ($iuseTypes) {
+      $q->whereIn('iuse_type', $iuseTypes);
     }
 
     if ($types) {
@@ -723,6 +763,50 @@ class Home extends BaseController
         ->orWhereIn('name', $term)
         ->orWhereIn('company', $term)
         ->groupEnd();
+    }
+
+    return $q->get();
+  }
+
+  protected function select2_teamsupport()
+  {
+    $billers    = getGet('biller');
+    $limit      = getGet('limit');
+    $term       = getGet('term');
+    $warehouses = getGet('warehouse');
+
+    $q = User::select("id, fullname text")
+      ->like('groups', 'TEAMSUPPORT', 'none')
+      ->where('active', 1);
+
+    if ($limit) {
+      $q->limit(intval($limit));
+    } else {
+      $q->limit(30);
+    }
+
+    if ($term && is_string($term)) {
+      $q->groupStart()
+        ->where('id', $term)
+        ->orWhere('phone', $term)
+        ->orLike('fullname', $term, 'both')
+        ->orLike('username', $term, 'both')
+        ->groupEnd();
+    } else if ($term && is_array($term)) {
+      $q->groupStart()
+        ->whereIn('id', $term)
+        ->orWhereIn('phone', $term)
+        ->orWhereIn('fullname', $term)
+        ->orWhereIn('username', $term)
+        ->groupEnd();
+    }
+
+    if ($billers) {
+      $q->whereIn('biller_id', $billers);
+    }
+
+    if ($warehouses) {
+      $q->whereIn('warehouse_id', $warehouses);
     }
 
     return $q->get();

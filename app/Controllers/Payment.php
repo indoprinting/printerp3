@@ -290,7 +290,7 @@ class Payment extends BaseController
         $data['type']       = 'received';
 
         $this->data['inv']    = $inv;
-        $this->data['amount'] = ($inv->grand_total + $tax - $inv->paid - $inv->discount);
+        $this->data['amount'] = $inv->grand_total;
         break;
       case 'transfer': // NOT IMPLEMENTED
         // $inv = ProductTransfer::getRow(['id' => $id]);

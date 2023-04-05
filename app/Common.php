@@ -653,11 +653,22 @@ function getJSON($json, bool $assoc = false)
 
 /**
  * Get last error message.
+ * @param string $defaultMsg Default message if last error message is not defined.
  * @return string|null Return error message. null or empty string if no error.
  */
-function getLastError()
+function getLastError(string $defaultMsg = null)
 {
-  return (session()->has('lastErrMsg') ? session('lastErrMsg') : null);
+  return (session()->has('lastErrMsg') ? session('lastErrMsg') : $defaultMsg);
+}
+
+/**
+ * Get Mark-on price or Warehouse price from cost and mark-on.
+ * @param float $cost Item cost.
+ * @param float $markon Mark-on percent.
+ */
+function getMarkonPrice($cost, $markon)
+{
+  return round(filterDecimal($cost) / (1 - (filterDecimal($markon) / 100)));
 }
 
 /**
@@ -851,6 +862,22 @@ function htmlRemove($html)
 }
 
 /**
+ * Determine if current status is the same like one of the status list.
+ * @param string $currentStatus Current status.
+ * @param array $statusList Status list.
+ */
+function inStatus(string $currentStatus, array $statusList = [])
+{
+  foreach ($statusList as $st) {
+    if (strcasecmp($currentStatus, $st) === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Check if request from AJAX.
  */
 function isAJAX()
@@ -900,6 +927,42 @@ function isEnv($environment)
 function isLoggedIn()
 {
   return (session()->has('login') ? true : false);
+}
+
+/**
+ * Check assigned product warehouse by warehouse name.
+ * @param string $product_warehouse Assigned product warehouse name.
+ * Ex. "Durian, Tembalang" or "-Tlogosari, -Ungaran".
+ * @param string $warehouse_name Warehouse name to check assign.
+ * Ex. "Durian", "Ngesrep", ...
+ */
+function isProductWarehouses($productWarehouse, $warehouseName)
+{
+  if (!empty($productWarehouse)) {
+    $negated = false;
+    $pwhs = explode(',', trim($productWarehouse));
+
+    if (substr($pwhs[0], 0, 1) == '-') $negated = true;
+
+    foreach ($pwhs as $pwh) {
+      $pwh = trim($pwh);
+
+      if ($negated) {
+        if (strcasecmp(substr($pwh, 1), $warehouseName) === 0) {
+          return false;
+        }
+      } else {
+        if (strcasecmp($pwh, $warehouseName) === 0) {
+          return true;
+        }
+      }
+    }
+
+    if (!$negated) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -968,14 +1031,14 @@ function isWeb2Print($sale_id)
 }
 
 /**
- * Nulling empty data.
+ * Nulling empty data except zero.
  */
 function nulling(array $data, array $keys)
 {
   if (empty($keys)) return $data;
 
   foreach ($keys as $key) {
-    if (isset($data[$key]) && empty($data[$key])) {
+    if (isset($data[$key]) && empty($data[$key]) && $data[$key] != 0) {
       $data[$key] = null;
     }
   }
