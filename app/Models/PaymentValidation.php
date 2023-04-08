@@ -300,196 +300,154 @@ class PaymentValidation
       return false;
     }
 
-    $validated = 0;
+    $validateTotal = 0;
 
-    foreach ($mutasiBanks as $mutasiBank) {
-      $mb = getJSON($mutasiBank->data);
+    foreach ($mutasiBanks as $mb) {
+      $dm = getJSON($mb->data);
+      $validated = false;
 
-      if (isset($mb->api_key)) {
-        if ($mb->api_key != 'tikXCBSpl2JGVr49ILhme7dHfbaQuOPFYNozMEc6') {
-          setLastError('API key is unauthorized.');
-          return false;
-        }
-      } else {
-        setLastError('API key is required.');
-        return false;
-      }
+      if ($dm->type != 'CR') continue; // Only incoming amount is accepted. CR = Credit, DB = Debit
 
-      if (!isset($mb->data_mutasi)) {
-        $res = MutasiBank::delete(['id' => $mutasiBank->id]);
+      foreach ($paymentValidations as $pv) {
+        if (intval($dm->amount) == intval($pv->amount + $pv->unique)) {
+          $bank = Bank::getRow(['number' => $mb->account, 'biller_id' => $pv->biller_id]);
 
-        if (!$res) {
-          setLastError('Failed to delete Mutasibank. data_mutasi object is not present.');
-          return false;
-        }
+          $pvData = [
+            'bank_id'           => $bank->id,
+            'transaction_at'    => $dm->created,
+            'transaction_date'  => $dm->created,
+            'description'       => $dm->description,
+            'status'            => 'verified'
+          ];
 
-        setLastError("data_mutasi object is not present. data_mutasi {$mutasiBank->id} is deleted.");
+          if ($useManual) {
+            $pvData = setCreatedBy($pvData);
+            $pvData['verified_at'] = null; // Manual not verified automatically.
+            $pvData['description'] = '(MANUAL) ' . $pvData['description'];
+          } else {
+            $pvData['verified_at'] = date('Y-m-d H:i:s');
+          }
 
-        DB::transComplete();
+          if (isset($option['attachment'])) {
+            $pvData['attachment'] = $option['attachment'];
+          }
 
-        return false;
-      }
+          if (!self::update((int)$pv->id, $pvData)) {
+            continue;
+          }
 
-      if (!is_array($mb->data_mutasi)) {
-        $res = MutasiBank::delete(['id' => $mutasiBank->id]);
+          if ($pv->sale_id) {
+            $sale = Sale::getRow(['id' => $pv->sale_id]);
 
-        if (!$res) {
-          setLastError('Failed to delete Mutasibank. data_mutasi object is not an array.');
-          return false;
-        }
-
-        setLastError("data_mutasi object is not an array. data_mutasi {$mutasiBank->id} is deleted.");
-
-        DB::transComplete();
-
-        return false;
-      }
-
-      foreach ($mb->data_mutasi as $dm) {
-        if ($dm->type != 'CR') continue; // Only incoming amount is accepted. CR = Credit, DB = Debit
-
-        foreach ($paymentValidations as $pv) {
-          if (intval($dm->amount) == intval($pv->amount + $pv->unique)) {
-            $bank = Bank::getRow(['number' => $mb->account_number, 'biller_id' => $pv->biller_id]);
-
-            $pvData = [
-              'bank_id'           => $bank->id,
-              'transaction_at'    => $dm->created,
-              'transaction_date'  => $dm->created,
-              'description'       => $dm->description,
-              'note'              => $dm->description,
-              'status'            => 'verified'
-            ];
-
-            if ($useManual) {
-              $pvData = setCreatedBy($pvData);
-              $pvData['verified_at'] = null; // Manual not verified automatically.
-              $pvData['description'] = '(MANUAL) ' . $pvData['description'];
-              $pvData['note'] = $pvData['description'];
-            } else {
-              $pvData['verified_at'] = date('Y-m-d H:i:s');
-            }
-
-            if (isset($option['attachment'])) {
-              $pvData['attachment'] = $option['attachment'];
-            }
-
-            if (!self::update((int)$pv->id, $pvData)) {
+            if (!$sale) {
               continue;
             }
 
-            if ($pv->sale_id) {
-              $sale = Sale::getRow(['id' => $pv->sale_id]);
-
-              if (!$sale) {
-                continue;
-              }
-
-              if ($sale->payment_status == 'paid') {
-                continue;
-              }
-
-              $payment = [
-                'amount'      => $pv->amount,
-                'method'      => 'Transfer',
-                'bank_id'     => $bank->id,
-                'created_at'  => $createdAt,
-                'created_by'  => $pv->created_by,
-                'type'        => 'received',
-                'note'        => $pv->note
-              ];
-
-              if (isset($option['attachment'])) {
-                $payment['attachment'] = $option['attachment'];
-              }
-
-              // Problem double payment. See if there is a double validate.
-              log_message('notice', "PaymentValidation::validate(): Sale [{$sale->id}] {$sale->reference}: {$pv->amount}");
-
-              if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment to sales.
-                continue;
-              }
-
-              $validated++;
+            if ($sale->payment_status == 'paid') {
+              continue;
             }
 
-            if ($pv->mutation_id) {
-              $mutation = BankMutation::getRow(['id' => $pv->mutation_id]);
+            $payment = [
+              'amount'      => $pv->amount,
+              'method'      => 'Transfer',
+              'bank_id'     => $bank->id,
+              'created_at'  => $createdAt,
+              'created_by'  => $pv->created_by,
+              'type'        => 'received',
+              'note'        => '(MB) ' . $pvData['description']
+            ];
 
-              if (!$mutation) {
-                continue;
-              }
-
-              if ($mutation->status == 'paid') {
-                continue;
-              }
-
-              $paymentFrom = [
-                'date'        => $mutation->date,
-                'mutation_id' => $mutation->id,
-                'bank_id'     => $mutation->bankfrom_id,
-                'biller_id'   => $mutation->biller_id,
-                'method'      => 'Transfer',
-                'amount'      => $mutation->amount + $pv->unique,
-                'type'        => 'sent',
-                'note'        => $mutation->note
-              ];
-
-              if (isset($option['attachment'])) {
-                $paymentFrom['attachment'] = $option['attachment'];
-              }
-
-              $insertId = Payment::add($paymentFrom);
-
-              if (!$insertId) {
-                continue;
-              }
-
-              $paymentTo = [
-                'date'        => $mutation->date,
-                'mutation_id' => $mutation->id,
-                'bank_id'     => $mutation->bankto_id,
-                'biller_id'   => $mutation->biller_id,
-                'method'      => 'Transfer',
-                'amount'      => $mutation->amount + $pv->unique,
-                'type'        => 'received',
-                'note'        => $mutation->note
-              ];
-
-              if (isset($option['attachment'])) {
-                $paymentTo['attachment'] = $option['attachment'];
-              }
-
-              $insertId = Payment::add($paymentTo);
-
-              if (!$insertId) {
-                continue;
-              }
-
-              $res = BankMutation::update((int)$mutation->id, [
-                'status' => 'paid'
-              ]);
-
-              if (!$res) {
-                continue;
-              }
-
-              $validated++;
+            if (isset($option['attachment'])) {
+              $payment['attachment'] = $option['attachment'];
             }
+
+            if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment to sales.
+              continue;
+            }
+
+            // Problem double payment. See if there is a double validate.
+            log_message('notice', "PaymentValidation::validate(): Sale [{$sale->id}] {$sale->reference}: {$pv->amount}");
+
+            $validated = true;
+            $validateTotal++;
+          }
+
+          if ($pv->mutation_id) {
+            $mutation = BankMutation::getRow(['id' => $pv->mutation_id]);
+
+            if (!$mutation) {
+              continue;
+            }
+
+            if ($mutation->status == 'paid') {
+              continue;
+            }
+
+            $paymentFrom = [
+              'date'        => $mutation->date,
+              'mutation_id' => $mutation->id,
+              'bank_id'     => $mutation->bankfrom_id,
+              'biller_id'   => $mutation->biller_id,
+              'method'      => 'Transfer',
+              'amount'      => $mutation->amount + $pv->unique,
+              'type'        => 'sent',
+              'note'        => '(MB) ' . $pvData['description']
+            ];
+
+            if (isset($option['attachment'])) {
+              $paymentFrom['attachment'] = $option['attachment'];
+            }
+
+            $insertId = Payment::add($paymentFrom);
+
+            if (!$insertId) {
+              continue;
+            }
+
+            $paymentTo = [
+              'date'        => $mutation->date,
+              'mutation_id' => $mutation->id,
+              'bank_id'     => $mutation->bankto_id,
+              'biller_id'   => $mutation->biller_id,
+              'method'      => 'Transfer',
+              'amount'      => $mutation->amount + $pv->unique,
+              'type'        => 'received',
+              'note'        => '(MB) ' . $pvData['description']
+            ];
+
+            if (isset($option['attachment'])) {
+              $paymentTo['attachment'] = $option['attachment'];
+            }
+
+            $insertId = Payment::add($paymentTo);
+
+            if (!$insertId) {
+              continue;
+            }
+
+            $res = BankMutation::update((int)$mutation->id, [
+              'status' => 'paid'
+            ]);
+
+            if (!$res) {
+              continue;
+            }
+
+            $validated = true;
+            $validateTotal++;
           }
         }
       }
 
       if ($validated) {
         DB::table('mutasibank')->update([
-          'status' => 'validated',
-          'validated' => $validated
-        ], ['id' => $mutasiBank->id]);
+          'status'  => 'validated'
+        ], ['id' => $mb->id]);
       } else {
         setLastError('Not validated.');
       }
     }
 
-    return $validated;
+    return $validateTotal;
   }
 }

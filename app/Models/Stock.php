@@ -103,10 +103,6 @@ class Stock
       return false;
     }
 
-    if (isset($data['price'])) {
-      $data['subtotal'] = filterDecimal($data['price']) * filterDecimal($data['quantity']);
-    }
-
     // UCR (Unique Code Replacement) for Internal Use only.
     if (isset($data['ucr']) && empty($data['unique_code'])) {
       $data['unique_code'] = $data['ucr'];
@@ -117,6 +113,8 @@ class Stock
     // Cost = Vendor price (Purchase). Price = Mark On Price (Transfer).
     if (!isset($data['cost']))  $data['cost']   = $product->cost;
     if (!isset($data['price'])) $data['price']  = $product->price;
+
+    $data['subtotal'] = filterDecimal($data['price']) * filterDecimal($data['quantity']);
 
     $data = setCreatedBy($data);
 
@@ -273,33 +271,38 @@ class Stock
    */
   public static function update(int $id, array $data)
   {
-    if (isset($data['product_id']))
+    if (isset($data['product_id'])) {
       $product  = Product::getRow(['id' => $data['product_id']]);
 
-    if ($product) {
-      $data['product_code']   = $product->code;
-      $data['product_name']   = $product->name;
-      $data['product_type']   = $product->type;
-    } else {
-      setLastError("Stock::add(): Product id '{$data['product_id']}' is not found.");
-      return false;
-    }
+      if ($product) {
+        $data['product_code']   = $product->code;
+        $data['product_name']   = $product->name;
+        $data['product_type']   = $product->type;
+      } else {
+        setLastError("Stock::update(): Product id '{$data['product_id']}' is not found.");
+        return false;
+      }
 
-    $category = ProductCategory::getRow(['id' => $product->category_id]);
+      $category = ProductCategory::getRow(['id' => $product->category_id]);
 
-    if ($category) {
-      $data['category_id']    = $category->id;
-      $data['category_code']  = $category->code;
-      $data['category_name']  = $category->name;
-    }
+      if ($category) {
+        $data['category_id']    = $category->id;
+        $data['category_code']  = $category->code;
+        $data['category_name']  = $category->name;
+      }
 
-    // Not all use unit like service.
-    $unit = Unit::getRow(['id' => $product->unit]);
+      // Not all use unit like service.
+      $unit = Unit::getRow(['id' => $product->unit]);
 
-    if ($unit) {
-      $data['unit_id']        = $unit->id;
-      $data['unit_code']      = $unit->code;
-      $data['unit_name']      = $unit->name;
+      if ($unit) {
+        $data['unit_id']        = $unit->id;
+        $data['unit_code']      = $unit->code;
+        $data['unit_name']      = $unit->name;
+      }
+
+      $data['cost']     = $product->cost;
+      $data['price']    = $product->price;
+      $data['subtotal'] = filterDecimal($data['price']) * filterDecimal($data['quantity']);
     }
 
     if (isset($data['warehouse_id'])) {
@@ -312,10 +315,6 @@ class Stock
         setLastError("Stock::add(): Warehouse id '{$data['warehouse_id']}' is not found.");
         return false;
       }
-    }
-
-    if (isset($data['price'])) {
-      $data['subtotal'] = filterDecimal($data['price']) * filterDecimal($data['quantity']);
     }
 
     $data = setUpdatedBy($data);

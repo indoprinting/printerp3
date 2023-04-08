@@ -284,7 +284,6 @@ class Payment extends BaseController
       case 'sale':
         $inv = Sale::getRow(['id' => $id]);
         $modeLang = lang('App.sale');
-        $tax = ($inv->grand_total * 0.01 * $inv->tax);
         $data['sale_id']    = $inv->id;
         $data['biller_id']  = $inv->biller_id;
         $data['type']       = 'received';
@@ -342,6 +341,7 @@ class Payment extends BaseController
           'sale_id'     => $inv->id,
           'biller_id'   => $data['biller_id'],
           'amount'      => $data['amount'],
+          'note'        => $data['note'],
           'attachment'  => ($data['attachment'] ?? NULL)
         ]);
 

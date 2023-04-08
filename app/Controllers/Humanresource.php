@@ -607,10 +607,10 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(201, ['message' => 'User group has been added.']);
+        $this->response(201, ['message' => 'Usergroup has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addusergroup');
@@ -637,7 +637,7 @@ class Humanresource extends BaseController
         $this->response(200, ['message' => 'User group has been deleted.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to delete user group.']);
@@ -656,10 +656,10 @@ class Humanresource extends BaseController
       ];
 
       if (UserGroup::update((int)$userGroup->id, $userGroupData)) {
-        $this->response(200, ['message' => sprintf(lang('Msg.userGroupEditOK'), $userGroup->name)]);
+        $this->response(200, ['message' => 'Usergroup has been updated.']);
       }
 
-      $this->response(400, ['message' => sprintf(lang('Msg.userGroupEditNO'), $userGroup->name)]);
+      $this->response(400, ['message' => 'Failed to update Usergroup.']);
     }
 
     $this->data['title'] = lang('App.editusergroup');
@@ -743,7 +743,7 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(201, ['message' => sprintf(lang('Msg.userAddOK'), $data['username'])]);
+        $this->response(201, ['message' => 'User has been added.']);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -763,7 +763,7 @@ class Humanresource extends BaseController
     }
 
     if (User::delete(['id' => $userId])) {
-      $this->response(200, ['message' => lang('Msg.userDeleteOK')]);
+      $this->response(200, ['message' => 'User has been deleted.']);
     }
 
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -836,7 +836,7 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(200, ['message' => sprintf(lang('Msg.userEditOK'), $user->fullname)]);
+        $this->response(200, ['message' => 'User has been updated.']);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -936,7 +936,7 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(201, ['message' => sprintf(lang('Msg.supplierAddOK'), $supplierData['name'])]);
+        $this->response(201, ['message' => 'Supplier has been added.']);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -966,7 +966,7 @@ class Humanresource extends BaseController
     DB::transComplete();
 
     if (Supplier::delete(['id' => $supplierId])) {
-      $this->response(200, ['message' => lang('Msg.supplierDeleteOK')]);
+      $this->response(200, ['message' => 'Supplier has been deleted.']);
     }
 
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);

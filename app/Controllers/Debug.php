@@ -8,6 +8,23 @@ use App\Models\{DB, Test1, Test2};
 
 class Debug extends BaseController
 {
+  public function mutex()
+  {
+    $pass = getGet('pass');
+
+    if ($pass == 1) {
+      die("PASSED");
+    }
+
+    $hMutex = mutexCreate();
+
+    sleep(10);
+
+    mutexRelease($hMutex);
+
+    echo "OK BRO";
+  }
+
   public function log()
   {
     log_message('info', 'INFO OK');

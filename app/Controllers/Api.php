@@ -211,6 +211,7 @@ class Api extends BaseController
 
     DB::transComplete();
 
+
     if (DB::transStatus()) {
       $this->response(200, ['message' => 'Validated', 'data' => ['validated' => $total]]);
     }

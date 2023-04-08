@@ -170,6 +170,7 @@ class Sale
       'amount'      => $data['amount'],
       'type'        => 'received',
       'method'      => ($data['method'] ?? 'Cash'),
+      'note'        => ($data['note'] ?? null),
       'attachment'  => ($data['attachment'] ?? null),
       'created_by'  => ($data['created_by'] ?? null)
     ]);

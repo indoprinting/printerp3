@@ -418,11 +418,6 @@ class Inventory extends BaseController
         'ts_id'             => getPost('teamsupport'),
       ];
 
-      // Auto complete for consumable category.
-      if ($data['category'] == 'consumable') {
-        $data['status'] = 'completed';
-      }
-
       $itemId       = getPost('item[id]');
       $itemCode     = getPost('item[code]');
       $itemCounter  = getPost('item[counter]');
@@ -517,6 +512,22 @@ class Inventory extends BaseController
     }
 
     $this->response(400, ['message' => getLastError()]);
+  }
+
+  protected function internaluse_view($id = null)
+  {
+    checkPermission('InternalUse.View');
+
+    $internalUse = InternalUse::getRow(['id' => $id]);
+
+    if (!$internalUse) {
+      $this->response(404, ['message' => 'Internal Use is not found.']);
+    }
+
+    $this->data['internalUse']  = $internalUse;
+    $this->data['title']        = lang('App.viewinternaluse');
+
+    $this->response(200, ['content' => view('Inventory/InternalUse/view', $this->data)]);
   }
 
   public function product()

@@ -230,7 +230,9 @@
 
     $('#warehousefrom').change(function() {
       erp.select2.product.warehouse = this.value;
+    });
 
+    $('#warehouseto').change(function() {
       $.ajax({
         data: {
           machine: 1,

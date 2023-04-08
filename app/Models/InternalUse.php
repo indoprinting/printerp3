@@ -31,6 +31,13 @@ class InternalUse
       $data['items']        .= '- ' . getExcerpt($product->name) . '<br>';
     }
 
+    // Auto complete for consumable category.
+    if ($data['category'] == 'consumable') {
+      $data['status'] = 'completed';
+    } else if ($data['category'] == 'sparepart') {
+      $data['status'] = 'need_approval';
+    }
+
     $data['reference'] = OrderRef::getReference('iuse');
     $data = setCreatedBy($data);
 

@@ -101,6 +101,51 @@ function checkPermission(string $permission = null)
 }
 
 /**
+ * Create mutual exclusion
+ * @param string $name Mutex name.
+ */
+function mutexCreate(string $name = null)
+{
+  if (!is_dir(WRITEPATH . 'mutex')) {
+    mkdir(WRITEPATH . 'mutex');
+  }
+
+  if (!$name) {
+    $name = 'default';
+  }
+
+  $hFile = fopen(WRITEPATH . 'mutex/' . $name, 'w');
+
+  if ($hFile && flock($hFile, LOCK_EX)) {
+    return $hFile;
+  }
+
+  return false;
+}
+
+/**
+ * Release mutual exclusion.
+ * @param resource $hMutex Mutex instance.
+ */
+function mutexRelease($hMutex)
+{
+  if ($hMutex) {
+    $meta_data = stream_get_meta_data($hMutex); // Get absolute file name from resource/stream.
+    $filename = $meta_data['uri'];
+
+    flock($hMutex, LOCK_UN);
+    fclose($hMutex);
+
+    if (file_exists($filename)) {
+      @unlink($filename);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Convert JS time to PHP time or vice versa.
  * @param string $dateTime dateTime.
  * @param int $currentDate Return current date if dateTime is empty.
@@ -1105,11 +1150,11 @@ function renderStatus(string $status)
     'received_partial', 'serving'
   ];
   $success = [
-    'active', 'approved', 'completed', 'currency', 'increase', 'formula', 'good', 'installed', 'paid',
-    'sent', 'served', 'verified'
+    'active', 'approved', 'completed', 'consumable', 'currency', 'increase', 'formula',
+    'good', 'installed', 'paid', 'sent', 'served', 'verified'
   ];
   $warning = [
-    'called', 'cancelled', 'checked', 'draft', 'inactive', 'packing', 'pending', 'slow',
+    'called', 'cancelled', 'checked', 'draft', 'inactive', 'packing', 'pending', 'slow', 'sparepart',
     'trouble', 'waiting', 'waiting_production', 'waiting_transfer'
   ];
 
