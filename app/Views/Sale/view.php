@@ -54,6 +54,18 @@
                 <td><?= lang('App.source') ?></td>
                 <td><?= $saleJS->source ?></td>
               </tr>
+              <?php if ($sale->updated_at) : ?>
+                <tr>
+                  <td><?= lang('App.updatedat') ?></td>
+                  <td><?= formatDateTime($sale->updated_at) ?></td>
+                </tr>
+              <?php endif; ?>
+              <?php if ($sale->updated_by) : ?>
+                <tr>
+                  <td><?= lang('App.updatedby') ?></td>
+                  <td><?= \App\Models\User::getRow(['id' => $sale->updated_by])->fullname ?></td>
+                </tr>
+              <?php endif; ?>
             </tbody>
           </table>
         </div>
@@ -144,7 +156,7 @@
     <div class="col-md-12">
       <div class="card">
         <div class="card-body">
-          <table class="table table-bordered table-striped text-center">
+          <table class="table table-bordered table-hover table-sm table-striped text-center">
             <thead>
               <tr>
                 <th><?= lang('App.operator') ?></th>
@@ -161,7 +173,7 @@
             </thead>
             <tbody>
               <?php foreach ($saleItems as $saleItem) : ?>
-                <?php $saleItemJS = getJSON($saleItem->json) ?>
+                <?php $saleItemJS = json_decode($saleItem->json) ?>
                 <?php $operator = \App\Models\User::getRow(['id' => $saleItemJS->operator_id]); ?>
                 <tr>
                   <td><?= ($operator ? $operator->fullname : '') ?></td>
@@ -189,7 +201,7 @@
                       <?php $stocks = \App\Models\Stock::get(['saleitem_id' => $saleItem->id]) ?>
                       <?php foreach ($stocks as $stock) : ?>
                         <?php $creator = \App\Models\User::getRow(['id' => $stock->created_by]); ?>
-                        <div class="row">
+                        <div class="row mb-1">
                           <!-- <div class="col-md-1"><?= $stock->id ?></div> -->
                           <div class="col-md-4 use-tooltip" title="<?= '(' . $stock->product_code . ') ' . $stock->product_name ?>">
                             <?= getExcerpt("({$stock->product_code}) " . $stock->product_name, 30) ?>

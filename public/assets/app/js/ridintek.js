@@ -33,7 +33,6 @@ export class InternalUse {
     item.hash = randomString();
 
     if (erp.machine && isArray(erp.machine)) {
-
       erp.machine.forEach((machine) => {
         option += `<option value="${machine.id}">${machine.name}</option>`;
       });
@@ -43,6 +42,7 @@ export class InternalUse {
       <tr>
         <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
         <input type="hidden" name="item[code][]" value="${item.code}">
+        <input type="hidden" name="item[unique][]" value="${item.unique ?? ''}">
         <td>(${item.code}) ${item.name}</td>
         <td>
           <div class="card card-dark card-tabs">
@@ -75,13 +75,13 @@ export class InternalUse {
                 <div class="tab-pane fade" id="tab-counter-${item.hash}">
                   <div class="form-group">
                     <label>${lang.App.counter}</label>
-                    <input name="item[counter][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.counter}" value="${item.counter}">
+                    <input name="item[counter][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.counter}" value="${item.counter ?? ''}">
                   </div>
                 </div>
                 <div class="tab-pane fade" id="tab-ucr-${item.hash}">
                   <div class="form-group">
                     <label>${lang.App.uniquecodereplacement}</label>
-                    <input name="item[ucr][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.uniquecodereplacement}" value="${item.ucr}">
+                    <input name="item[ucr][]" class="form-control form-control-border form-control-sm" placeholder="${lang.App.uniquecodereplacement}" value="${item.ucr ?? ''}">
                   </div>
                 </div>
                 <div class="tab-pane fade" id="tab-quantity-${item.hash}">
@@ -121,6 +121,71 @@ export default class Ridintek {
 
   addItem(item) {
     console.log(item);
+  }
+}
+
+export class ProductMutation {
+  static tbody = null;
+
+  static table(table) {
+    this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('ProductMutation::table() Cannot find tbody.');
+    }
+
+    return this;
+  }
+
+  static addItem(item, allowDuplicate = false) {
+    if (!this.tbody.length) {
+      return false;
+    }
+
+    if (!allowDuplicate) {
+      let items = this.tbody.find('.item-id');
+
+      for (let i of items) {
+        if (item.code == i.value) {
+          toastr.error('Item has been added before.');
+          return false;
+        }
+      }
+    }
+
+    item.hash = randomString();
+
+    this.tbody.prepend(`
+      <tr>
+        <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
+        <input type="hidden" name="item[code][]" value="${item.code}">
+        <td>(${item.code}) ${item.name}</td>
+        <td>
+          <div class="card card-dark card-tabs">
+            <div class="card-header bg-gradient-dark p-0 pt-1">
+              <ul class="nav nav-tabs">
+                <li class="nav-item">
+                  <a href="#tab-quantity-${item.hash}" class="nav-link active" data-toggle="pill">${lang.App.quantity}</a>
+                </li>
+              </ul>
+            </div>
+            <div class="card-body">
+              <div class="tab-content">
+                <div class="tab-pane fade active show" id="tab-quantity-${item.hash}">
+                  <div class="form-group">
+                    <label>${lang.App.quantity}</label>
+                    <input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td>${item.unit}</td>
+        <td>${formatNumber(item.current_qty)}</td>
+        <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
+      </tr>
+    `);
   }
 }
 

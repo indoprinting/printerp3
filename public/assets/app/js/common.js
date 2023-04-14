@@ -333,21 +333,29 @@ function hasAccess(access) {
 }
 
 function htmlEscape(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/\"/g, '&quot;')
-    .replace(/\</g, '&lt;')
-    .replace(/\>/g, '&gt;')
-    .replace(/\'/g, '&#039;')
+  if (str && isString(str)) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/\"/g, '&quot;')
+      .replace(/\</g, '&lt;')
+      .replace(/\>/g, '&gt;')
+      .replace(/\'/g, '&#039;');
+  }
+
+  return null;
 }
 
 function htmlUnescape(str) {
-  return str
-    .replace(new RegExp('&amp;', 'g'), '&')
-    .replace(new RegExp('&quot;', 'g'), '"')
-    .replace(new RegExp('&lt;', 'g'), '<')
-    .replace(new RegExp('&gt;', 'g'), '>')
-    .replace(new RegExp('&#039;', 'g'), "'")
+  if (str && isString(str)) {
+    return str
+      .replace(new RegExp('&amp;', 'g'), '&')
+      .replace(new RegExp('&quot;', 'g'), '"')
+      .replace(new RegExp('&lt;', 'g'), '<')
+      .replace(new RegExp('&gt;', 'g'), '>')
+      .replace(new RegExp('&#039;', 'g'), "'");
+  }
+
+  return null;
 }
 
 function initControls() {
@@ -676,7 +684,7 @@ function initModalForm(opt = {}) {
       error: function (xhr) {
         Swal.fire({
           icon: 'error',
-          text: xhr.responseJSON.message,
+          text: (xhr.responseJSON?.message ?? 'Unknown error'),
           title: xhr.statusText
         });
 

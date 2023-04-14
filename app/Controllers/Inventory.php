@@ -11,6 +11,8 @@ use App\Models\{
   InternalUse,
   Product,
   ProductCategory,
+  ProductMutation,
+  ProductMutationItem,
   Stock,
   StockAdjustment,
   Warehouse,
@@ -100,6 +102,57 @@ class Inventory extends BaseController
       })
       ->editColumn('grand_total', function ($data) {
         return '<div class="float-right">' . formatNumber($data['grand_total']) . '</div>';
+      })
+      ->editColumn('status', function ($data) {
+        return renderStatus($data['status']);
+      })
+      ->editColumn('attachment', function ($data) {
+        return renderAttachment($data['attachment']);
+      })
+      ->generate();
+  }
+
+  public function getProductMutations()
+  {
+    checkPermission('ProductMutation.View');
+
+    $dt = new DataTables('product_mutation');
+    $dt
+      ->select("product_mutation.id AS id, product_mutation.id AS cid, product_mutation.date,
+      product_mutation.reference,
+      warehousefrom.name AS warehouse_from_name, warehouseto.name AS warehouse_to_name,
+      product_mutation.items, product_mutation.note, product_mutation.status,
+      product_mutation.attachment, product_mutation.created_at, creator.fullname")
+      ->join('warehouse warehousefrom', 'warehousefrom.id = product_mutation.from_warehouse_id', 'left')
+      ->join('warehouse warehouseto', 'warehouseto.id = product_mutation.to_warehouse_id', 'left')
+      ->join('users creator', 'creator.id = product_mutation.created_by', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-gear"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('inventory/mutation/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('inventory/mutation/view/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('inventory/mutation/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
+      ->editColumn('cid', function ($data) {
+        return "<input class=\"checkbox\" type=\"checkbox\" value=\"{$data['cid']}\">";
       })
       ->editColumn('status', function ($data) {
         return renderStatus($data['status']);
@@ -364,7 +417,7 @@ class Inventory extends BaseController
    * 
    * Decrease quantity warehouseFrom without increase quantity warehouseTo.
    * 
-   * category:
+   * category and status:
    *  - consumable: completed
    *  - sparepart: need_approval, approved
    *    - packing:
@@ -413,7 +466,6 @@ class Inventory extends BaseController
         'to_warehouse_id'   => $warehouseIdTo,
         'category'          => $category,
         'note'              => stripTags(getPost('note')),
-        'status'            => 'need_approval',
         'supplier_id'       => getPost('supplier'),
         'ts_id'             => getPost('teamsupport'),
       ];
@@ -423,8 +475,8 @@ class Inventory extends BaseController
       $itemCounter  = getPost('item[counter]');
       $itemMachine  = getPost('item[machine]');
       $itemQty      = getPost('item[quantity]');
+      $itemUnique   = getPost('item[unique]'); // Auto-generated on add.
       $itemUcr      = getPost('item[ucr]'); // Unique Code Replacement.
-
 
       if (!is_array($itemId) && !is_array($itemQty)) {
         $this->response(400, ['message' => 'Item tidak ada atau tidak valid.']);
@@ -453,6 +505,7 @@ class Inventory extends BaseController
           'counter'     => $itemCounter[$a],
           'machine_id'  => $itemMachine[$a],
           'quantity'    => $itemQty[$a],
+          'unique_code' => $itemUnique[$a],
           'ucr'         => $itemUcr[$a]
         ];
       }
@@ -496,7 +549,7 @@ class Inventory extends BaseController
     Stock::delete(['internal_use_id' => $id]);
 
     foreach ($iUseItems as $iUseItem) {
-      Product::sync((int)$iUseItem->product_id, (int)$iUse->from_warehouse_id);
+      Product::sync((int)$iUseItem->product_id);
     }
 
     $res = InternalUse::delete(['id' => $id]);
@@ -514,6 +567,169 @@ class Inventory extends BaseController
     $this->response(400, ['message' => getLastError()]);
   }
 
+  protected function internaluse_edit($id = null)
+  {
+    checkPermission('InternalUse.Edit');
+
+    $internalUse = InternalUse::getRow(['id' => $id]);
+
+    if (!$internalUse) {
+      $this->response(404, ['message' => 'Internal Use is not found.']);
+    }
+
+    if (requestMethod() == 'POST') {
+      $category         = getPost('category');
+      $warehouseIdFrom  = getPost('warehousefrom');
+      $warehouseIdTo    = getPost('warehouseto');
+
+      $data = [
+        'date'              => dateTimePHP(getPost('date')),
+        'from_warehouse_id' => $warehouseIdFrom,
+        'to_warehouse_id'   => $warehouseIdTo,
+        'category'          => $category,
+        'note'              => stripTags(getPost('note')),
+        'status'            => getPost('status'), // Status is changeable from edit.
+        'supplier_id'       => getPost('supplier'),
+        'ts_id'             => getPost('teamsupport'),
+      ];
+
+      $itemId       = getPost('item[id]');
+      $itemCode     = getPost('item[code]');
+      $itemCounter  = getPost('item[counter]');
+      $itemMachine  = getPost('item[machine]');
+      $itemQty      = getPost('item[quantity]');
+      $itemUnique   = getPost('item[unique]');
+      $itemUcr      = getPost('item[ucr]'); // Unique Code Replacement.
+
+      if (!is_array($itemId) && !is_array($itemQty)) {
+        $this->response(400, ['message' => 'Item tidak ada atau tidak valid.']);
+      }
+
+      for ($a = 0; $a < count($itemId); $a++) {
+        if (empty($itemQty[$a])) {
+          $this->response(400, ['message' => "Quantity untuk {$itemCode[$a]} harus lebih besar dari nol."]);
+        }
+
+        $items[] = [
+          'id'          => $itemId[$a],
+          'counter'     => $itemCounter[$a],
+          'machine_id'  => $itemMachine[$a],
+          'quantity'    => $itemQty[$a],
+          'unique_code' => $itemUnique[$a],
+          'ucr'         => $itemUcr[$a]
+        ];
+      }
+
+      DB::transStart();
+
+      $data = $this->useAttachment($data);
+
+      $insertID = InternalUse::update((int)$id, $data, $items);
+
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Internal Use has been updated.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $items = [];
+
+    foreach (Stock::get(['internal_use_id' => $internalUse->id]) as $stock) {
+      $whp = WarehouseProduct::getRow([
+        'product_id' => $stock->product_id, 'warehouse_id' => $internalUse->from_warehouse_id
+      ]);
+
+      $items[] = [
+        'id'          => intval($stock->product_id),
+        'code'        => $stock->product_code,
+        'name'        => $stock->product_name,
+        'unit'        => $stock->unit,
+        'quantity'    => floatval($stock->quantity),
+        'counter'     => $stock->spec,
+        'unique'      => $stock->unique_code,
+        'ucr'         => $stock->ucr,
+        'current_qty' => floatval($whp->quantity),
+        'machine'     => intval($stock->machine_id),
+      ];
+    }
+
+    $this->data['internalUse']  = $internalUse;
+    $this->data['items']        = $items;
+    $this->data['title']        = lang('App.editinternaluse');
+
+    $this->response(200, ['content' => view('Inventory/InternalUse/edit', $this->data)]);
+  }
+
+  protected function internaluse_status($id = null)
+  {
+    $internalUse = InternalUse::getRow(['id' => $id]);
+
+    if (!$internalUse) {
+      $this->response(404, ['message' => 'Internal Use is not found.']);
+    }
+
+    $iuseItems = Stock::get(['internal_use_id' => $internalUse->id]);
+
+    if (!$iuseItems) {
+      $this->response(404, ['message' => 'Internal Use items are not found.']);
+    }
+
+    $items        = [];
+    $status       = getPost('status');
+    $itemId       = getPost('item[id]');
+    $itemCode     = getPost('item[code]');
+    $itemCounter  = getPost('item[counter]');
+
+    foreach ($iuseItems as $iuseItem) {
+      $counter = $iuseItem->spec;
+
+      if ($status == 'completed') {
+        for ($a = 0; $a < count($itemId); $a++) {
+          if (empty($itemCounter[$a])) {
+            $this->response(400, ['message' => "Counter {$itemCode[$a]} harus diisi."]);
+          }
+
+          if ($iuseItem->product_id == $itemId[$a]) {
+            $counter = $itemCounter[$a];
+            break;
+          }
+        }
+      }
+
+      $items[] = [
+        'id'          => $iuseItem->product_id,
+        'counter'     => $counter,
+        'machine_id'  => $iuseItem->machine_id,
+        'quantity'    => $iuseItem->quantity,
+        'unique_code' => $iuseItem->unique_code,
+        'ucr'         => $iuseItem->ucr
+      ];
+    }
+
+    DB::transStart();
+
+    $res = InternalUse::update((int)$id, ['status' => $status], $items);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Internal Use status has been updated.']);
+    }
+
+    $this->response(400, ['message' => 'Failed to update status.']);
+  }
+
   protected function internaluse_view($id = null)
   {
     checkPermission('InternalUse.View');
@@ -528,6 +744,183 @@ class Inventory extends BaseController
     $this->data['title']        = lang('App.viewinternaluse');
 
     $this->response(200, ['content' => view('Inventory/InternalUse/view', $this->data)]);
+  }
+
+  /**
+   * Product Mutation.
+   * Status: packing -> received
+   */
+  public function mutation()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    checkPermission('ProductMutation.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.inventory'), 'slug' => 'inventory', 'url' => '#'],
+        ['name' => lang('App.productmutation'), 'slug' => 'mutation', 'url' => '#']
+      ],
+      'content' => 'Inventory/Mutation/index',
+      'title' => lang('App.productmutation')
+    ];
+
+    return $this->buildPage($this->data);
+  }
+
+  protected function mutation_add()
+  {
+    checkPermission('ProductMutation.Add');
+
+    if (requestMethod() == 'POST') {
+      $warehouseIdFrom  = getPost('warehousefrom');
+      $warehouseIdTo    = getPost('warehouseto');
+
+      $data = [
+        'date'              => dateTimePHP(getPost('date')),
+        'from_warehouse_id' => $warehouseIdFrom,
+        'to_warehouse_id'   => $warehouseIdTo,
+        'note'              => stripTags(getPost('note')),
+      ];
+
+      $itemId   = getPost('item[id]');
+      $itemCode = getPost('item[code]');
+      $itemQty  = getPost('item[quantity]');
+
+      if (!is_array($itemId) && !is_array($itemQty)) {
+        $this->response(400, ['message' => 'Item tidak ada atau tidak valid.']);
+      }
+
+      for ($a = 0; $a < count($itemId); $a++) {
+        if (empty($itemQty[$a])) {
+          $this->response(400, ['message' => "Quantity untuk {$itemCode[$a]} harus lebih besar dari nol."]);
+        }
+
+        $items[] = [
+          'id'        => $itemId[$a],
+          'quantity'  => $itemQty[$a],
+        ];
+      }
+
+      DB::transStart();
+
+      $data = $this->useAttachment($data);
+
+      $insertID = ProductMutation::add($data, $items);
+
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Product Mutation has been added.']);
+      }
+
+      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+    }
+
+    $this->data['title'] = lang('App.addproductmutation');
+
+    $this->response(200, ['content' => view('Inventory/Mutation/add', $this->data)]);
+  }
+
+  protected function mutation_delete($id = null)
+  {
+    $mutation       = ProductMutation::getRow(['id' => $id]);
+    $mutationItems  = Stock::get(['pm_id' => $id]);
+
+    if (!$mutation) {
+      $this->response(404, ['message' => 'Product Mutation is not found.']);
+    }
+
+    DB::transStart();
+
+    Attachment::delete(['hashname' => $mutation->attachment]);
+    Stock::delete(['pm_id' => $id]);
+
+    foreach ($mutationItems as $mutationItem) {
+      Product::sync((int)$mutationItem->product_id);
+    }
+
+    $res = ProductMutation::delete(['id' => $id]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Product Mutation has been deleted.']);
+    }
+
+    $this->response(400, ['message' => getLastError()]);
+  }
+
+  protected function mutation_status($id = null)
+  {
+    $mutation = ProductMutation::getRow(['id' => $id]);
+
+    if (!$mutation) {
+      $this->response(404, ['message' => 'Product Mutation is not found.']);
+    }
+
+    $mutationItems = ProductMutationItem::get(['pm_id' => $mutation->id]);
+
+    if (!$mutationItems) {
+      $this->response(404, ['message' => 'Product Mutation items are not found.']);
+    }
+
+    $items  = [];
+    $status = getPost('status');
+
+    foreach ($mutationItems as $mutationItem) {
+      $items[] = [
+        'id'        => $mutationItem->product_id,
+        'quantity'  => $mutationItem->quantity,
+      ];
+    }
+
+    DB::transStart();
+
+    $res = ProductMutation::update((int)$id, ['status' => $status], $items);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Product Mutation status has been updated.']);
+    }
+
+    $this->response(400, ['message' => 'Failed to update status.']);
+  }
+
+  protected function mutation_view($id = null)
+  {
+    checkPermission('ProductMutation.View');
+
+    $mutation = ProductMutation::getRow(['id' => $id]);
+
+    if (!$mutation) {
+      $this->response(404, ['message' => 'Internal Use is not found.']);
+    }
+
+    $this->data['mutation'] = $mutation;
+    $this->data['title']    = lang('App.viewproductmutation');
+
+    $this->response(200, ['content' => view('Inventory/Mutation/view', $this->data)]);
   }
 
   public function product()
@@ -595,13 +988,9 @@ class Inventory extends BaseController
 
       $synced = 0;
 
-      foreach (Warehouse::get(['active' => 1]) as $warehouse) {
-        foreach ($ids as $productId) {
-          $res = Product::sync((int)$productId, (int)$warehouse->id);
-
-          if ($res) {
-            $synced++;
-          }
+      foreach ($ids as $productId) {
+        if (Product::sync((int)$productId)) {
+          $synced++;
         }
       }
 
@@ -652,7 +1041,7 @@ class Inventory extends BaseController
       $itemQty    = getPost('item[quantity]');
 
       if (!is_array($itemCodes) && !is_array($itemQty)) {
-        $this->response(400, ['message' => 'Items are not present or invalid.']);
+        $this->response(400, ['message' => 'Item tidak ada atau tidak valid.']);
       }
 
       for ($a = 0; $a < count($itemCodes); $a++) {

@@ -12,13 +12,13 @@
         <div class="card">
           <div class="card-body">
             <div class="row">
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <div class="form-group">
                   <label for="date"><?= lang('App.date') ?></label>
                   <input id="date" name="date" type="datetime-local" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <div class="form-group">
                   <label for="category"><?= lang('App.category') ?> *</label>
                   <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style="width:100%">
@@ -28,6 +28,20 @@
                     <?php if (hasAccess('InternalUse.Sparepart')) : ?>
                       <option value="sparepart"><?= lang('App.sparepart') ?></option>
                     <?php endif; ?>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="status"><?= lang('App.status') ?></label>
+                  <select id="status" name="status" class="select" data-placeholder="<?= lang('App.status') ?>" style="width:100%">
+                    <option value="need_approval"><?= lang('Status.need_approval') ?></option>
+                    <option value="approved"><?= lang('Status.approved') ?></option>
+                    <option value="packing"><?= lang('Status.packing') ?></option>
+                    <option value="cancelled"><?= lang('Status.cancelled') ?></option>
+                    <option value="installed"><?= lang('Status.installed') ?></option>
+                    <option value="returned"><?= lang('Status.returned') ?></option>
+                    <option value="completed"><?= lang('Status.completed') ?></option>
                   </select>
                 </div>
               </div>
@@ -178,6 +192,8 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    editor.root.innerHTML = `<?= $internalUse->note ?>`;
+
     $('#category').change(function() {
       erp.select2.product.iuse_type = [this.value];
 
@@ -203,6 +219,7 @@
 
       $.ajax({
         data: {
+          active: 1,
           id: this.value,
           warehouse: warehouseFrom
         },
@@ -216,7 +233,6 @@
             unit: item.unit,
             quantity: 0,
             counter: '',
-            unique: '',
             ucr: '',
             current_qty: item.quantity
           });
@@ -247,13 +263,37 @@
       });
     });
 
-    preSelect2('warehouse', '#warehousefrom', erp.warehouse.id).catch(err => console.warn(err));
-    preSelect2('warehouse', '#warehouseto', erp.warehouse.id).catch(err => console.warn(err));
+    $('#date').val('<?= dateTimeJS($internalUse->date) ?>');
+    $('#category').val('<?= $internalUse->category ?>').trigger('change');
+    $('#status').val('<?= $internalUse->status ?>').trigger('change');
+
+    preSelect2('user', '#teamsupport', '<?= $internalUse->ts_id ?>').catch(err => console.warn(err));
+    preSelect2('supplier', '#supplier', '<?= $internalUse->supplier_id ?>').catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehousefrom', <?= $internalUse->from_warehouse_id ?>).catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehouseto', <?= $internalUse->to_warehouse_id ?>).catch(err => console.warn(err));
+
+    let items = JSON.parse('<?= json_encode($items) ?>');
+
+    for (let item of items) {
+      InternalUse.table('#table-internaluse').addItem({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        unit: item.unit,
+        quantity: item.quantity,
+        counter: item.counter,
+        ucr: item.ucr,
+        current_qty: item.current_qty,
+        machine: item.machine
+      });
+
+      initControls();
+    }
 
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/inventory/internaluse/add'
+      url: base_url + '/inventory/internaluse/edit/<?= $internalUse->id ?>'
     });
   });
 </script>

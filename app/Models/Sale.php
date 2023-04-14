@@ -523,23 +523,23 @@ class Sale
       unset($data['waiting_production_date']);
     }
 
-    if ($items) {
-      SaleItem::delete(['sale_id' => $sale->id]);
-      Stock::delete(['sale_id' => $sale->id]);
-
-      $insertIds = SaleItem::add($id, $items);
-
-      if (!$insertIds) {
-        return false;
-      }
-    }
-
     $data['json']       = json_encode($saleJS);
     $data['json_data']  = json_encode($saleJS);
 
     DB::table('sales')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
+      if ($items) {
+        SaleItem::delete(['sale_id' => $sale->id]);
+        Stock::delete(['sale_id' => $sale->id]);
+
+        $insertIds = SaleItem::add($id, $items);
+
+        if (!$insertIds) {
+          return false;
+        }
+      }
+
       return true;
     }
 

@@ -454,7 +454,7 @@ class QueueTicket
     DB::table('queue_tickets')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

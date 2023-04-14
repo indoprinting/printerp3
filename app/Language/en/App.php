@@ -296,6 +296,7 @@ return [
   'regular'               => 'Regular',
   'report'                => 'Report',
   'resetcomplete'         => 'Reset Complete',
+  'return'                => 'Return',
   'revenue'               => 'Revenue',
   'review'                => 'Review',
   'sale'                  => 'Sale',
@@ -393,6 +394,8 @@ return [
   'voucher'               => 'Voucher',
   'warehouse'             => 'Warehouse',
   'warehouseaccess'       => 'Warehouse Access',
+  'warehousefrom'         => 'From Warehouse',
+  'warehouseto'           => 'To Warehouse',
   'wednesday'             => 'Wednesday',
   'width'                 => 'Width',
   'yes'                   => 'Yes'

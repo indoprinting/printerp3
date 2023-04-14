@@ -296,6 +296,7 @@
 
       $.ajax({
         data: {
+          active: 1,
           id: this.value,
           customer: customerId,
           warehouse: warehouse

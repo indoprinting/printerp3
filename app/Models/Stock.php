@@ -103,13 +103,6 @@ class Stock
       return false;
     }
 
-    // UCR (Unique Code Replacement) for Internal Use only.
-    if (isset($data['ucr']) && empty($data['unique_code'])) {
-      $data['unique_code'] = $data['ucr'];
-    } else if (isset($data['unique_code']) && empty($data['ucr'])) {
-      $data['ucr'] = $data['unique_code'];
-    }
-
     // Cost = Vendor price (Purchase). Price = Mark On Price (Transfer).
     if (!isset($data['cost']))  $data['cost']   = $product->cost;
     if (!isset($data['price'])) $data['price']  = $product->price;
@@ -237,7 +230,6 @@ class Stock
    * Get total quantity based by product and warehouse.
    * @param int $productId Product ID.
    * @param int $warehouseId Warehouse ID.
-   * @param array $opt [ start_date, end_date, order_by(column,ASC|DESC) ]
    * @return float Return total quantity.
    */
   public static function totalQuantity(int $productId, int $warehouseId)
@@ -322,7 +314,7 @@ class Stock
     DB::table('stocks')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

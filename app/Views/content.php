@@ -411,8 +411,8 @@
                   <?php endif; ?>
                   <?php if (hasAccess('ProductMutation.View')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
-                        <i class="nav-icon fad fa-cart-flatbed-boxes"></i>
+                      <a href="<?= base_url('inventory/mutation') ?>" class="nav-link" data-action="link" data-slug="mutation">
+                        <i class="nav-icon fad fa-cart-flatbed-boxes" style="color:#ffff80"></i>
                         <p><?= lang('App.mutation') ?></p>
                       </a>
                     </li>

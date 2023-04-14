@@ -296,6 +296,7 @@ return [
   'regular'               => 'Reguler',
   'report'                => 'Laporan',
   'resetcomplete'         => 'Reset Komplit',
+  'return'                => 'Kembali',
   'revenue'               => 'Pendapatan',
   'review'                => 'Tinjauan',
   'sale'                  => 'Penjualan',
@@ -393,6 +394,8 @@ return [
   'voucher'               => 'Voucher',
   'warehouse'             => 'Gudang',
   'warehouseaccess'       => 'Akses Gudang',
+  'warehousefrom'         => 'Dari Gudang',
+  'warehouseto'           => 'Ke Gudang',
   'wednesday'             => 'Rabu',
   'width'                 => 'Lebar',
   'yes'                   => 'Ya'

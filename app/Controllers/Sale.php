@@ -531,6 +531,8 @@ class Sale extends BaseController
 
       $data = $this->useAttachment($data);
 
+      $data = setUpdatedBy($data);
+
       $res = Invoice::update((int)$id, $data, $items);
 
       if (!$res) {

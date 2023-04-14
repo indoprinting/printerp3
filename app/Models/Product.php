@@ -12,7 +12,7 @@ class Product
   public static function add(array $data)
   {
     DB::table('products')->insert($data);
-    
+
     if (DB::error()['code'] == 0) {
       return DB::insertID();
     }
@@ -28,7 +28,7 @@ class Product
   public static function delete(array $where)
   {
     DB::table('products')->delete($where);
-    
+
     if (DB::error()['code'] == 0) {
       return DB::affectedRows();
     }
@@ -68,16 +68,29 @@ class Product
   /**
    * Sync product quantity.
    */
-  public static function sync(int $productId, int $warehouseId)
+  public static function sync(int $productId)
   {
-    $whp = WarehouseProduct::getRow(['product_id' => $productId, 'warehouse_id' => $warehouseId]);
+    $whIds = [];
 
-    if (!$whp) return false;
+    foreach (Warehouse::get(['active' => 1]) as $warehouse) {
+      $whIds[] = $warehouse->id;
+    }
 
-    return WarehouseProduct::update(
-      (int)$whp->id,
-      ['quantity' => Stock::totalQuantity($productId, $warehouseId)]
-    );
+    $totalQty = 0;
+
+    foreach ($whIds as $whId) {
+      if (Stock::sync((int)$productId, (int)$whId)) {
+        $totalQty += Stock::totalQuantity((int)$productId, (int)$whId);
+      } else {
+        setLastError("Failed sync Product: {$productId}, Warehouse: {$whId}");
+      }
+    }
+
+    if (Product::update((int)$productId, ['quantity' => $totalQty])) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -86,9 +99,9 @@ class Product
   public static function update(int $id, array $data)
   {
     DB::table('products')->update($data, ['id' => $id]);
-    
+
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

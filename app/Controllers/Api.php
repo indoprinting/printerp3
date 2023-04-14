@@ -229,6 +229,7 @@ class Api extends BaseController
       }
     }
 
+    $active     = getGet('active');
     $code       = getGet('code');
     $cust       = getGet('customer'); // id
     $id         = getGet('id');
@@ -249,6 +250,10 @@ class Api extends BaseController
     }
 
     $q = Product::select('*');
+
+    if ($active !== null) {
+      $q->where('active', $active);
+    }
 
     if ($id) {
       if (is_array($id)) {

@@ -4,10 +4,26 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{DB, Test1, Test2};
+use App\Models\{DB, SaleItem, Stock, Test1, Test2};
 
 class Debug extends BaseController
 {
+  public function emoji()
+  {
+    $items = SaleItem::get(['sale_id' => 48064]);
+
+    foreach ($items as $item) {
+      $itemJS = json_decode($item->json);
+      echo $itemJS->spec . '<br>';
+    }
+  }
+
+  public function syncproduct()
+  {
+    $r = Stock::totalQuantity(1, 5);
+    print_r($r);
+  }
+
   public function mutex()
   {
     $pass = getGet('pass');

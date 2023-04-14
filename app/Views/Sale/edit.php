@@ -213,7 +213,7 @@
     erp.select2.user = {};
     erp.select2.operator = {};
     erp.select2.customer = {};
-    
+
     erp.select2.product.type = ['combo', 'service'];
     erp.select2.user.biller = ['<?= $sale->biller ?>'];
     erp.select2.operator.warehouse = ['<?= $sale->warehouse ?>'];
@@ -226,33 +226,12 @@
       $('#draft').iCheck('check');
     }
 
-    let items = JSON.parse(`<?= json_encode($items) ?>`);
-
-    for (let item of items) {
-      Sale.table('#table-sale').addItem({
-        id: item.id,
-        code: item.code,
-        name: item.name,
-        category: item.category,
-        complete: item.complete,
-        completed_at: item.completed_at,
-        finished_qty: item.finished_qty,
-        length: item.length,
-        operator: item.operator,
-        prices: item.prices,
-        quantity: item.quantity,
-        ranges: item.ranges,
-        spec: item.spec,
-        status: item.status,
-        type: item.type,
-        width: item.width
-      }, true);
-
-      initControls();
-    }
-
     let editor = new Quill('#editor', {
       theme: 'snow'
+    });
+
+    editor.on('text-change', (delta, oldDelta, source) => {
+      $('[name="note"]').val(editor.root.innerHTML);
     });
 
     editor.root.innerHTML = `<?= $sale->note ?>`;
@@ -293,10 +272,6 @@
       }
     });
 
-    editor.on('text-change', (delta, oldDelta, source) => {
-      $('[name="note"]').val(editor.root.innerHTML);
-    });
-
     $('#product').change(function() {
       if (!this.value) return false;
 
@@ -321,6 +296,7 @@
 
       $.ajax({
         data: {
+          active: 1,
           id: this.value,
           customer: customerId,
           warehouse: warehouse
@@ -359,6 +335,31 @@
     preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>').catch(err => console.warn(err));
     preSelect2('customer', '#customer', '<?= $sale->customer_id ?>').catch(err => console.warn(err));
     preSelect2('voucher', '#voucher', JSON.parse('<?= json_encode($saleJS->vouchers ?? '[]') ?>')).catch(err => console.warn(err));
+
+    let items = JSON.parse(`<?= json_encode($items) ?>`);
+
+    for (let item of items) {
+      Sale.table('#table-sale').addItem({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        complete: item.complete,
+        completed_at: item.completed_at,
+        finished_qty: item.finished_qty,
+        length: item.length,
+        operator: item.operator,
+        prices: item.prices,
+        quantity: item.quantity,
+        ranges: item.ranges,
+        spec: item.spec,
+        status: item.status,
+        type: item.type,
+        width: item.width
+      }, true);
+
+      initControls();
+    }
 
     initModalForm({
       form: '#form',

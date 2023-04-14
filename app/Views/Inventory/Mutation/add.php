@@ -18,44 +18,6 @@
                   <input id="date" name="date" type="datetime-local" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="category"><?= lang('App.category') ?> *</label>
-                  <select id="category" name="category" class="select" data-placeholder="<?= lang('App.category') ?>" style="width:100%">
-                    <?php if (hasAccess('InternalUse.Consumable')) : ?>
-                      <option value="consumable"><?= lang('App.consumable') ?></option>
-                    <?php endif; ?>
-                    <?php if (hasAccess('InternalUse.Sparepart')) : ?>
-                      <option value="sparepart"><?= lang('App.sparepart') ?></option>
-                    <?php endif; ?>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-12 additional" style="display:none">
-                <div class="card">
-                  <div class="card-header bg-gradient-primary"><?= lang('App.additional') ?></div>
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label for="teamsupport"><?= lang('App.teamsupport') ?></label>
-                          <select id="teamsupport" name="teamsupport" class="select-team-support" data-placeholder="<?= lang('App.teamsupport') ?>" style="width:100%">
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <label for="supplier"><?= lang('App.supplier') ?></label>
-                          <select id="supplier" name="supplier" class="select-supplier" data-placeholder="<?= lang('App.supplier') ?>" style="width:100%">
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
             <div class="row">
               <div class="col-md-12">
@@ -101,7 +63,7 @@
                 </div>
               </div>
               <div class="col-md-12">
-                <table id="table-internaluse" class="table">
+                <table id="table-productmutation" class="table">
                   <thead>
                     <tr>
                       <th class="col-md-3"><?= lang('App.name') ?></th>
@@ -163,12 +125,11 @@
 </script>
 <script type="module">
   import {
-    InternalUse
+    ProductMutation
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
     erp.select2.product = {};
-    erp.select2.product.iuse_type = [$('#category').val()];
 
     let editor = new Quill('#editor', {
       theme: 'snow'
@@ -176,16 +137,6 @@
 
     editor.on('text-change', (delta, oldDelta, source) => {
       $('[name="note"]').val(editor.root.innerHTML);
-    });
-
-    $('#category').change(function() {
-      erp.select2.product.iuse_type = [this.value];
-
-      if (this.value == 'sparepart') {
-        $('.additional').slideDown();
-      } else {
-        $('.additional').slideUp();
-      }
     });
 
     $('#product').change(function() {
@@ -209,15 +160,12 @@
         success: (data) => {
           let item = data.data[0];
 
-          InternalUse.table('#table-internaluse').addItem({
+          ProductMutation.table('#table-productmutation').addItem({
             id: item.id,
             code: item.code,
             name: item.name,
             unit: item.unit,
             quantity: 0,
-            counter: '',
-            unique: '',
-            ucr: '',
             current_qty: item.quantity
           });
 
@@ -253,7 +201,7 @@
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/inventory/internaluse/add'
+      url: base_url + '/inventory/mutation/add'
     });
   });
 </script>

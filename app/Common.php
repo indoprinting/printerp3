@@ -375,6 +375,59 @@ function formatNumber($num)
 }
 
 /**
+ * Internal Use unique code generator.
+ * @param string $category Category name (consumable, category).
+ */
+function generateInternalUseUniqueCode(string $category)
+{
+  $code = null;
+  $prefix = [
+    'consumable'  => 'C',
+    'sparepart'   => 'S'
+  ];
+
+  if (strcasecmp($category, 'consumable') != 0 && strcasecmp($category, 'sparepart') != 0) {
+    setLastError('Category must be consumable or sparepart.');
+    return false;
+  }
+
+  $lastItem = DB::table('stocks')->isNotNull('internal_use_id')
+    ->like('unique_code', $prefix[$category], 'right')
+    ->orderBy('internal_use_id', 'DESC')->getRow(); // Find Cxxxx or Sxxxx
+
+  if ($lastItem) {
+    $lastUniqueCode = $lastItem->unique_code; // Ex. SA0001, CA0001
+
+    $prf = substr($lastUniqueCode, 0, 1); // Prefix C (Consumable) or S (Sparepart)
+    $alp = substr($lastUniqueCode, 1, 1); // Alphabet A,B,C,...,Z
+    $idx = substr($lastUniqueCode, 2); // Index 0001,0002,0003,...,9999
+
+    if (intval($idx) == 9999) {
+      $a = ord($alp);
+
+      if ($a == 90) { // if Z reset to A
+        $a = 65;
+      } else {
+        $a++;
+      }
+
+      $code = $prf . chr($a) . '0001';
+    } else {
+      $i = intval($idx);
+      $i++;
+
+      // Prepend zero.
+      $id = strval($i);
+      $id = ($i < 1000 ? ($i < 100 ? ($i < 10 ? '000' . $id : '00' . $id) : '0' . $id) : $id);
+
+      $code = $prf . $alp . $id;
+    }
+  }
+
+  return ($code ? $code : $prefix[$category] . 'A0001');
+}
+
+/**
  * Get adjusted quantity.
  * @return array Return adjusted object [ quantity, type ]
  */
@@ -891,7 +944,7 @@ function htmlEncode($html)
 {
   $allowed = '<a><span><div><a><br><p><b><i><u><img><blockquote><small><ul><ol><li><hr><pre>
   <code><strong><em><table><tr><td><th><tbody><thead><tfoot><h3><h4><h5><h6>';
-  $stripped = strip_tags($html, $allowed);
+  $stripped = strip_tags($html ?? '', $allowed);
   return htmlentities(trim($stripped), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
 }
 
@@ -902,7 +955,7 @@ function htmlEncode($html)
  */
 function htmlRemove($html)
 {
-  $decoded = html_entity_decode(trim($html), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
+  $decoded = html_entity_decode(trim($html ?? ''), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
   return preg_replace('/\<(.*?)\>/', '', $decoded);
 }
 

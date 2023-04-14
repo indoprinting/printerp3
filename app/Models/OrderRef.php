@@ -13,6 +13,7 @@ class OrderRef
     'iuse'        => 'IUS-',
     'mutation'    => 'MUT-',
     'opname'      => 'SO-',
+    'pm'          => 'PM-',
     'purchase'    => 'PO-',
     'sale'        => 'INV-',
     'transfer'    => 'TRF-'
@@ -66,13 +67,14 @@ class OrderRef
         'iuse'        => 1,
         'mutation'    => 1,
         'opname'      => 1,
+        'pm'          => 1,
         'purchase'    => 1,
         'sale'        => 1,
         'transfer'    => 1
       ], ['ref_id' => $order->ref_id]);
 
       if (DB::error()['code'] == 0) {
-        return DB::affectedRows();
+        return true;
       }
 
       setLastError(DB::error()['message']);
@@ -93,7 +95,7 @@ class OrderRef
       DB::table('order_ref')->update([$name => [$order->{$name} + 1]], ['ref_id' => $order->ref_id]);
 
       if (DB::error()['code'] == 0) {
-        return DB::affectedRows();
+        return true;
       }
 
       setLastError(DB::error()['message']);
