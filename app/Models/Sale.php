@@ -280,7 +280,7 @@ class Sale
       $saleItems  = SaleItem::get(['sale_id' => $sale->id]);
 
       if (empty($saleItems)) {
-        setLastError("Sale::sync() Sale items empty. Sale id {$sale->id}, {$sale->reference}");
+        setLastError("Sale::sync() Sale items is empty. Sale id {$sale->id}, {$sale->reference}");
         continue;
       }
 
