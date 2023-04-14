@@ -356,9 +356,9 @@ class Sale extends BaseController
         $sale = Invoice::getRow(['id' => $insertId]);
 
         $res = PaymentValidation::add([
-          'sale'    => $sale->reference,
-          'biller'  => $sale->biller,
-          'amount'  => $sale->grand_total,
+          'sale_id'   => $sale->id,
+          'biller_id' => $sale->biller_id,
+          'amount'    => $sale->grand_total,
         ]);
 
         if (!$res) {
