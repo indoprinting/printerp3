@@ -964,7 +964,7 @@ function htmlRemove($html)
  * @param string $currentStatus Current status.
  * @param array $statusList Status list.
  */
-function inStatus(string $currentStatus, array $statusList = [])
+function inStatus(string $currentStatus, array $statusList)
 {
   foreach ($statusList as $st) {
     if (strcasecmp($currentStatus, $st) === 0) {
@@ -981,6 +981,24 @@ function inStatus(string $currentStatus, array $statusList = [])
 function isAJAX()
 {
   return Services::request()->isAJAX();
+}
+
+/**
+ * Check if all array value is empty.
+ * @param array $data Array data to check.
+ * @param array $key Set of key to check.
+ * 
+ * Example: isArrayEmpty($data, ['user_id', 'biller_id'])
+ */
+function isArrayEmpty(array $data, array $key)
+{
+  foreach ($key as $k) {
+    if (!empty($data[$k])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
