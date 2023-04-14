@@ -361,7 +361,7 @@ class PaymentValidation
               $payment['attachment'] = $option['attachment'];
             }
 
-            if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment to sales.
+            if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment and sync sales.
               continue;
             }
 
