@@ -521,7 +521,7 @@ function getDailyPerformanceReport($opt)
         $dt       = prependZero($a);
         $dtDaily  = new DateTime("{$ymPeriod}-{$dt}");
 
-        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') === '+');
 
         if (!$overTime) {
           $dailyRevenue = round(floatval(DB::table('product_transfer')
@@ -571,7 +571,7 @@ function getDailyPerformanceReport($opt)
         $dt = prependZero($a);
         $dtDaily = new DateTime("{$ymPeriod}-{$dt}");
 
-        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') === '+');
 
         if (!$overTime) {
           $dailyRevenue = round(floatval(DB::table('sales')
@@ -998,7 +998,7 @@ function isCLI()
 function isCompleted($status)
 {
   return ($status == 'completed' || $status == 'completed_partial' ||
-    $status == 'delivered' || $status == 'finished' ? true : false);
+    $status == 'delivered' || $status == 'finished');
 }
 
 /**
@@ -1006,9 +1006,9 @@ function isCompleted($status)
  * @param string $due_date Due date
  * @example 1 isDueDate('2020-01-20 20:40:11'); // Return false if current time less then due date.
  */
-function isDueDate($due_date)
+function isDueDate($dueDate)
 {
-  return (strtotime($due_date) > time() ? false : true);
+  return (time() > strtotime($dueDate));
 }
 
 /**
@@ -1024,7 +1024,7 @@ function isEnv($environment)
  */
 function isLoggedIn()
 {
-  return (session()->has('login') ? true : false);
+  return session()->has('login');
 }
 
 /**
@@ -1086,7 +1086,7 @@ function isSpecialCustomer($customerId)
   $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
-    return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? true : false);
+    return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0);
   }
 
   return false;
@@ -1108,7 +1108,7 @@ function isW2PUser($user_id)
   $user = User::getRow(['id' => $user_id]);
 
   if ($user) {
-    return (strcasecmp($user->username, 'W2P') === 0 ? true : false);
+    return (strcasecmp($user->username, 'W2P') === 0);
   }
   return false;
 }
@@ -1123,7 +1123,7 @@ function isWeb2Print($sale_id)
   if ($sale) {
     $saleJS = getJSON($sale->json);
 
-    return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0 ? true : false);
+    return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0);
   }
   return false;
 }
