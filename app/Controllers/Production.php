@@ -33,7 +33,7 @@ class Production extends BaseController
       ->join('customers', 'customers.phone = sales.customer', 'left')
       ->join('users operator', "operator.id = sale_items.json->>'$.operator_id'", 'left')
       ->join('warehouse', 'warehouse.code = sales.warehouse', 'left')
-      ->whereIn('sale_items.status', ['completed_partial', 'waiting_production'])
+      ->whereIn('sale_items.status', ['completed', 'completed_partial', 'waiting_production'])
       ->where("sales.date BETWEEN '{$startDate} 00:00:00' AND '{$endDate} 23:59:59'")
       ->editColumn('id', function ($data) {
         return '<input class="checkbox" type="checkbox" value="' . $data['id'] . '">';
