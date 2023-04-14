@@ -280,7 +280,7 @@ $(document).ready(function () {
             delete this.dataset.progress;
 
             if (typeof erp.table !== 'undefined') erp.table.draw(false);
-            if (typeof erp.modalTable !== 'undefined') erp.modalTable.draw(false);
+            if (typeof erp.tableModal !== 'undefined') erp.tableModal.draw(false);
           },
           url: url
         });
