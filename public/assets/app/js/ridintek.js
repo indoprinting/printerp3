@@ -655,8 +655,6 @@ export class Sale {
     item.price = getSalePrice(item.area * item.quantity, item.ranges, item.prices);
     item.subtotal = item.area * item.price * item.quantity;
 
-    console.log(item);
-
     let readOnly = (item.category != 'DPI' ? ' readonly' : '');
     let priceReadOnly = (hasAccess('Sale.EditPrice') ? '' : ' readonly');
 
