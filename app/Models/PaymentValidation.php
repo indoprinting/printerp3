@@ -115,14 +115,14 @@ class PaymentValidation
       }
 
       while (1) {
-        $uq = mt_rand(1, 200);
+        $uq = mt_rand(1, 100);
 
         if (!in_array($uq + $amount, $amounts)) {
           break;
         }
       }
     } else {
-      $uq = mt_rand(1, 200);
+      $uq = mt_rand(1, 100);
     }
 
     return $uq;
