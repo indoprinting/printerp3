@@ -55,20 +55,20 @@ class Production extends BaseController
       }
     }
 
-    if (session('login')->biller) {
+    if (session('login')->biller_id) {
       if ($billers) {
-        $billers[] = session('login')->biller;
+        $billers[] = session('login')->biller_id;
       } else {
-        $billers = [session('login')->biller];
+        $billers = [session('login')->biller_id];
       }
     }
 
     if ($billers) {
-      $dt->whereIn('sales.biller', $billers);
+      $dt->whereIn('sales.biller_id', $billers);
     }
 
     if ($warehouses) {
-      $dt->whereIn('sales.warehouse', $warehouses);
+      $dt->whereIn('sales.warehouse_id', $warehouses);
     }
 
     if ($status) {
