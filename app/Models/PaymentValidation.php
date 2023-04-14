@@ -99,7 +99,8 @@ class PaymentValidation
     }
     return null;
   }
-/**
+
+  /**
    * (NEW) Get random unique code.
    */
   public static function getUniqueCode(int $amount)
