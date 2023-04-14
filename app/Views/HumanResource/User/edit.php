@@ -80,21 +80,12 @@
             </div>
             <div class="form-group">
               <label for="biller"><?= lang('App.biller') ?></label>
-              <select id="biller" name="biller" class="form-control select-allow-clear" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                <option value="">
-                <option>
-                  <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-              <?php endforeach; ?>
+              <select id="biller" name="biller" class="form-control select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
               </select>
             </div>
             <div class="form-group">
               <label for="warehouse"><?= lang('App.warehouse') ?></label>
-              <select id="warehouse" name="warehouse" class="form-control select-allow-clear" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%">
-                <option value=""></option>
-                <?php foreach (\App\Models\Warehouse::get(['active' => 1]) as $wh) : ?>
-                  <option value="<?= $wh->code ?>"><?= $wh->name ?></option>
-                <?php endforeach; ?>
+              <select id="warehouse" name="warehouse" class="form-control select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%">
               </select>
             </div>
           </div>
@@ -153,11 +144,11 @@
     });
 
     $('#active').val('<?= $user->active ?>').trigger('change');
-    $('#biller').val('<?= $user->biller ?>').trigger('change');
     $('#gender').val('<?= $user->gender ?>').trigger('change');
     $('#groups').val('<?= $user->groups ?>'.split(',')).trigger('change');
-    $('#warehouse').val('<?= $user->warehouse ?>').trigger('change');
+    preSelect2('biller', '#biller', '<?= $user->biller_id ?>').catch(err => console.warn(err));
     preSelect2('biller', '#billers', <?= isset($userJS->billers) ? json_encode($userJS?->billers) : '[]' ?>).catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehouse', '<?= $user->warehouse_id ?>').catch(err => console.warn(err));
     preSelect2('warehouse', '#warehouses', <?= isset($userJS->warehouses) ? json_encode($userJS?->warehouses) : '[]' ?>).catch(err => console.warn(err));
 
     initModalForm({

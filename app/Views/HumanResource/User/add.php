@@ -79,21 +79,12 @@
             </div>
             <div class="form-group">
               <label for="biller"><?= lang('App.biller') ?></label>
-              <select id="biller" name="biller" class="form-control select-allow-clear" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                <option value=""></option>
-                <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                  <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                <?php endforeach; ?>
+              <select id="biller" name="biller" class="form-control select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
               </select>
             </div>
             <div class="form-group">
               <label for="warehouse"><?= lang('App.warehouse') ?></label>
-              <select id="warehouse" name="warehouse" class="form-control select-allow-clear" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%">
-                <option value="">
-                <option>
-                  <?php foreach (\App\Models\Warehouse::get(['active' => 1]) as $wh) : ?>
-                <option value="<?= $wh->code ?>"><?= $wh->name ?></option>
-              <?php endforeach; ?>
+              <select id="warehouse" name="warehouse" class="form-control select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%">
               </select>
             </div>
           </div>

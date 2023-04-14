@@ -40,6 +40,28 @@ class User
       return false;
     }
 
+    if (!empty($data['biller_id'])) {
+      $biller = Biller::getRow(['id' => $data['biller_id']]);
+
+      if (!$biller) {
+        setLastError('Biller is not found.');
+        return false;
+      }
+
+      $data['biller'] = $biller->code;
+    }
+
+    if (!empty($data['warehouse_id'])) {
+      $warehouse = Warehouse::getRow(['id' => $data['warehouse_id']]);
+
+      if (!$warehouse) {
+        setLastError('Warehouse is not found.');
+        return false;
+      }
+
+      $data['warehouse'] = $warehouse->code;
+    }
+
     $data = nulling($data, ['biller_id', 'warehouse_id']);
 
     DB::table('users')->insert($data);
@@ -155,6 +177,28 @@ class User
       }
 
       $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+    }
+
+    if (!empty($data['biller_id'])) {
+      $biller = Biller::getRow(['id' => $data['biller_id']]);
+
+      if (!$biller) {
+        setLastError('Biller is not found.');
+        return false;
+      }
+
+      $data['biller'] = $biller->code;
+    }
+
+    if (!empty($data['warehouse_id'])) {
+      $warehouse = Warehouse::getRow(['id' => $data['warehouse_id']]);
+
+      if (!$warehouse) {
+        setLastError('Warehouse is not found.');
+        return false;
+      }
+
+      $data['warehouse'] = $warehouse->code;
     }
 
     $data = nulling($data, ['biller_id', 'warehouse_id']);

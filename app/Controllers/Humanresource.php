@@ -202,8 +202,8 @@ class Humanresource extends BaseController
     $dt
       ->select("users.id AS id, avatar, fullname, username, users.phone, gender, users.groups,
         billers.name AS biller_name, warehouses.name AS warehouse_name, users.active AS active")
-      ->join('billers', 'billers.code = users.biller', 'left')
-      ->join('warehouses', 'warehouses.code = users.warehouse', 'left')
+      ->join('billers', 'billers.id = users.biller_id', 'left')
+      ->join('warehouses', 'warehouses.id = users.warehouse_id', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
