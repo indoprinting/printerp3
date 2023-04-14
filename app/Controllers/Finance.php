@@ -1487,28 +1487,30 @@ class Finance extends BaseController
 
     $pv = null;
 
-    if (!$mode || ($mode != 'sale' && $mode != 'mutation')) {
-      $this->response(400, ['message' => 'Manual validation mode must be SALE or MUTATION.']);
+    if (!inStatus($mode, ['mutation', 'sale'])) {
+      $this->response(400, ['message' => 'Manual validation mode must be Sale or Mutation.']);
     }
 
     if ($mode == 'sale') {
       $pv = PaymentValidation::select('*')->where('sale_id', $id)->orderBy('id', 'DESC')->getRow();
       $inv = Sale::getRow(['id' => $id]);
+
+      if (!$inv) {
+        $this->response(404, ['message' => 'Sale is not found.']);
+      }
+
       $this->data['sale'] = $inv;
     } else if ($mode == 'expense') {
       $pv = PaymentValidation::select('*')->where('expense_id', $id)->orderBy('id', 'DESC')->getRow();
       $inv = BankMutation::getRow(['id' => $id]);
+
+      if (!$inv) {
+        $this->response(404, ['message' => 'Bank mutation is not found.']);
+      }
+
       $this->data['mutation'] = $inv;
     } else {
       $this->response(400, ['message' => 'Mode is neither sale nor bank mutation.']);
-    }
-
-    if (!$inv) {
-      if (isset($this->data['sale'])) {
-        $this->response(404, ['message' => 'Sale is not found.']);
-      } else if (isset($this->data['mutation'])) {
-        $this->response(404, ['message' => 'Bank mutation is not found.']);
-      }
     }
 
     $this->data['reference']  = $inv->reference;
@@ -1540,7 +1542,7 @@ class Finance extends BaseController
         'sale_id'     => $pv->sale_id,
         'bank_id'     => $bank,
         'biller_id'   => $pv->biller_id,
-        'amount'      => $amount,
+        'amount'      => $amount, // For validation only.
         'note'        => stripTags(getPost('note')),
         'manual'      => true // Required.
       ];
