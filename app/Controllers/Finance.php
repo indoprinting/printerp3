@@ -349,6 +349,20 @@ class Finance extends BaseController
       ->join('customers', 'customers.id = sales.customer_id', 'left')
       ->join('bank_mutations', 'bank_mutations.id = payment_validations.mutation_id', 'left')
       ->join('users creator', 'creator.id = payment_validations.created_by', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-gear"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('finance/validation/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
       })
@@ -1479,6 +1493,33 @@ class Finance extends BaseController
     ];
 
     return $this->buildPage($this->data);
+  }
+
+  protected function validation_delete($id = null)
+  {
+    checkPermission('PaymentValidation.Delete');
+
+    $pv = PaymentValidation::getRow(['id' => $id]);
+
+    if (!$pv) {
+      $this->response(404, ['message' => 'Payment Validation is not found.']);
+    }
+
+    DB::transStart();
+
+    $res = PaymentValidation::delete(['id' => $id]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Payment Validation has been deleted.']);
+    }
+
+    $this->response(200, ['message' => 'Failed to delete Payment Validation.']);
   }
 
   protected function validation_manual(string $mode = null, $id = null)
