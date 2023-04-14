@@ -984,7 +984,7 @@ function isAJAX()
 }
 
 /**
- * Check if all array value is empty.
+ * Check if all array key is empty.
  * @param array $data Array data to check.
  * @param array $key Set of key to check.
  * 
