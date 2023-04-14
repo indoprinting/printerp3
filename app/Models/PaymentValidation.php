@@ -11,34 +11,44 @@ class PaymentValidation
    */
   public static function add(array $data)
   {
-    if (isset($data['expense_id'])) {
+    if (isArrayEmpty($data, ['expense_id', 'mutation_id', 'sale_id'])) {
+      setLastError('One of expense, mutation or sale must be selected.');
+      return false;
+    }
+
+    if (empty($data['amount'])) {
+      setLastError('Amount is required.');
+      return false;
+    }
+
+    if (empty($data['biller_id'])) {
+      setLastError('Biller is required.');
+      return false;
+    }
+
+    if (!empty($data['expense_id'])) {
       $expense = Expense::getRow(['id' => $data['expense_id']]);
       $data['reference']  = $expense->reference;
-      $data['expense_id'] = $expense->id;
     }
 
-    if (isset($data['mutation_id'])) {
+    if (!empty($data['mutation_id'])) {
       $mutation = BankMutation::getRow(['id' => $data['mutation_id']]);
       $data['reference']    = $mutation->reference;
-      $data['mutation_id']  = $mutation->id;
     }
 
-    if (isset($data['sale_id'])) {
+    if (!empty($data['sale_id'])) {
       $sale = Sale::getRow(['id' => $data['sale_id']]);
       $data['reference']  = $sale->reference;
-      $data['sale_id']    = $sale->id;
-    }
-
-    if (isset($data['biller_id'])) {
-      $biller = Biller::getRow(['id' => $data['biller_id']]);
-      $data['biller_id']  = $biller->id;
     }
 
     if (empty($data['status'])) {
       $data['status'] = 'pending';
     }
 
-    $data['unique'] = self::getUniqueCode();
+    $biller = Biller::getRow(['id' => $data['biller_id']]);
+    $data['biller']  = $biller->code;
+
+    $data['unique'] = self::getUniqueCode((int)$data['amount']);
     $data['unique_code'] = $data['unique']; // Compatibility.
 
     $data = setCreatedBy($data);
@@ -89,11 +99,39 @@ class PaymentValidation
     }
     return null;
   }
+/**
+   * (NEW) Get random unique code.
+   */
+  public static function getUniqueCode(int $amount)
+  {
+    $pvs = self::get(['status' => 'pending']);
+
+    if ($pvs) {
+      $amounts = [];
+
+      foreach ($pvs as $pv) {
+        $amounts[] = $pv->amount + $pv->unique;
+      }
+
+      while (1) {
+        $uq = mt_rand(1, 200);
+
+        if (!in_array($uq + $amount, $amounts)) {
+          break;
+        }
+      }
+    } else {
+      $uq = mt_rand(1, 200);
+    }
+
+    return $uq;
+  }
 
   /**
    * Get random unique code.
+   * @deprecated Not valid unique code.
    */
-  public static function getUniqueCode()
+  public static function getUniqueCode_()
   {
     $pvs = self::get(['status' => 'pending']);
 
@@ -192,7 +230,7 @@ class PaymentValidation
    */
   public static function validate($option = [])
   {
-    $createdAt = date('Y-m-d H:i:s');
+    $createdAt = ($option['date'] ?? date('Y-m-d H:i:s'));
     $startDate = date('Y-m-d H:i:s', strtotime('-7 day')); // We retrieve data from 7 days ago.
     $useManual = false;
 
@@ -275,6 +313,25 @@ class PaymentValidation
           setLastError('Bank mutation is already paid.');
           return false;
         }
+      }
+
+      // Since we need a manual validation.
+      // We need a custom mutasibank data manually.
+      $data = [
+        'account' => $bank->number,
+        'data'    => json_encode([
+          'amount'      => $pv->amount + $pv->unique,
+          'created'     => $createdAt,
+          'description' => ($option['note'] ?? ''),
+          'type'        => 'CR',
+        ]),
+        'module'  => 'manual'
+      ];
+
+      $insertId = MutasiBank::add($data);
+
+      if (!$insertId) {
+        return false;
       }
     } // End Manual Validation.
 
