@@ -13,6 +13,14 @@ class BankMutation
   {
     $data['reference'] = OrderRef::getReference('mutation');
 
+    if (isset($data['bankfrom_id'])) {
+      $data['from_bank_id'] = $data['bankfrom_id'];
+    }
+
+    if (isset($data['bankto_id'])) {
+      $data['to_bank_id'] = $data['bankto_id'];
+    }
+
     $data = setCreatedBy($data);
 
     DB::table('bank_mutations')->insert($data);
@@ -78,10 +86,18 @@ class BankMutation
    */
   public static function update(int $id, array $data)
   {
+    if (isset($data['bankfrom_id'])) {
+      $data['from_bank_id'] = $data['bankfrom_id'];
+    }
+
+    if (isset($data['bankto_id'])) {
+      $data['to_bank_id'] = $data['bankto_id'];
+    }
+
     DB::table('bank_mutations')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

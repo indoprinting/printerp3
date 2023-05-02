@@ -4,6 +4,7 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Session\Handlers\FileHandler;
+use CodeIgniter\Session\Handlers\RedisHandler;
 
 class App extends BaseConfig
 {
@@ -152,7 +153,7 @@ class App extends BaseConfig
    *
    * @var string
    */
-  public $sessionDriver = FileHandler::class;
+  public $sessionDriver = RedisHandler::class;
 
   /**
    * --------------------------------------------------------------------------
@@ -175,7 +176,7 @@ class App extends BaseConfig
    *
    * @var int
    */
-  public $sessionExpiration = 7200;
+  public $sessionExpiration = 14400;
 
   /**
    * --------------------------------------------------------------------------
@@ -194,7 +195,8 @@ class App extends BaseConfig
    *
    * @var string
    */
-  public $sessionSavePath = WRITEPATH . 'session';
+  // public $sessionSavePath = WRITEPATH . 'session';
+  public $sessionSavePath = 'tcp://localhost:6379';
 
   /**
    * --------------------------------------------------------------------------
@@ -356,7 +358,7 @@ class App extends BaseConfig
    *
    * @var string
    */
-  public $CSRFTokenName = 'csrf_test_name';
+  public $CSRFTokenName = '_';
 
   /**
    * --------------------------------------------------------------------------
@@ -382,7 +384,7 @@ class App extends BaseConfig
    *
    * @var string
    */
-  public $CSRFCookieName = 'csrf_cookie_name';
+  public $CSRFCookieName = '_';
 
   /**
    * --------------------------------------------------------------------------

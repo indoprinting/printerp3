@@ -50,6 +50,14 @@
                 </div>
               </div>
             </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <input id="pinned" name="pinned" class="form-control" type="checkbox" value="1">
+                  <label for="pinned"><?= lang('App.pinned') ?></label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -110,10 +118,14 @@
   })();
 
   $(document).ready(function() {
-    $('#scope').val('<?= $notification->scopes ?>');
+    $('#scope').val('<?= $notification->scope ?>');
     $('#status').val('<?= $notification->status ?>').trigger('change');
     $('#title').val('<?= $notification->title ?>');
     $('#type').val('<?= $notification->type ?>').trigger('change');
+
+    if (<?= $notification->pinned ?>) {
+      $('#pinned').iCheck('check');
+    }
 
     let editor = new Quill('#editor', {
       theme: 'snow'
@@ -151,10 +163,10 @@
 
     let scope = JSON.parse($('#scope').val());
 
-    preSelect2('biller', '#biller', scope.billers);
-    preSelect2('user', '#user', scope.users);
-    preSelect2('usergroup', '#usergroup', scope.usergroups);
-    preSelect2('warehouse', '#warehouse', scope.warehouses);
+    preSelect2('biller', '#biller', scope.billers).catch(err => console.warn(err));;
+    preSelect2('user', '#user', scope.users).catch(err => console.warn(err));;
+    preSelect2('usergroup', '#usergroup', scope.usergroups).catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehouse', scope.warehouses).catch(err => console.warn(err));;
 
     initModalForm({
       form: '#form',

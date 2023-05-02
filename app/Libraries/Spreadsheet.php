@@ -16,11 +16,11 @@ class Spreadsheet
   /**
    * @var \PhpOffice\PhpSpreadsheet\Spreadsheet
    */
-  private $spreadsheet;
+  protected $spreadsheet;
   /**
    * @var \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
    */
-  private $worksheet;
+  protected $worksheet;
 
   public function __construct()
   {
@@ -29,7 +29,7 @@ class Spreadsheet
     return $this->spreadsheet;
   }
 
-  public function createSheet($index = NULL)
+  public function createSheet($index = null)
   {
     $this->worksheet = $this->spreadsheet->createSheet($index);
     return $this;
@@ -37,7 +37,7 @@ class Spreadsheet
 
   public function export($filename)
   {
-    if (empty($filename)) return FALSE;
+    if (empty($filename)) return false;
     $exportPath = FCPATH . 'files/exports/';
     $writer = new Writer\Xlsx($this->spreadsheet);
     $filename = (strlen($filename) < 6 ? $filename . '.xlsx' : $filename);
@@ -65,7 +65,7 @@ class Spreadsheet
    */
   public function export_($filename)
   {
-    if (empty($filename)) return FALSE;
+    if (empty($filename)) return false;
     $writer = new Writer\Xlsx($this->spreadsheet);
     $filename = (strlen($filename) < 6 ? $filename . '.xlsx' : $filename);
     $filename = (strtolower(substr($filename, -5, 5)) == '.xlsx' ? $filename : $filename . '.xlsx');
@@ -127,13 +127,13 @@ class Spreadsheet
    */
   public function save($filename)
   {
-    if (empty($filename)) return FALSE;
+    if (empty($filename)) return false;
     $writer = new Writer\Xlsx($this->spreadsheet);
     $filename = (strlen($filename) < 6 ? $filename . '.xlsx' : $filename);
     $filename = (strtolower(substr($filename, -5, 5)) == '.xlsx' ? $filename : $filename . '.xlsx');
     $writer->save($filename);
     $this->spreadsheet->disconnectWorksheets();
-    return TRUE;
+    return true;
   }
 
   public function setActiveSheetIndex($index)
@@ -163,13 +163,13 @@ class Spreadsheet
     return $this;
   }
 
-  public function setBold($ranges, $bold = TRUE)
+  public function setBold($ranges, $bold = true)
   {
     $this->worksheet->getStyle($ranges)->getFont()->setBold($bold);
     return $this;
   }
 
-  public function setCellValue($cell, $value, $type = NULL)
+  public function setCellValue($cell, $value, $type = null)
   {
     if ($type) {
       $this->setCellValueExplicit($cell, $value, $type);
@@ -199,7 +199,7 @@ class Spreadsheet
 
   public function setColumnAutoWidth($col)
   {
-    $this->worksheet->getColumnDimension($col)->setAutoSize(TRUE);
+    $this->worksheet->getColumnDimension($col)->setAutoSize(true);
     return $this;
   }
 
@@ -245,7 +245,7 @@ class Spreadsheet
 
   public function setItalic($ranges)
   {
-    $this->worksheet->getStyle($ranges)->getFont()->setItalic(TRUE);
+    $this->worksheet->getStyle($ranges)->getFont()->setItalic(true);
     return $this;
   }
 
@@ -263,7 +263,7 @@ class Spreadsheet
 
   public function setUnderline($ranges)
   {
-    $this->worksheet->getStyle($ranges)->getFont()->setUnderline(TRUE);
+    $this->worksheet->getStyle($ranges)->getFont()->setUnderline(true);
     return $this;
   }
 
@@ -278,7 +278,7 @@ class Spreadsheet
     $this->worksheet->getStyle($ranges)->getAlignment()->setHorizontal($align);
   }
 
-  public function setWrapText($ranges, $enable = TRUE)
+  public function setWrapText($ranges, $enable = true)
   {
     $this->worksheet->getStyle($ranges)->getAlignment()->setWrapText($enable);
     return $this;

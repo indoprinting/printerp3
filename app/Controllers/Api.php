@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\{
+  Biller,
   Customer,
   DB,
   PaymentValidation,
@@ -13,7 +14,9 @@ use App\Models\{
   ProductCategory,
   ProductPrice,
   Sale,
+  SaleItem,
   Stock,
+  Unit,
   Voucher,
   Warehouse,
   WarehouseProduct
@@ -46,38 +49,6 @@ class Api extends BaseController
     } else {
       return curl_error($ch);
     }
-  }
-
-  public function v1()
-  {
-    if ($args = func_get_args()) {
-      $method = __FUNCTION__ . '_' . $args[0];
-
-      if (method_exists($this, $method)) {
-        array_shift($args);
-        return call_user_func_array([$this, $method], $args);
-      }
-    }
-
-    $this->response(404, ['message' => 'Not Found']);
-  }
-
-  public function v2()
-  {
-    if ($args = func_get_args()) {
-      $method = __FUNCTION__ . '_' . $args[0];
-
-      if (method_exists($this, $method)) {
-        array_shift($args);
-        return call_user_func_array([$this, $method], $args);
-      }
-    }
-
-    $this->response(404, ['message' => 'Not Found']);
-  }
-
-  protected function mutasibank_v2()
-  {
   }
 
   public function mutasibank_accounts()
@@ -163,6 +134,55 @@ class Api extends BaseController
     sendJSON(['error' => 1, 'msg' => 'Failed to validate payment.']);
   }
 
+  public function v1()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    $this->response(404, ['message' => 'Not Found']);
+  }
+
+  protected function v1_biller($mode = null)
+  {
+    if (requestMethod() == 'POST') {
+      if (!$mode) {
+        // $this->voucher_add();
+      } else if ($mode == 'delete') {
+        // $this->voucher_delete();
+      } else if ($mode == 'use') {
+        // $this->voucher_use();
+      }
+    }
+
+    $id   = getGet('id');
+    $code = getGet('code');
+
+    $clause = [];
+
+    if ($id) {
+      $clause['id'] = $id;
+    }
+
+    if ($code) {
+      $clause['code'] = $code;
+    }
+
+    $billers = Biller::get($clause);
+
+    if (!$billers) {
+      $this->response(404, ['message' => 'Billers are not found.']);
+    }
+
+
+    $this->response(200, ['data' => $billers, 'message' => 'successS']);
+  }
+
   protected function v1_mutasibank($mode = NULL)
   {
     if ($mode == 'accounts') {
@@ -191,6 +211,7 @@ class Api extends BaseController
 
     DB::transComplete();
 
+
     if (DB::transStatus()) {
       $this->response(200, ['message' => 'Validated', 'data' => ['validated' => $total]]);
     }
@@ -208,48 +229,101 @@ class Api extends BaseController
       }
     }
 
-    $code = getGet('code');
-    $cust = getGet('customer'); // id
-    $id   = getGet('id');
-    $wh   = getGet('warehouse');
+    $active     = getGet('active');
+    $code       = getGet('code');
+    $cust       = getGet('customer'); // id
+    $id         = getGet('id');
+    $warehouse  = getGet('warehouse'); // id (no array)
+    $limit      = getGet('limit');
+    $iuseType   = getGet('iuse_type');
+    $machine    = getGet('machine');
+    $type       = getGet('type'); // combo, service, standard
 
     $clause = [];
 
-    if ($code)  $clause['code'] = $code;
-    if ($id)    $clause['id']   = $id;
+    if ($warehouse) {
+      $warehouse = Warehouse::getRow(['id' => $warehouse]);
 
-    if (empty($code) && empty($id)) {
-      $this->response(400, ['message' => 'Product code or id is required.']);
+      if (!$warehouse) {
+        $this->response(404, ['message' => 'Warehouse is not found.']);
+      }
     }
 
-    $product = Product::getRow($clause);
+    $q = Product::select('*');
 
-    if (!$product) {
-      $this->response(404, ['message' => 'Product is not found.']);
+    if ($active !== null) {
+      $q->where('active', $active);
     }
 
-    if ($product) {
-      $pcategory = ProductCategory::getRow(['id' => $product->category_id]);
+    if ($id) {
+      if (is_array($id)) {
+        $q->whereIn('id', $id);
+      } else {
+        $q->where('id', $id);
+      }
+    }
+
+    if ($code) {
+      if (is_array($code)) {
+        $q->whereIn('code', $code);
+      } else {
+        $q->where('code', $code);
+      }
+    }
+
+    if ($iuseType) {
+      if (is_array($iuseType)) {
+        $q->whereIn('iuse_type', $iuseType);
+      } else {
+        $q->where('iuse_type', $iuseType);
+      }
+    }
+
+    if ($machine) {
+      // MACPOD, COMP, MACOUTIN, MACFIN, MACMER
+      $q->whereIn('subcategory_id', [14, 17, 22, 23, 24]);
+
+      if ($warehouse) {
+        $q->like('warehouses', $warehouse->name, 'none');
+      }
+    }
+
+    if ($type) {
+      if (is_array($type)) {
+        $q->whereIn('type', $type);
+      } else {
+        $q->where('type', $type);
+      }
+    }
+
+    if ($limit) {
+      $q->limit(intval($limit));
+    } else {
+      $q->limit(30);
+    }
+
+    $products = $q->get($clause);
+
+    if (!$products) {
+      $this->response(404, ['message' => 'Products are not found.']);
+    }
+
+    $data = [];
+
+    foreach ($products as $product) {
+      $pcategory  = ProductCategory::getRow(['id' => $product->category_id]);
+      $scategory  = ProductCategory::getRow(['id' => $product->subcategory_id]);
       $priceGroup = null;
+      $prices     = [floatval($product->price)];
+      $quantity   = floatval($product->quantity);
 
-      $data = [
-        'code'          => $product->code,
-        'name'          => $product->name,
-        'cost'          => floatval($product->cost),
-        'price'         => floatval($product->price),
-        'prices'        => [floatval($product->price)],
-        'markon_price'  => floatval($product->markon_price),
-        'category'      => $pcategory->code,
-        'category_name' => $pcategory->name,
-        'iuse_type'     => $product->iuse_type,
-        'quantity'      => floatval($product->quantity),
-        'ranges'        => getJSON($product->price_ranges_value),
-        'type'          => $product->type,
-        'warehouses'    => $product->warehouses,
-      ];
-
-      if ($warehouse = Warehouse::getRow(['code' => $wh])) {
+      if ($warehouse) {
         $priceGroup = PriceGroup::getRow(['id' => $warehouse->pricegroup]);
+
+
+        if ($whp = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_id' => $warehouse->id])) {
+          $quantity = floatval($whp->quantity);
+        }
       }
 
       if ($customer = Customer::getRow(['id' => $cust])) {
@@ -260,21 +334,96 @@ class Api extends BaseController
         $productPrice = ProductPrice::getRow(['product_id' => $product->id, 'price_group_id' => $priceGroup->id]);
 
         if ($productPrice) {
-          $data['prices'] = [
+          $prices = [
             floatval($productPrice->price), floatval($productPrice->price2), floatval($productPrice->price3),
             floatval($productPrice->price4), floatval($productPrice->price5), floatval($productPrice->price6)
           ];
         }
       }
 
-      if ($whp = WarehouseProduct::getRow(['product_id' => $product->id, 'warehouse_code' => $wh])) {
-        $data['quantity'] = floatval($whp->quantity);
+      if ($product->unit) {
+        $unit = Unit::getRow(['id' => $product->unit]);
+      } else {
+        $unit = null;
       }
 
-      $this->response(200, ['data' => $data]);
+      $data[] = [
+        'id'                => intval($product->id),
+        'code'              => $product->code,
+        'name'              => $product->name,
+        'cost'              => floatval($product->cost),
+        'price'             => floatval($product->price),
+        'prices'            => $prices,
+        'markon_price'      => floatval($product->markon_price),
+        'category'          => $pcategory->code,
+        'category_name'     => $pcategory->name,
+        'subcategory'       => ($scategory ? $scategory->code : null),
+        'subcategory_name'  => ($scategory ? $scategory->name : null),
+        'iuse_type'         => $product->iuse_type,
+        'quantity'          => $quantity,
+        'ranges'            => getJSON($product->price_ranges_value),
+        'type'              => $product->type,
+        'unit'              => ($unit ? $unit->code : null),
+        'warehouses'        => $product->warehouses,
+      ];
     }
 
-    $this->response(404, ['message' => 'Product is not found.']);
+    $this->response(200, ['data' => $data]);
+  }
+
+  protected function v1_saleitem()
+  {
+    $id    = getGet('id');
+    $limit = getGet('limit');
+
+    $q = SaleItem::select('*');
+
+    if ($id) {
+      if (is_array($id)) {
+        $q->whereIn('id', $id);
+      } else {
+        $q->where('id', $id);
+      }
+    }
+
+    if ($limit) {
+      $q->limit(intval($limit));
+    } else {
+      $q->limit(30);
+    }
+
+    $saleItems = $q->get();
+
+    foreach ($saleItems as $saleItem) {
+      $saleItemJS = getJSON($saleItem->json);
+
+      $data[] = [
+        'id'            => $saleItem->id,
+        'sale'          => $saleItem->sale,
+        'sale_id'       => $saleItem->sale_id,
+        'product_id'    => intval($saleItem->product_id),
+        'product_code'  => $saleItem->product_code,
+        'product_name'  => $saleItem->product_name,
+        'product_type'  => $saleItem->product_type,
+        'price'         => floatval($saleItem->price),
+        'quantity'      => floatval($saleItem->quantity),
+        'finished_qty'  => floatval($saleItem->finished_qty),
+        'status'        => $saleItem->status,
+        'subtotal'      => floatval($saleItem->subtotal),
+        'area'          => floatval($saleItemJS->area),
+        'completed_at'  => $saleItemJS->completed_at,
+        'length'        => floatval($saleItemJS->l),
+        'operator_id'   => floatval($saleItemJS->operator_id),
+        'spec'          => $saleItemJS->spec,
+        'width'         => floatval($saleItemJS->w),
+      ];
+    }
+
+    $this->response(200, ['data' => $data]);
+  }
+
+  protected function v1_warehouse()
+  {
   }
 
   protected function product_add()
@@ -403,35 +552,47 @@ class Api extends BaseController
 
   protected function voucher_use()
   {
-    $code = getPost('code');
-    $invoice = getPost('invoice');
+    $code     = getPost('code'); // Must be separated by comma if more than one. code=VOUCHER1,VOUCHER2
+    $invoice  = getPost('invoice');
+    $discount = 0;
 
-    $voucher  = Voucher::getRow(['code' => $code]);
-    $sale     = Sale::getRow(['reference' => $invoice]);
-
-    if (!$voucher) {
-      $this->response(404, ['message' => 'Voucher is not found.']);
+    if (empty($code)) {
+      $this->response(400, ['message' => 'Voucher code is empty.']);
     }
+
+    $sale = Sale::getRow(['reference' => $invoice]);
 
     if (!$sale) {
       $this->response(404, ['message' => 'Invoice is not found.']);
     }
 
-    if (strtotime($voucher->valid_from) > time()) {
-      $this->response(400, ['message' => 'Voucher is too early to be used.']);
-    }
-
-    if (strtotime($voucher->valid_to) < time()) {
-      $this->response(400, ['message' => 'Voucher has been expired.']);
-    }
-
-    if (intval($voucher->quota) == 0) {
-      $this->response(400, ['message' => 'Voucher quota has been exceeded']);
-    }
-
     DB::transStart();
 
-    $res = Sale::update((int)$sale->id, ['discount' => $voucher->amount]);
+    foreach (explode(',', $code) as $vc) {
+      $voucher  = Voucher::getRow(['code' => $vc]);
+
+      if (!$voucher) {
+        $this->response(404, ['message' => 'Voucher is not found.']);
+      }
+
+      if (strtotime($voucher->valid_from) > time()) {
+        $this->response(400, ['message' => 'Voucher is too early to be used.']);
+      }
+
+      if (strtotime($voucher->valid_to) < time()) {
+        $this->response(400, ['message' => 'Voucher has been expired.']);
+      }
+
+      if (intval($voucher->quota) == 0) {
+        $this->response(400, ['message' => 'Voucher quota has been exceeded']);
+      }
+
+      if (Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1])) {
+        $discount += $voucher->amount;
+      }
+    }
+
+    $res = Sale::update((int)$sale->id, ['discount' => $discount]);
 
     if (!$res) {
       $this->response(400, ['message' => getLastError()]);
@@ -439,18 +600,26 @@ class Api extends BaseController
 
     Sale::sync(['id' => $sale->id]);
 
-    $res = Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1]);
-
-    if (!$res) {
-      $this->response(400, ['message' => getLastError()]);
-    }
-
     DB::transComplete();
 
     if (DB::transStatus()) {
-      $this->response(200, ['message' => 'Voucher has been used.']);
+      $this->response(200, ['message' => 'Vouchers have been used.']);
     }
 
-    $this->response(400, ['message' => 'Failed to use voucher.']);
+    $this->response(400, ['message' => 'Failed to use vouchers.']);
+  }
+
+  public function v2()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    $this->response(404, ['message' => 'Not Found']);
   }
 }

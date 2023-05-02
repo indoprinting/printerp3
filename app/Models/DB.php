@@ -167,7 +167,7 @@ class DB
    */
   public function isNotNull($field)
   {
-    self::$qb->where("{$field} IS NOT null");
+    self::$qb->where("{$field} IS NOT NULL");
     return self::$instance;
   }
 
@@ -176,7 +176,7 @@ class DB
    */
   public function isNull($field)
   {
-    self::$qb->where("{$field} IS null");
+    self::$qb->where("{$field} IS NULL");
     return self::$instance;
   }
 
@@ -537,12 +537,11 @@ class DB
    *
    * @param array|object|null        $set
    * @param array|RawSql|string|null $where
-   * @return int Return affected rows of updates.
+   * @return bool Return true if record has been updated.
    */
   public function update($set = null, $where = null, ?int $limit = null)
   {
-    self::$qb->update($set, $where, $limit);
-    return self::$instance->affectedRows();
+    return self::$qb->update($set, $where, $limit);
   }
 
   /**

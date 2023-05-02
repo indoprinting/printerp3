@@ -14,7 +14,7 @@ class Voucher
     $data = setCreatedBy($data);
 
     DB::table('voucher')->insert($data);
-    
+
     if (DB::error()['code'] == 0) {
       return DB::insertID();
     }
@@ -30,7 +30,7 @@ class Voucher
   public static function delete(array $where)
   {
     DB::table('voucher')->delete($where);
-    
+
     if (DB::error()['code'] == 0) {
       return DB::affectedRows();
     }
@@ -73,9 +73,9 @@ class Voucher
   public static function update(int $id, array $data)
   {
     DB::table('voucher')->update($data, ['id' => $id]);
-    
+
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

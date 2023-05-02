@@ -145,6 +145,25 @@ $(document).ready(function () {
     }
   });
 
+  // iCheck multicheck.
+  $(document).on('change', '.checkbox-parent', function (e) {
+    let that = this;
+
+    if (this.checked) {
+      $('.checkbox-parent').iCheck('check');
+    } else {
+      $('.checkbox-parent').iCheck('uncheck');
+    }
+
+    $('.checkbox').each(function () {
+      if (that.checked) {
+        $(this).iCheck('check');
+      } else {
+        $(this).iCheck('uncheck');
+      }
+    });
+  });
+
   $(document).on('change', '.saleitem', function (e) {
     let area = $(this).closest('tr').find('[name="item[area][]"]');
     let price = $(this).closest('tr').find('[name="item[price][]"]');
@@ -171,8 +190,8 @@ $(document).ready(function () {
 
       SweetAlert.fire({
         icon: 'error',
-        title: 'Ketahuan deh!',
-        text: 'Hayoo mau ngapain? Tak laporin loh!'
+        title: 'Gagal',
+        text: 'Item jasa tidak bisa berupa floating point.'
       });
 
       return false;
@@ -192,9 +211,19 @@ $(document).ready(function () {
     calculateSale();
   });
 
+  $(document).on('click', '[data-action="clear-notification"]', function (e) {
+    e.preventDefault();
+
+    $('[data-type="notification"]').slideUp(function () {
+      $(this).empty();
+    })
+  });
+
   $(document).on('click', '[data-action="confirm"]', function (e) {
     e.preventDefault();
 
+    let text = this.dataset.text;
+    let title = this.dataset.title;
     let url = this.href;
     let fa = $(this).find('i')[0];
     let faClass = fa.className;
@@ -206,8 +235,8 @@ $(document).ready(function () {
 
     Swal.fire({
       icon: 'warning',
-      text: lang.Msg.areYouSure,
-      title: lang.Msg.areYouSure,
+      text: (text ?? lang.Msg.areYouSure),
+      title: (title ?? lang.Msg.areYouSure),
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
@@ -215,10 +244,19 @@ $(document).ready(function () {
 
         $(fa).removeClass(faClass).addClass(faClassProgress);
 
+        let data = {
+          id: [],
+          __: __
+        };
+
+        $('.checkbox').each(function () {
+          if (this.checked) {
+            data.id.push(this.value);
+          }
+        });
+
         $.ajax({
-          data: {
-            __: __
-          },
+          data: data,
           error: (xhr) => {
             Swal.fire({
               icon: 'error',
@@ -226,7 +264,9 @@ $(document).ready(function () {
               title: lang.App.failed
             });
 
+
             $(fa).removeClass(faClassProgress).addClass(faClass);
+            delete this.dataset.progress;
           },
           method: 'POST',
           success: (data) => {
@@ -237,9 +277,10 @@ $(document).ready(function () {
             });
 
             $(fa).removeClass(faClassProgress).addClass(faClass);
+            delete this.dataset.progress;
 
             if (typeof erp.table !== 'undefined') erp.table.draw(false);
-            if (typeof erp.modalTable !== 'undefined') erp.modalTable.draw(false);
+            if (typeof erp.tableModal !== 'undefined') erp.tableModal.draw(false);
           },
           url: url
         });
@@ -272,7 +313,7 @@ $(document).ready(function () {
 
       },
       url: base_url + '/setting/theme?darkmode=' + darkMode
-    })
+    });
   });
 
   $(document).on('click', '[data-action="http-get"]', function (e) {
@@ -282,6 +323,7 @@ $(document).ready(function () {
     let fa = $(this).find('i')[0];
     let faClass = fa.className;
     let faClassProgress = 'fad fa-spinner-third fa-spin';
+    let data = erp.http.get;
 
     if (this.dataset.progress == 'true') {
       return false;
@@ -292,6 +334,7 @@ $(document).ready(function () {
     $(fa).removeClass(faClass).addClass(faClassProgress);
 
     $.ajax({
+      data: data,
       error: (xhr) => {
         Swal.fire({
           icon: 'error',
@@ -303,10 +346,14 @@ $(document).ready(function () {
         delete this.dataset.progress;
       },
       method: 'GET',
-      success: (data) => {
+      success: (response) => {
+        if (typeof erp.http.callback == 'function') {
+          erp.http.callback(response);
+        };
+
         Swal.fire({
           icon: 'success',
-          text: data.message,
+          text: response.message,
           title: lang.App.success
         });
 
@@ -326,6 +373,7 @@ $(document).ready(function () {
     let fa = $(this).find('i')[0];
     let faClass = fa.className;
     let faClassProgress = 'fad fa-spinner-third fa-spin';
+    let data = erp.http.post;
 
     if (this.dataset.progress == 'true') {
       return false;
@@ -335,10 +383,10 @@ $(document).ready(function () {
 
     $(fa).removeClass(faClass).addClass(faClassProgress);
 
+    data.__ = __;
+
     $.ajax({
-      data: {
-        __: __
-      },
+      data: data,
       error: (xhr) => {
         Swal.fire({
           icon: 'error',
@@ -350,10 +398,14 @@ $(document).ready(function () {
         delete this.dataset.progress;
       },
       method: 'POST',
-      success: (data) => {
+      success: (response) => {
+        if (typeof erp.http.callback == 'function') {
+          erp.http.callback(response);
+        };
+
         Swal.fire({
           icon: 'success',
-          text: data.message,
+          text: response.message,
           title: lang.App.success
         });
 
@@ -363,7 +415,7 @@ $(document).ready(function () {
         if (typeof erp.table !== 'undefined') erp.table.draw(false);
       },
       url: url
-    })
+    });
   });
 
   $(document).on('click', '[data-action="logout"]', function () {
@@ -385,8 +437,130 @@ $(document).ready(function () {
     });
   });
 
-  $(document).on('click', '[data-action="notification"]', function () {
+  $(document).on('click', '[data-action="export"]', function (e) {
+    e.preventDefault();
 
+    let url = this.href;
+    let param = $(this.dataset.param).val();
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
+    let faClassProgress = 'fad fa-spinner-third fa-spin';
+
+    if (this.dataset.progress == 'true') {
+      return false;
+    }
+
+    this.dataset.progress = 'true';
+
+    $(fa).removeClass(faClass).addClass(faClassProgress);
+
+    let data = JSON.parse(param ? param : '{}');
+
+    data.__ = __;
+
+    let bank = $('#filter-bank').val();
+    let biller = $('#filter-biller').val();
+    let createdBy = $('#filter-createdby').val();
+    let customer = $('#filter-customer').val();
+    let paymentStatus = $('#filter-paymentstatus').val();
+    let period = $('#filter-period').val();
+    let status = $('#filter-status').val();
+    let supplier = $('#filter-supplier').val();
+    let warehouse = $('#filter-warehouse').val();
+    let startDate = $('#filter-startdate').val();
+    let endDate = $('#filter-enddate').val();
+
+    if (bank) {
+      data.bank = bank;
+    }
+
+    if (biller) {
+      data.biller = biller;
+    }
+
+    if (createdBy) {
+      data.created_by = createdBy;
+    }
+
+    if (customer) {
+      data.customer = customer;
+    }
+
+    if (status) {
+      data.status = status;
+    }
+
+    if (paymentStatus) {
+      data.payment_status = paymentStatus;
+    }
+
+    if (period) {
+      data.period = period;
+    }
+
+    if (supplier) {
+      data.supplier = supplier;
+    }
+
+    if (warehouse) {
+      data.warehouse = warehouse;
+    }
+
+    if (startDate) {
+      data.start_date = startDate;
+    }
+
+    if (endDate) {
+      data.end_date = endDate;
+    }
+
+    $.ajax({
+      contentType: false,
+      data: JSON.stringify(data),
+      error: (xhr) => {
+        Swal.fire({
+          icon: 'error',
+          text: xhr.responseJSON.message,
+          title: lang.App.failed
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      method: 'POST',
+      processData: false,
+      success: (data) => {
+        Swal.fire({
+          icon: 'success',
+          text: data.message,
+          title: lang.App.success
+        });
+
+        $(fa).removeClass(faClassProgress).addClass(faClass);
+        delete this.dataset.progress;
+      },
+      url: url
+    });
+  });
+
+  $(document).on('click', '[data-widget="pushmenu"]', function () {
+    let collapse = 0;
+
+    if ($('body').hasClass('sidebar-collapse')) {
+      collapse = 1;
+    } else {
+      collapse = 0;
+    }
+
+    $.ajax({
+      error: (xhr) => {
+        if (xhr.status == 401) location.reload();
+      },
+      success: (data) => {
+
+      },
+      url: base_url + '/setting/sidebar?collapse=' + collapse
+    });
   });
 
   $(document).on('click', '.change-locale', function (e) {
@@ -442,6 +616,17 @@ $(document).ready(function () {
     if ($('.modal:visible').length) $('body').addClass('modal-open');
 
     erp.modal.pop();
+  });
+
+  // Fix echarts resize.
+  $(window).on('resize', () => {
+    let methods = Object.keys(erp.chart);
+
+    if (methods.length) {
+      for (let method of methods) {
+        erp.chart[method].resize();
+      }
+    }
   });
 
   $(document).on('show.bs.modal', '.modal', function () {
@@ -504,6 +689,18 @@ $(document).ready(function () {
 
     calculateSale();
   });
+
+  // setInterval(() => {
+  //   fetch(base_url + '/auth/status').then((response) => {
+  //     if (response.status == 403) {
+  //       location.reload();
+  //     }
+
+  //     response.json().then((response) => {
+
+  //     });
+  //   });
+  // }, 60 * 1000);
 
   $.extend(true, $.fn.DataTable.defaults, {
     drawCallback: function (settings) {

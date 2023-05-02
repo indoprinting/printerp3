@@ -22,7 +22,6 @@
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
                   <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%" placeholder="<?= lang('App.biller') ?>">
-                    <option value=""></option>
                   </select>
                 </div>
               </div>
@@ -30,17 +29,13 @@
                 <div class="form-group">
                   <label for="warehouse"><?= lang('App.warehouse') ?> *</label>
                   <select id="warehouse" name="warehouse" class="select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" placeholder="<?= lang('App.warehouse') ?>">
-                    <option value=""></option>
                   </select>
                 </div>
               </div>
-            </div>
-            <div class="row">
               <div class="col-md-4">
                 <div class="form-group">
-                  <label for="cashier"><?= lang('App.cashier') ?> *</label>
-                  <select id="cashier" name="cashier" class="select-user" data-placeholder="<?= lang('App.cashier') ?>" style="width:100%" placeholder="<?= lang('App.cashier') ?>">
-                    <option value=""></option>
+                  <label for="created_by"><?= lang('App.createdby') ?></label>
+                  <select id="created_by" name="created_by" class="select-user" data-placeholder="<?= lang('App.createdby') ?>" style="width:100%" placeholder="<?= lang('App.createdby') ?>">
                   </select>
                 </div>
               </div>
@@ -54,7 +49,6 @@
                       </div>
                     <?php endif; ?>
                     <select id="customer" name="customer" class="select-customer" data-placeholder="<?= lang('App.customer') ?>" style="width:100%" placeholder="<?= lang('App.customer') ?>">
-                      <option value=""></option>
                     </select>
                   </div>
                 </div>
@@ -65,13 +59,11 @@
                   <input type="datetime-local" id="duedate" name="duedate" class="form-control form-control-border form-control-sm">
                 </div>
               </div>
-            </div>
-            <div class="row">
               <div class="col-md-4">
                 <?php if (hasAccess('Sale.Discount')) : ?>
                   <div class="form-group">
                     <label for="discount"><?= lang('App.discount') ?></label>
-                    <input type="number" id="discount" name="discount" class="form-control form-control-border form-control-sm" min="0" value="0">
+                    <input id="discount" name="discount" class="form-control form-control-border form-control-sm currency">
                   </div>
                 <?php endif; ?>
               </div>
@@ -102,6 +94,18 @@
                     <label for="draft"><?= lang('App.draft') ?></label>
                   </div>
                 <?php endif; ?>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="cashier"><?= lang('App.cashier') ?></label>
+                  <select id="cashier" name="cashier" class="select-user" data-placeholder="<?= lang('App.cashier') ?>" style="width:100%" placeholder="<?= lang('App.cashier') ?>">
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label for="voucher"><?= lang('App.voucher') ?></label>
+                <select id="voucher" name="voucher[]" class="select-voucher" data-placeholder="<?= lang('App.voucher') ?>" style="width:100%" multiple>
+                </select>
               </div>
             </div>
           </div>
@@ -203,9 +207,16 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
+    erp.select2.product = {};
+    erp.select2.user = {};
+    erp.select2.operator = {};
+    erp.select2.customer = {};
+
     erp.select2.product.type = ['combo', 'service'];
-    erp.select2.user.biller = ['<?= $sale->biller ?>'];
-    erp.select2.operator.warehouse = ['<?= $sale->warehouse ?>'];
+
+    if (erp.biller.id) {
+      erp.select2.biller.id = [erp.biller.id];
+    }
 
     if (<?= $saleJS->approved ?>) {
       $('#approved').iCheck('check');
@@ -215,31 +226,12 @@
       $('#draft').iCheck('check');
     }
 
-    let items = JSON.parse(`<?= json_encode($items) ?>`);
-
-    for (let item of items) {
-      Sale.table('#table-sale').addItem({
-        code: item.code,
-        name: item.name,
-        category: item.category,
-        completed_at: item.completed_at,
-        finished_qty: item.finished_qty,
-        length: item.length,
-        operator: item.operator,
-        prices: item.prices,
-        quantity: item.quantity,
-        spec: item.spec,
-        status: item.status,
-        type: item.type,
-        ranges: item.ranges,
-        width: item.width
-      }, true);
-
-      initControls();
-    }
-
     let editor = new Quill('#editor', {
       theme: 'snow'
+    });
+
+    editor.on('text-change', (delta, oldDelta, source) => {
+      $('[name="note"]').val(editor.root.innerHTML);
     });
 
     editor.root.innerHTML = `<?= $sale->note ?>`;
@@ -280,10 +272,6 @@
       }
     });
 
-    editor.on('text-change', (delta, oldDelta, source) => {
-      $('[name="note"]').val(editor.root.innerHTML);
-    });
-
     $('#product').change(function() {
       if (!this.value) return false;
 
@@ -308,22 +296,26 @@
 
       $.ajax({
         data: {
-          code: this.value,
+          active: 1,
+          id: this.value,
           customer: customerId,
           warehouse: warehouse
         },
         success: (data) => {
+          let item = data.data[0];
+
           Sale.table('#table-sale').addItem({
-            code: data.data.code,
-            name: data.data.name,
-            category: data.data.category,
-            width: 1,
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            category: item.category,
             length: 1,
+            prices: item.prices,
             quantity: 1,
+            ranges: item.ranges,
             spec: '',
-            type: data.data.type,
-            prices: data.data.prices,
-            ranges: data.data.ranges
+            type: item.type,
+            width: 1
           }, true);
 
           initControls();
@@ -335,16 +327,39 @@
     });
 
     $('#date').val('<?= dateTimeJS($sale->date, false) ?>');
-    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? '', false) ?>');
-    $('#discount').val('<?= filterDecimal($sale->discount) ?>');
+    $('#duedate').val('<?= dateTimeJS($sale->due_date ?? null, false) ?>');
+    $('#discount').val('<?= formatCurrency($sale->discount) ?>');
 
-    try {
-      preSelect2('biller', '#biller', '<?= $sale->biller ?>');
-      preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse ?>');
-      preSelect2('user', '#cashier', '<?= \App\Models\User::getRow(['id' => $saleJS->cashier_by])?->phone ?>');
-      preSelect2('customer', '#customer', '<?= $sale->customer ?>');
-    } catch (e) {
-      console.warn(e);
+    preSelect2('biller', '#biller', '<?= $sale->biller_id ?>').catch(err => console.warn(err));
+    preSelect2('warehouse', '#warehouse', '<?= $sale->warehouse_id ?>').catch(err => console.warn(err));
+    preSelect2('user', '#cashier', '<?= $saleJS->cashier_by ?>').catch(err => console.warn(err));
+    preSelect2('customer', '#customer', '<?= $sale->customer_id ?>').catch(err => console.warn(err));
+    preSelect2('user', '#created_by', '<?= $sale->created_by ?>').catch(err => console.warn(err));
+    preSelect2('voucher', '#voucher', JSON.parse('<?= json_encode($saleJS->vouchers ?? '[]') ?>')).catch(err => console.warn(err));
+
+    let items = JSON.parse(`<?= json_encode($items) ?>`);
+
+    for (let item of items) {
+      Sale.table('#table-sale').addItem({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        complete: item.complete,
+        completed_at: item.completed_at,
+        finished_qty: item.finished_qty,
+        length: item.length,
+        operator: item.operator,
+        prices: item.prices,
+        quantity: item.quantity,
+        ranges: item.ranges,
+        spec: item.spec,
+        status: item.status,
+        type: item.type,
+        width: item.width
+      }, true);
+
+      initControls();
     }
 
     initModalForm({

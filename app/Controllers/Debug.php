@@ -4,10 +4,109 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{DB, Test1, Test2};
+use App\Models\{Bank, DB, PaymentValidation, SaleItem, Stock, Test1, Test2};
 
 class Debug extends BaseController
 {
+  public function paymentvalidation()
+  {
+    $createdAt = ($option['date'] ?? date('Y-m-d H:i:s'));
+    $startDate = date('Y-m-d H:i:s', strtotime('-1 day')); // We retrieve data from 7 days ago.
+    $status = ['pending'];
+
+    // Delete old MutasiBank data.
+    DB::table('mutasibank')
+      ->whereIn('status', $status)
+      ->where("created_at < '{$startDate} 00:00:00'")
+      ->delete();
+
+    $mutasiBanks = DB::table('mutasibank')
+      ->whereIn('status', $status)
+      ->where("created_at >= '{$startDate} 00:00:00'")
+      ->get();
+
+    dbgprint($mutasiBanks); die;
+
+    $paymentValidations = PaymentValidation::select('*')
+      ->whereIn('status', $status)
+      ->where("date >= '{$startDate} 00:00:00'")
+      ->get();
+
+    dbgprint($paymentValidations);
+  }
+
+  public function emoji()
+  {
+    $items = SaleItem::get(['sale_id' => 48064]);
+
+    foreach ($items as $item) {
+      $itemJS = json_decode($item->json);
+      echo $itemJS->spec . '<br>';
+    }
+  }
+
+  public function syncproduct()
+  {
+    $r = Stock::totalQuantity(1, 5);
+    print_r($r);
+  }
+
+  public function mutex()
+  {
+    $pass = getGet('pass');
+
+    if ($pass == 1) {
+      die("PASSED");
+    }
+
+    $hMutex = mutexCreate();
+
+    sleep(10);
+
+    mutexRelease($hMutex);
+
+    echo "OK BRO";
+  }
+
+  public function log()
+  {
+    log_message('info', 'INFO OK');
+    log_message('debug', 'DEBUG OK');
+    log_message('error', 'ERROR OK');
+    log_message('notice', 'NOTICE OK');
+    log_message('warning', 'WARNING OK');
+    $s = "RizonBarns";
+
+
+    echo $s;
+  }
+
+  public function array_object()
+  {
+    $rows = [
+      ['id' => 1, 'name' => 'Riyan'],
+      ['id' => 2, 'name' => 'Rizon'],
+      ['id' => 3, 'name' => 'Ridintek']
+    ];
+
+    array_splice($rows, 1, 1);
+
+    dbgprint($rows);
+  }
+
+  public function cache()
+  {
+    echo '<pre>';
+    print_r(cache('debug'));
+    echo '</pre>';
+    echo '<pre>';
+    print_r(cache('dailyPerformance22023-03'));
+    echo '</pre>';
+    echo '<pre>';
+    print_r(cache('revenueForecast2023-03'));
+    echo '</pre>';
+  }
+
   public function datetime2()
   {
     $dt = new \DateTime(''); // Return current date.
@@ -138,6 +237,23 @@ class Debug extends BaseController
   public function model()
   {
     \App\Models\Debug::add('HALO');
+  }
+
+  public function nullcoalesce()
+  {
+    $orang = (object)[];
+
+    if (isset($orang->kepala)) {
+      echo 'ada kepala';
+    } else {
+      $orang->kepala = 'botak';
+      echo 'Kepala: ' . $orang->kepala . '<br>';
+    }
+
+    $badan = ($orang->badan ?? 'gak ada'); // OK
+    // $badan = $orang?->badan // Error
+
+    echo 'Badan: ' . $badan;
   }
 
   public function page()

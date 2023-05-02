@@ -14,15 +14,43 @@
             <table class="table table-condensed table-hover table-striped" id="TableModal">
               <thead>
                 <tr>
-                  <th></th>
                   <th><?= lang('App.createdat') ?></th>
                   <th><?= lang('App.title') ?></th>
                   <th><?= lang('App.content') ?></th>
                 </tr>
               </thead>
+              <tbody>
+                <?php foreach ($notifications as $notify) : ?>
+                  <?php $scope = getJSON($notify->scope) ?>
+                  <?php if (!empty($scope->users)) : ?>
+                    <?php if (!in_array(session('login')->user_id, $scope->users)) : ?>
+                      <?php continue; ?>
+                    <?php endif; ?>
+                  <?php endif; ?>
+                  <?php if (!empty($scope->usergroups)) : ?>
+                    <?php if (!in_array(\App\Models\UserGroup::getRow(['name' => session('login')->groups[0]])->id, $scope->usergroups)) : ?>
+                      <?php continue; ?>
+                    <?php endif; ?>
+                  <?php endif; ?>
+                  <?php if (!empty($scope->billers)) : ?>
+                    <?php if (!in_array(session('login')->biller_id, $scope->billers)) : ?>
+                      <?php continue; ?>
+                    <?php endif; ?>
+                  <?php endif; ?>
+                  <?php if (!empty($scope->warehouses)) : ?>
+                    <?php if (!in_array(session('login')->warehouse_id, $scope->warehouses)) : ?>
+                      <?php continue; ?>
+                    <?php endif; ?>
+                  <?php endif; ?>
+                  <tr>
+                    <td><?= $notify->created_at ?></td>
+                    <td class="bg-gradient-<?= $notify->type ?> font-weight-bolder"><?= $notify->title ?></td>
+                    <td><?= $notify->note ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
               <tfoot>
                 <tr>
-                  <th></th>
                   <th><?= lang('App.createdat') ?></th>
                   <th><?= lang('App.title') ?></th>
                   <th><?= lang('App.content') ?></th>
@@ -47,17 +75,7 @@
     "use strict";
 
     erp.tableModal = $('#TableModal').DataTable({
-      ajax: {
-        data: {
-          <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-        },
-        method: 'POST',
-        url: base_url + '/profile/getNotifications'
-      },
       columnDefs: [{
-        targets: [0],
-        visible: false
-      }, {
         targets: [1, 2],
         orderable: false
       }],
@@ -67,7 +85,7 @@
         [10, 25, 50, 100, lang.App.all]
       ],
       order: [
-        [1, 'desc']
+        [0, 'desc']
       ],
       processing: true,
       responsive: true,
@@ -87,7 +105,6 @@
       },
       scrollX: false,
       searchDelay: 1000,
-      serverSide: true,
       stateSave: false
     });
   });

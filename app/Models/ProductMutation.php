@@ -9,12 +9,40 @@ class ProductMutation
   /**
    * Add new ProductMutation.
    */
-  public static function add(array $data)
+  public static function add(array $data, array $items)
   {
+    $data['items']  = '';
+
+    foreach ($items as $item) {
+      $product = Product::getRow(['id' => $item['id']]);
+
+      if (!$product) {
+        setLastError("Product id {$product->id} is not found.");
+        return false;
+      }
+
+      $data['items']  .= '- ' . getExcerpt($product->name) . '<br>';
+    }
+
+    $data['status'] = ($data['status'] ?? 'packing');
+
+    $data['reference'] = OrderRef::getReference('pm');
+    $data = setCreatedBy($data);
+
     DB::table('product_mutation')->insert($data);
 
     if (DB::error()['code'] == 0) {
-      return DB::insertID();
+      $insertId = DB::insertID();
+
+      $insertIds = ProductMutationItem::add((int)$insertId, $items);
+
+      if (!$insertIds) {
+        return false;
+      }
+
+      OrderRef::updateReference('pm');
+
+      return $insertId;
     }
 
     setLastError(DB::error()['message']);
@@ -68,12 +96,40 @@ class ProductMutation
   /**
    * Update ProductMutation.
    */
-  public static function update(int $id, array $data)
+  public static function update(int $id, array $data, array $items = null)
   {
+    if ($items) {
+      $data['items']  = '';
+
+      foreach ($items as $item) {
+        $product = Product::getRow(['id' => $item['id']]);
+
+        if (!$product) {
+          setLastError("Product id {$product->id} is not found.");
+          return false;
+        }
+
+        $data['items']  .= '- ' . getExcerpt($product->name) . '<br>';
+      }
+    }
+
+    $data = setUpdatedBy($data);
+
     DB::table('product_mutation')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      if ($items) {
+        ProductMutationItem::delete(['pm_id' => $id]);
+        Stock::delete(['pm_id' => $id]);
+
+        $insertIds = ProductMutationItem::add((int)$id, $items);
+
+        if (!$insertIds) {
+          return false;
+        }
+      }
+
+      return true;
     }
 
     setLastError(DB::error()['message']);

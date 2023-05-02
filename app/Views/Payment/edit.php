@@ -21,12 +21,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="biller"><?= lang('App.biller') ?> *</label>
-                  <select id="biller" name="biller" class="select" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Biller::get(['active' => 1]) as $bl) : ?>
-                      <?php if (!empty(session('login')->biller) && session('login')->biller != $bl->code) continue; ?>
-                      <option value="<?= $bl->code ?>"><?= $bl->name ?></option>
-                    <?php endforeach; ?>
+                  <select id="biller" name="biller" class="select-biller" data-placeholder="<?= lang('App.biller') ?>" style="width:100%">
                   </select>
                 </div>
               </div>
@@ -113,8 +108,7 @@
   })();
 
   $(document).ready(function() {
-    erp.bank = {}; // Init.
-    erp.bank.biller = $('#biller').val();
+    erp.select2.bank.biller = [$('#biller').val()];
 
     let hasSkipValidation = <?= hasAccess('PaymentValidation.Skip') ? 'true' : 'false' ?>;
 
@@ -129,7 +123,7 @@
     editor.root.innerHTML = `<?= $payment->note ?>`;
 
     $('#biller').change(function() {
-      erp.bank.biller = this.value;
+      erp.select2.bank.biller = [this.value];
     });
 
     $('#bank').change(function() {
@@ -161,10 +155,10 @@
       $('#skip_validation').iCheck('disable');
     }
 
-    preSelect2('bank', '#bank', '<?= $payment->bank ?>');
+    preSelect2('bank', '#bank', '<?= $payment->bank_id ?>');
+    preSelect2('biller', '#biller', '<?= $payment->biller_id ?>');
 
     $('#date').val('<?= dateTimeJS($payment->date) ?>');
-    $('#biller').val('<?= $payment->biller ?>').trigger('change');
     $('#method').val('<?= $payment->method ?>').trigger('change');
 
     initModalForm({

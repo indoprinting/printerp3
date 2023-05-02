@@ -16,7 +16,7 @@ class Notification extends BaseController
     $dt = new DataTables('notification');
     $dt
       ->select("notification.id AS id, notification.created_at, notification.title, notification.note,
-      notification.scopes, notification.type, notification.status, creator.fullname AS creator_name")
+      notification.scope, notification.type, notification.status, creator.fullname AS creator_name")
       ->join('users creator', 'creator.id = notification.created_by', 'left')
       ->editColumn('id', function ($data) {
         return '
@@ -46,42 +46,43 @@ class Notification extends BaseController
       ->editColumn('note', function ($data) {
         return "<div data-widget=\"tooltip\" title=\"{$data['note']}\">" . getExcerpt(html2Note($data['note'])) . '</div>';
       })
-      ->editColumn('scopes', function ($data) {
-        $scopes = getJSON($data['scopes']);
+      ->editColumn('scope', function ($data) {
+        $scope = getJSON($data['scope']);
         $status = lang('App.all');
         $type   = 'navy';
         $res    = '';
 
-        if (empty($scopes->billers) && empty($scopes->usergroups) && empty($scopes->users) && empty($scopes->warehouses)) {
+        if (empty($scope->billers) && empty($scope->usergroups) && empty($scope->users) && empty($scope->warehouses)) {
           return "<div class=\"badge bg-gradient-{$type} m-1 p-2\">{$status}</div>";
         }
 
-        if (!empty($scopes->billers)) {
-          foreach ($scopes->billers as $biller) {
-            $biller = Biller::getRow(['code' => $biller]);
+        if (!empty($scope->billers)) {
+          foreach ($scope->billers as $biller) {
+            $biller = Biller::getRow(['id' => $biller]);
             $status = lang('App.biller') . ': ' . $biller->name;
             $res .= "<div class=\"badge bg-gradient-orange m-1 p-2\">{$status}</div>";
           }
         }
 
-        if (!empty($scopes->usergroups)) {
-          foreach ($scopes->usergroups as $usergroup) {
-            $status = lang('App.usergroup') . ': ' . $usergroup;
+        if (!empty($scope->usergroups)) {
+          foreach ($scope->usergroups as $usergroup) {
+            $userGroup = UserGroup::getRow(['id' => $usergroup]);
+            $status = lang('App.usergroup') . ': ' . $userGroup->name;
             $res .= "<div class=\"badge bg-gradient-indigo m-1 p-2\">{$status}</div>";
           }
         }
 
-        if (!empty($scopes->users)) {
-          foreach ($scopes->users as $user) {
-            $user = User::getRow(['phone' => $user]);
+        if (!empty($scope->users)) {
+          foreach ($scope->users as $user) {
+            $user = User::getRow(['id' => $user]);
             $status = lang('App.user') . ': ' . $user->fullname;
             $res .= "<div class=\"badge bg-gradient-info m-1 p-2\">{$status}</div>";
           }
         }
 
-        if (!empty($scopes->warehouses)) {
-          foreach ($scopes->warehouses as $warehouse) {
-            $warehouse = Warehouse::getRow(['code' => $warehouse]);
+        if (!empty($scope->warehouses)) {
+          foreach ($scope->warehouses as $warehouse) {
+            $warehouse = Warehouse::getRow(['id' => $warehouse]);
             $status = lang('App.warehouse') . ': ' . $warehouse->name;
             $res .= "<div class=\"badge bg-gradient-green m-1 p-2\">{$status}</div>";
           }
@@ -118,7 +119,8 @@ class Notification extends BaseController
       $data = [
         'title'   => getPost('title'),
         'note'    => stripTags(getPost('note')),
-        'scopes'  => getPost('scope'),
+        'pinned'  => (getPost('pinned') == 1 ? 1 : 0),
+        'scope'   => getPost('scope'),
         'type'    => getPost('type'),
         'status'  => getPost('status')
       ];
@@ -194,7 +196,8 @@ class Notification extends BaseController
       $data = [
         'title'   => getPost('title'),
         'note'    => stripTags(getPost('note')),
-        'scopes'  => getPost('scope'),
+        'pinned'  => (getPost('pinned') == 1 ? 1 : 0),
+        'scope'   => getPost('scope'),
         'type'    => getPost('type'),
         'status'  => getPost('status')
       ];

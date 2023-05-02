@@ -9,35 +9,28 @@ class Sale
   /**
    * Add new sales.
    * @param array $data
-   * @param array $items [ ]
+   * @param array $items [ id, spec, width, length, price, quantity, operator ]
    */
   public static function add(array $data, array $items)
   {
-    $biller = Biller::getRow(['code' => $data['biller']]);
+    $biller = Biller::getRow(['id' => $data['biller_id']]);
 
     if (!$biller) {
       setLastError('Biller is not found.');
       return false;
     }
 
-    $customer = Customer::getRow(['phone' => $data['customer']]);
+    $customer = Customer::getRow(['id' => $data['customer_id']]);
 
     if (!$customer) {
       setLastError('Customer is not found.');
       return false;
     }
 
-    $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
+    $warehouse = Warehouse::getRow(['id' => $data['warehouse_id']]);
 
     if (!$warehouse) {
       setLastError('Warehouse is not found.');
-      return false;
-    }
-
-    $cashier = User::getRow(['phone' => $data['cashier']]);
-
-    if (!$cashier) {
-      setLastError('Cashier is not found.');
       return false;
     }
 
@@ -46,12 +39,16 @@ class Sale
 
     $data['status'] = ($data['status'] ?? ($isSpecialCustomer ? 'waiting_production' : 'need_payment'));
 
-    $grandTotal  = 0;
-    $totalPrice  = 0;
+    $discount   = floatval($data['discount'] ?? 0); // Currency
+    $grandTotal = 0.0;
+    $tax        = floatval($data['tax'] ?? 0); // Percent.
+    $totalPrice = 0.0;
     $totalItems = 0.0;
-    $date = ($data['date'] ?? date('Y-m-d H:i:s'));
-    $reference = OrderRef::getReference('sale');
 
+    $date       = ($data['date'] ?? date('Y-m-d H:i:s'));
+    $reference  = OrderRef::getReference('sale');
+
+    // Calculate totalQty, totalPrice and totalItems.
     foreach ($items as $item) {
       $price    = filterDecimal($item['price']);
       $quantity = filterDecimal($item['quantity']);
@@ -59,19 +56,32 @@ class Sale
       $length   = filterDecimal($item['length'] ?? 1);
       $area     = ($width * $length);
 
-      $totalQty         = ($area * $quantity);
-      $totalPrice  += round($price * $totalQty);
+      $totalQty   = ($area * $quantity);
+      $totalPrice += round($price * $totalQty);
       $totalItems += $totalQty;
     }
 
-    // Discount.
-    $grandTotal = ($totalPrice - ($data['discount'] ?? 0));
+    // Using Vouchers.
+    if (!empty($data['vouchers']) && is_array($data['vouchers'])) {
+      $discount = useVouchers($data['vouchers'], $totalPrice, $discount);
+    }
+
+    // Discount protection prevent minus.
+    if ($discount > $totalPrice) {
+      $discount = $totalPrice;
+    }
+
+    // Tax calculation.
+    $taxPrice  = ($tax * 0.01 * $totalPrice);
+
+    // Grand Total.
+    $grandTotal = round($totalPrice + $taxPrice - $discount);
 
     // Get balance.
     $balance = ($isSpecialCustomer ? $grandTotal : 0);
 
     // Determine use TB by biller and warehouse, if both different, then use tb (1).
-    $useTB = isTBSale($data['biller'], $data['warehouse']);
+    $useTB = isTBSale($biller->code, $warehouse->code);
 
     // Get payment term.
     $payment_term = filterDecimal($data['payment_term'] ?? 1);
@@ -79,7 +89,7 @@ class Sale
 
     $saleJS = json_encode([
       'approved'                => ($data['approved'] ?? 0),
-      'cashier_by'              => $cashier->id,
+      'cashier_by'              => ($data['cashier_id'] ?? 0),
       'est_complete_date'       => ($data['due_date'] ?? ''),
       'payment_due_date'        => ($data['payment_due_date'] ?? getWorkingDateTime(date('Y-m-d H:i:s', strtotime('+1 days')))),
       'source'                  => ($data['source'] ?? ''),
@@ -98,7 +108,8 @@ class Sale
       'warehouse'       => $warehouse->code,
       'no_po'           => ($data['no_po'] ?? null),
       'note'            => ($data['note'] ?? null),
-      'discount'        => filterDecimal($data['discount'] ?? 0),
+      'discount'        => $discount,
+      'tax'             => $tax,
       'total'           => roundDecimal($totalPrice),
       'shipping'        => filterDecimal($data['shipping'] ?? 0),
       'grand_total'     => roundDecimal($grandTotal), // IMPORTANT roundDecimal !!
@@ -124,77 +135,10 @@ class Sale
     if (DB::error()['code'] == 0) {
       $insertId = DB::insertID();
 
-      foreach ($items as $item) {
-        $product = Product::getRow(['code' => $item['code']]);
-        $productJS = getJSON($product->json_data);
-        $operator = User::getRow(['phone' => $item['operator']]);
+      $res = SaleItem::add((int)$insertId, $items);
 
-        if (!empty($item['width']) && !empty($item['length'])) {
-          $area = filterDecimal($item['width']) * filterDecimal($item['length']);
-          $quantity = ($area * filterDecimal($item['quantity']));
-        } else {
-          $area           = 0;
-          $quantity       = $item['quantity'];
-          $item['width']  = 0;
-          $item['length'] = 0;
-        }
-
-        $saleItemId = SaleItem::add([
-          'sale'          => $reference,
-          'product'       => $product->code,
-          'price'         => $item['price'],
-          'quantity'      => $quantity,
-          'subtotal'      => (floatval($item['price']) * $quantity),
-          'json'          => json_encode([
-            'w'             => $item['width'],
-            'l'             => $item['length'],
-            'area'          => $area,
-            'sqty'          => $item['quantity'],
-            'spec'          => ($item['spec'] ?? ''),
-            'status'        => $saleData['status'],
-            'operator_id'   => $operator->id,
-            'due_date'      => ($saleData['due_date'] ?? ''),
-            'completed_at'  => ($item['completed_at'] ?? '')
-          ]),
-          'json_data'     => json_encode([
-            'w'             => $item['width'],
-            'l'             => $item['length'],
-            'area'          => $area,
-            'sqty'          => $item['quantity'],
-            'spec'          => ($item['spec'] ?? ''),
-            'status'        => $saleData['status'],
-            'operator_id'   => $operator->id,
-            'due_date'      => ($saleData['due_date'] ?? ''),
-            'completed_at'  => ($item['completed_at'] ?? '')
-          ])
-        ]);
-
-        if (!$saleItemId) {
-          return false;
-        }
-
-        /**
-         * Autocomplete Engine
-         */
-        if ($saleData['status'] == 'waiting_production') {
-          if (!isWeb2Print($insertId) && isset($productJS->autocomplete) && $productJS->autocomplete == 1) {
-            $saleItem = SaleItem::getRow(['id' => $saleItemId]);
-            $saleItemJS = getJSON($saleItem->json);
-
-            if (isCompleted($saleItemJS->status)) {
-              continue;
-            }
-
-            $res = SaleItem::complete((int)$saleItemId, [
-              'quantity'    => $saleItem->quantity,
-              'created_by'  => $saleItemJS->operator_id
-            ]);
-
-            if (!$res) {
-              return false;
-            }
-          }
-        }
+      if (!$res) {
+        return false;
       }
 
       OrderRef::updateReference('sale');
@@ -214,14 +158,21 @@ class Sale
   {
     $sale = self::getRow(['id' => $saleId]);
 
+    if ($sale->payment_status == 'paid') {
+      setLastError('Invoice is already paid.');
+      return false;
+    }
+
     $insertId = Payment::add([
       'sale_id'     => $sale->id,
       'bank_id'     => $data['bank_id'],
       'biller_id'   => $sale->biller_id,
       'amount'      => $data['amount'],
       'type'        => 'received',
-      'method'      => ($data['method'] ?? 'Transfer'),
-      'attachment'  => ($data['attachment'] ?? null)
+      'method'      => ($data['method'] ?? 'Cash'),
+      'note'        => ($data['note'] ?? null),
+      'attachment'  => ($data['attachment'] ?? null),
+      'created_by'  => ($data['created_by'] ?? null)
     ]);
 
     if (!$insertId) {
@@ -329,25 +280,26 @@ class Sale
       $saleItems  = SaleItem::get(['sale_id' => $sale->id]);
 
       if (empty($saleItems)) {
-        setLastError("Sale::sync() Sale items empty. Sale id {$sale->id}, {$sale->reference}");
+        setLastError("Sale::sync() Sale items is empty. Sale id {$sale->id}, {$sale->reference}");
         continue;
       }
 
-      $completedItems = 0;
-      $deliveredItems = 0;
-      $finishedItems  = 0;
-      $total          = 0;
+      $completedItems = 0.0;
+      $deliveredItems = 0.0;
+      $finishedItems  = 0.0;
+      $discount       = floatval($sale->discount);
+      $tax            = floatval($sale->tax);
+      $total          = 0.0;
       $hasPartial     = false;
-      $totalSaleItems = 0;
+      $totalSaleItems = 0.0;
       $saleStatus     = $sale->status;
 
       foreach ($saleItems as $saleItem) {
-        $saleItemJS = getJSON($saleItem->json);
-        $saleItemStatus = $saleItemJS->status;
-        $totalSaleItems++;
-        $total += round($saleItem->price * $saleItem->quantity);
+        $saleItemStatus = $saleItem->status;
         $isItemFinished = ($saleItem->quantity == $saleItem->finished_qty ? true : false);
         $isItemFinishedPartial = ($saleItem->finished_qty > 0 && $saleItem->quantity > $saleItem->finished_qty ? true : false);
+        $total += round($saleItem->price * $saleItem->quantity);
+        $totalSaleItems++;
 
         if ($saleItemStatus == 'delivered') {
           $completedItems++;
@@ -372,29 +324,33 @@ class Sale
         }
 
         if ($sale->status == 'inactive') {
-          $saleItemJS->status = 'inactive';
+          $saleItemStatus = 'inactive';
         }
 
-        if ($saleItemJS->status == 'draft') {
+        if ($saleItemStatus == 'draft') {
           continue;
         }
 
-        $saleItemJS->status = $saleItemStatus;
-
         SaleItem::update((int)$saleItem->id, [
-          'json'      => json_encode($saleItemJS),
-          'json_data' => json_encode($saleItemJS)
+          'status'  => $saleItemStatus
         ]);
       }
 
-      if ($sale->discount > $total) {
-        $sale->discount = $total;
+      // Use Vouchers.
+      if (!empty($saleJS->vouchers) && is_array($saleJS->vouchers)) {
+        $discount = useVouchers($saleJS->vouchers, $total, $discount);
+      }
+
+      // Discount protection prevent minus.
+      if ($discount > $total) {
+        $discount = $total;
       }
 
       // Tax calculation.
-      $tax        = ($sale->tax * 0.01 * $total);
-      $grandTotal = round($total + $tax - $sale->discount);
+      $taxPrice   = ($tax * 0.01 * $total);
+      $grandTotal = round($total + $taxPrice - $discount);
 
+      $saleData['discount']     = $discount;
       $saleData['total']        = $total;
       $saleData['grand_total']  = $grandTotal; // Inclue tax.
 
@@ -469,8 +425,11 @@ class Sale
         }
       }
 
-      if ($saleStatus == 'waiting_production' && empty($saleJS->waiting_production_date)) {
+      if ($sale->status != 'waiting_production' && $saleStatus == 'waiting_production') {
         $saleJS->waiting_production_date = date('Y-m-d H:i:s');
+
+        // Set sale due date.
+        $saleData['due_date'] = date('Y-m-d', strtotime('+7 day'));
       }
 
       if ($sale->status != 'draft') {
@@ -482,10 +441,12 @@ class Sale
         $saleData['status'] = 'inactive';
       }
 
+      $json = json_encode($saleJS);
+
       $saleData['paid']       = $totalPaid;
       $saleData['balance']    = $balance;
-      $saleData['json']       = json_encode($saleJS);
-      $saleData['json_data']  = json_encode($saleJS);
+      $saleData['json']       = $json;
+      $saleData['json_data']  = $json;
 
       if (self::update((int)$sale->id, $saleData)) {
         $updateCounter++;
@@ -518,114 +479,73 @@ class Sale
 
     if (isset($data['approved'])) {
       $saleJS->approved = $data['approved'];
-
-      unset($data['approved']);
     }
 
-    if (isset($data['biller'])) {
-      $biller = Biller::getRow(['code' => $data['biller']]);
+    if (isset($data['customer_id'])) {
+      $customer = Customer::getRow(['id' => $data['customer_id']]);
 
-      $data['biller_id']  = $biller->id;
+      if ($customer) {
+        $data['customer_id']    = $customer->id;
+        $data['customer_name']  = $customer->name;
+        $data['customer']       = $customer->phone;
+      }
     }
 
-    if (isset($data['customer'])) {
-      $customer = Customer::getRow(['phone' => $data['customer']]);
+    if (isset($data['cashier_id'])) {
+      $cashier = User::getRow(['id' => $data['cashier_id']]);
 
-      $data['customer_id']    = $customer->id;
-      $data['customer_name']  = $customer->name;
-    }
-
-    if (isset($data['cashier'])) {
-      $cashier = User::getRow(['phone' => $data['cashier']]);
-      $saleJS->cashier_by = $cashier->id;
-
-      unset($data['cashier']);
+      if ($cashier) {
+        $saleJS->cashier_by = $cashier->id;
+      }
     }
 
     if (isset($data['est_complete_date'])) {
       $saleJS->est_complete_date = $data['est_complete_date'];
-      unset($data['est_complete_date']);
     }
 
     if (isset($data['payment_due_date'])) {
       $saleJS->payment_due_date = $data['payment_due_date'];
-      unset($data['payment_due_date']);
     }
 
     if (isset($data['source'])) {
       $saleJS->source = $data['source'];
-      unset($data['source']);
     }
 
     if (isset($data['vouchers'])) {
       $saleJS->vouchers = $data['vouchers'];
-      unset($data['vouchers']);
     }
 
     if (isset($data['waiting_production_date'])) {
       $saleJS->waiting_production_date = $data['waiting_production_date'];
-      unset($data['waiting_production_date']);
-    }
-
-    if (isset($data['warehouse'])) {
-      $warehouse = Warehouse::getRow(['code' => $data['warehouse']]);
-
-      $data['warehouse_id'] = $warehouse->id;
-    }
-
-    if ($items) {
-      SaleItem::delete(['sale_id' => $sale->id]);
-      Stock::delete(['sale_id' => $sale->id]);
-
-      foreach ($items as $item) {
-        $product  = Product::getRow(['code' => $item['code']]);
-        $operator = User::getRow(['phone' => $item['operator']]);
-
-        if (!empty($item['width']) && !empty($item['length'])) {
-          $area = floatval($item['width']) * floatval($item['length']);
-          $quantity = ($area * floatval($item['quantity']));
-        } else {
-          $area           = 1;
-          $quantity       = floatval($item['quantity']);
-          $item['width']  = 1;
-          $item['length'] = 1;
-        }
-
-        $saleItemJS = json_encode([
-          'w'             => floatval($item['width']),
-          'l'             => floatval($item['length']),
-          'area'          => $area,
-          'sqty'          => floatval($item['quantity']),
-          'spec'          => ($item['spec'] ?? ''),
-          'status'        => $item['status'],
-          'operator_id'   => $operator->id,
-          'due_date'      => ($data['due_date'] ?? ''),
-          'completed_at'  => ($item['completed_at'] ?? '')
-        ]);
-
-        $saleItemId = SaleItem::add([
-          'sale'          => $sale->reference,
-          'product'       => $product->code,
-          'price'         => $item['price'],
-          'quantity'      => $quantity,
-          'finished_qty'  => ($item['finished_qty'] ?? 0),
-          'subtotal'      => (floatval($item['price']) * $quantity),
-          'json'          => $saleItemJS,
-          'json_data'     => $saleItemJS
-        ]);
-
-        if (!$saleItemId) {
-          return false;
-        }
-      }
     }
 
     $data['json']       = json_encode($saleJS);
     $data['json_data']  = json_encode($saleJS);
 
+    unset(
+      $data['approved'],
+      $data['cashier_id'],
+      $data['est_complete_date'],
+      $data['payment_due_date'],
+      $data['source'],
+      $data['vouchers'],
+      $data['waiting_production_date']
+    );
+
     DB::table('sales')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
+      if ($items) {
+        SaleItem::delete(['sale_id' => $sale->id]);
+        Stock::delete(['sale_id' => $sale->id]);
+
+        $insertIds = SaleItem::add($id, $items);
+
+        if (!$insertIds) {
+          return false;
+        }
+      }
+
       return true;
     }
 

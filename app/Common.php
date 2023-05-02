@@ -14,7 +14,9 @@ use App\Models\{
   Sale,
   SaleItem,
   User,
-  Warehouse
+  Voucher,
+  Warehouse,
+  WarehouseProduct
 };
 use Config\Services;
 
@@ -100,11 +102,57 @@ function checkPermission(string $permission = null)
 }
 
 /**
+ * Create mutual exclusion
+ * @param string $name Mutex name.
+ */
+function mutexCreate(string $name = null)
+{
+  if (!is_dir(WRITEPATH . 'mutex')) {
+    mkdir(WRITEPATH . 'mutex');
+  }
+
+  if (!$name) {
+    $name = 'default';
+  }
+
+  $hFile = fopen(WRITEPATH . 'mutex/' . $name, 'w');
+
+  if ($hFile && flock($hFile, LOCK_EX)) {
+    return $hFile;
+  }
+
+  return false;
+}
+
+/**
+ * Release mutual exclusion.
+ * @param resource $hMutex Mutex instance.
+ */
+function mutexRelease($hMutex)
+{
+  if ($hMutex) {
+    $meta_data = stream_get_meta_data($hMutex); // Get absolute file name from resource/stream.
+    $filename = $meta_data['uri'];
+
+    flock($hMutex, LOCK_UN);
+    fclose($hMutex);
+
+    if (file_exists($filename)) {
+      @unlink($filename);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Convert JS time to PHP time or vice versa.
  * @param string $dateTime dateTime.
  * @param int $currentDate Return current date if dateTime is empty.
+ * @param string $mode Return mode default 'auto'. Options: auto|js|php
  */
-function dateTimeJS(string $dateTime, bool $currentDate = true)
+function dateTimeJS(string $dateTime = null, bool $currentDate = true)
 {
   if ($currentDate && empty($dateTime)) {
     $dateTime = date('Y-m-d H:i:s');
@@ -114,11 +162,20 @@ function dateTimeJS(string $dateTime, bool $currentDate = true)
     return null;
   }
 
-  if (strlen($dateTime) && strpos($dateTime, 'T') !== false) {
-    return str_replace('T', ' ', $dateTime);
+  return str_replace(' ', 'T', $dateTime);
+}
+
+function dateTimePHP(string $dateTime = null, bool $currentDate = true)
+{
+  if ($currentDate && empty($dateTime)) {
+    $dateTime = date('Y-m-d H:i:s');
   }
 
-  return str_replace(' ', 'T', $dateTime);
+  if (empty($dateTime)) {
+    return null;
+  }
+
+  return str_replace('T', ' ', $dateTime);
 }
 
 /**
@@ -319,6 +376,59 @@ function formatNumber($num)
 }
 
 /**
+ * Internal Use unique code generator.
+ * @param string $category Category name (consumable, category).
+ */
+function generateInternalUseUniqueCode(string $category)
+{
+  $code = null;
+  $prefix = [
+    'consumable'  => 'C',
+    'sparepart'   => 'S'
+  ];
+
+  if (strcasecmp($category, 'consumable') != 0 && strcasecmp($category, 'sparepart') != 0) {
+    setLastError('Category must be consumable or sparepart.');
+    return false;
+  }
+
+  $lastItem = DB::table('stocks')->isNotNull('internal_use_id')
+    ->like('unique_code', $prefix[$category], 'right')
+    ->orderBy('internal_use_id', 'DESC')->getRow(); // Find Cxxxx or Sxxxx
+
+  if ($lastItem) {
+    $lastUniqueCode = $lastItem->unique_code; // Ex. SA0001, CA0001
+
+    $prf = substr($lastUniqueCode, 0, 1); // Prefix C (Consumable) or S (Sparepart)
+    $alp = substr($lastUniqueCode, 1, 1); // Alphabet A,B,C,...,Z
+    $idx = substr($lastUniqueCode, 2); // Index 0001,0002,0003,...,9999
+
+    if (intval($idx) == 9999) {
+      $a = ord($alp);
+
+      if ($a == 90) { // if Z reset to A
+        $a = 65;
+      } else {
+        $a++;
+      }
+
+      $code = $prf . chr($a) . '0001';
+    } else {
+      $i = intval($idx);
+      $i++;
+
+      // Prepend zero.
+      $id = strval($i);
+      $id = ($i < 1000 ? ($i < 100 ? ($i < 10 ? '000' . $id : '00' . $id) : '0' . $id) : $id);
+
+      $code = $prf . $alp . $id;
+    }
+  }
+
+  return ($code ? $code : $prefix[$category] . 'A0001');
+}
+
+/**
  * Get adjusted quantity.
  * @return array Return adjusted object [ quantity, type ]
  */
@@ -360,24 +470,15 @@ function getCurrentMonthPeriod($period = [])
  */
 function getDailyPerformanceReport($opt)
 {
-  // We need biller to warehouse because ONLY warehouse has 'active' column.
   $dailyPerformanceData = [];
-  $billers    = [];
-  $warehouses = [];
+  $billers              = [];
 
   if (!empty($opt['biller_id']) && is_array($opt['biller_id'])) {
     foreach ($opt['biller_id'] as $billerId) {
       $billers[] = Biller::getRow(['id' => $billerId, 'active' => '1']);
     }
-
-    if ($warehouseIds = billerToWarehouse($opt['biller_id'])) {
-      foreach ($warehouseIds as $warehouseId) {
-        $warehouses[] = Warehouse::getRow(['id' => $warehouseId, 'active' => '1']);
-      }
-    }
   } else if (empty($opt['biller_id'])) {
-    $billers    = Biller::get(['active' => '1']);
-    $warehouses = Warehouse::get(['active' => '1']);
+    $billers  = Biller::get(['active' => '1']);
   }
 
   if ($opt['period']) {
@@ -399,8 +500,8 @@ function getDailyPerformanceReport($opt)
 
   foreach ($billers as $biller) {
     if ($biller->active != 1) continue;
-    // Hide FUCKED IDS
     // if ($biller->code == 'BALINN') continue;
+    // Hide FUCKED IDS
     if ($biller->code == 'IDSUNG') continue;
     if ($biller->code == 'IDSLOS') continue;
     if ($biller->code == 'BALINT') continue;
@@ -421,7 +522,7 @@ function getDailyPerformanceReport($opt)
         $dt       = prependZero($a);
         $dtDaily  = new DateTime("{$ymPeriod}-{$dt}");
 
-        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') === '+');
 
         if (!$overTime) {
           $dailyRevenue = round(floatval(DB::table('product_transfer')
@@ -471,7 +572,7 @@ function getDailyPerformanceReport($opt)
         $dt = prependZero($a);
         $dtDaily = new DateTime("{$ymPeriod}-{$dt}");
 
-        $overTime = ($currentDate->diff($dtDaily)->format('%R') == '+' ? true : false);
+        $overTime = ($currentDate->diff($dtDaily)->format('%R') === '+');
 
         if (!$overTime) {
           $dailyRevenue = round(floatval(DB::table('sales')
@@ -569,11 +670,27 @@ function getGet($name)
 }
 
 /**
+ * Fetch an item from GET data with fallback to POST.
+ */
+function getGetPost($name)
+{
+  return Services::request()->getGetPost($name);
+}
+
+/**
  * Fetch an item from POST.
  */
 function getPost($name)
 {
   return Services::request()->getPost($name);
+}
+
+/**
+ * Fetch an item from POST data with fallback to GET.
+ */
+function getPostGet($name)
+{
+  return Services::request()->getPostGet($name);
 }
 
 /**
@@ -635,11 +752,41 @@ function getJSON($json, bool $assoc = false)
 
 /**
  * Get last error message.
+ * @param string $defaultMsg Default message if last error message is not defined.
  * @return string|null Return error message. null or empty string if no error.
  */
-function getLastError()
+function getLastError(string $defaultMsg = null)
 {
-  return (session()->has('lastErrMsg') ? session('lastErrMsg') : null);
+  return (session()->has('lastErrMsg') ? session('lastErrMsg') : $defaultMsg);
+}
+
+/**
+ * Get Mark-on price or Warehouse price from cost and mark-on.
+ * @param float $cost Item cost.
+ * @param float $markon Mark-on percent.
+ */
+function getMarkonPrice($cost, $markon)
+{
+  return round(filterDecimal($cost) / (1 - (filterDecimal($markon) / 100)));
+}
+
+/**
+ * Get StockOpname items suggestion.
+ */
+function getStockOpnameSuggestion(int $userId, int $warehouseId, int $cycle)
+{
+  return WarehouseProduct::select('products.id AS id, products.code AS code, products.name AS name,
+    units.code AS unit, warehouses_products.quantity AS quantity')
+    ->join('products', 'products.id = warehouses_products.product_id', 'left')
+    ->join('units', 'units.id = products.unit', 'left')
+    ->where('products.active', 1)
+    ->where('warehouses_products.user_id', $userId)
+    ->where('warehouses_products.warehouse_id', $warehouseId)
+    ->where('warehouses_products.so_cycle', $cycle)
+    ->like('products.type', 'standard')
+    ->groupBy('products.id')
+    ->orderBy('name', 'ASC')
+    ->get();
 }
 
 /**
@@ -660,9 +807,9 @@ function getWarehouseStockValue(int $warehouseId, array $opt = [])
   }
 
   // If end date is more than current date then 0.
-  if ($currentDate->diff($endDate)->format('%R') == '+') {
-    return 0;
-  }
+  // if ($currentDate->diff($endDate)->format('%R') == '+') {
+  //   return 0;
+  // }
 
   if ($warehouse->code == 'LUC') { // Lucretai mode.
     $value = DB::table('products')->selectSum('products.cost * (recv.total - sent.total)', 'total')
@@ -748,12 +895,51 @@ function hasAccess($permission)
   return false;
 }
 
+function hasNotificationAccess(object $scope)
+{
+  if (!empty($scope->billers) && session('login')->biller_id) {
+    if (!in_array(session('login')->biller_id, $scope->billers)) {
+      return false;
+    }
+  }
+
+  if (!empty($scope->users)) {
+    if (!in_array(session('login')->user_id, $scope->users)) {
+      return false;
+    }
+  }
+
+  if (!empty($scope->usergroups)) {
+    $hasAccess = false;
+
+    foreach (session('login')->groups as $group) {
+      $userGroup = \App\Models\UserGroup::getRow(['code' => $group]);
+
+      if (!in_array($userGroup, $scope->usergroups)) {
+        $hasAccess = true;
+      }
+    }
+
+    if (!$hasAccess) {
+      return false;
+    }
+  }
+
+  if (!empty($scope->warehouses) && session('login')->warehouse_id) {
+    if (!in_array(session('login')->warehouse_id, $scope->warehouses)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /**
  * Convert html string into readable note.
  */
 function html2Note($html)
 {
-  $str = str_replace('<br>', "\r\n", $html);
+  $str = str_replace('<br>', "\r\n", ($html ?? ''));
   return htmlRemove($str);
 }
 
@@ -778,7 +964,7 @@ function htmlEncode($html)
 {
   $allowed = '<a><span><div><a><br><p><b><i><u><img><blockquote><small><ul><ol><li><hr><pre>
   <code><strong><em><table><tr><td><th><tbody><thead><tfoot><h3><h4><h5><h6>';
-  $stripped = strip_tags($html, $allowed);
+  $stripped = strip_tags($html ?? '', $allowed);
   return htmlentities(trim($stripped), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
 }
 
@@ -789,8 +975,24 @@ function htmlEncode($html)
  */
 function htmlRemove($html)
 {
-  $decoded = html_entity_decode(trim($html), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
+  $decoded = html_entity_decode(trim($html ?? ''), ENT_HTML5 | ENT_QUOTES | ENT_XHTML, 'UTF-8');
   return preg_replace('/\<(.*?)\>/', '', $decoded);
+}
+
+/**
+ * Determine if current status is the same like one of the status list.
+ * @param string $currentStatus Current status.
+ * @param array $statusList Status list.
+ */
+function inStatus(string $currentStatus, array $statusList)
+{
+  foreach ($statusList as $st) {
+    if (strcasecmp($currentStatus, $st) === 0) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -799,6 +1001,24 @@ function htmlRemove($html)
 function isAJAX()
 {
   return Services::request()->isAJAX();
+}
+
+/**
+ * Check if all array key is empty.
+ * @param array $data Array data to check.
+ * @param array $key Set of key to check.
+ * 
+ * Example: isArrayEmpty($data, ['user_id', 'biller_id'])
+ */
+function isArrayEmpty(array $data, array $key)
+{
+  foreach ($key as $k) {
+    if (!empty($data[$k])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -816,7 +1036,7 @@ function isCLI()
 function isCompleted($status)
 {
   return ($status == 'completed' || $status == 'completed_partial' ||
-    $status == 'delivered' || $status == 'finished' ? true : false);
+    $status == 'delivered' || $status == 'finished');
 }
 
 /**
@@ -824,9 +1044,9 @@ function isCompleted($status)
  * @param string $due_date Due date
  * @example 1 isDueDate('2020-01-20 20:40:11'); // Return false if current time less then due date.
  */
-function isDueDate($due_date)
+function isDueDate($dueDate)
 {
-  return (strtotime($due_date) > time() ? false : true);
+  return (time() > strtotime($dueDate));
 }
 
 /**
@@ -842,7 +1062,43 @@ function isEnv($environment)
  */
 function isLoggedIn()
 {
-  return (session()->has('login') ? true : false);
+  return session()->has('login');
+}
+
+/**
+ * Check assigned product warehouse by warehouse name.
+ * @param string $product_warehouse Assigned product warehouse name.
+ * Ex. "Durian, Tembalang" or "-Tlogosari, -Ungaran".
+ * @param string $warehouse_name Warehouse name to check assign.
+ * Ex. "Durian", "Ngesrep", ...
+ */
+function isProductWarehouses($productWarehouse, $warehouseName)
+{
+  if (!empty($productWarehouse)) {
+    $negated = false;
+    $pwhs = explode(',', trim($productWarehouse));
+
+    if (substr($pwhs[0], 0, 1) == '-') $negated = true;
+
+    foreach ($pwhs as $pwh) {
+      $pwh = trim($pwh);
+
+      if ($negated) {
+        if (strcasecmp(substr($pwh, 1), $warehouseName) === 0) {
+          return false;
+        }
+      } else {
+        if (strcasecmp($pwh, $warehouseName) === 0) {
+          return true;
+        }
+      }
+    }
+
+    if (!$negated) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -868,7 +1124,7 @@ function isSpecialCustomer($customerId)
   $csGroup = CustomerGroup::getRow(['id' => $customer->customer_group_id]);
 
   if ($csGroup) {
-    return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0 ? true : false);
+    return (strcasecmp($csGroup->name, 'PRIVILEGE') === 0 || strcasecmp($csGroup->name, 'TOP') === 0);
   }
 
   return false;
@@ -890,7 +1146,7 @@ function isW2PUser($user_id)
   $user = User::getRow(['id' => $user_id]);
 
   if ($user) {
-    return (strcasecmp($user->username, 'W2P') === 0 ? true : false);
+    return (strcasecmp($user->username, 'W2P') === 0);
   }
   return false;
 }
@@ -905,20 +1161,20 @@ function isWeb2Print($sale_id)
   if ($sale) {
     $saleJS = getJSON($sale->json);
 
-    return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0 ? true : false);
+    return (strcasecmp(($saleJS->source ?? ''), 'W2P') === 0);
   }
   return false;
 }
 
 /**
- * Nulling empty data.
+ * Nulling empty data except zero.
  */
 function nulling(array $data, array $keys)
 {
   if (empty($keys)) return $data;
 
   foreach ($keys as $key) {
-    if (isset($data[$key]) && empty($data[$key])) {
+    if (isset($data[$key]) && empty($data[$key]) && $data[$key] != 0) {
       $data[$key] = null;
     }
   }
@@ -981,14 +1237,15 @@ function renderStatus(string $status)
   ];
   $info = [
     'calling', 'completed_partial', 'confirmed', 'delivered', 'excellent', 'finished',
-    'installed_partial', 'ordered', 'partial', 'preparing', 'received', 'received_partial', 'serving'
+    'installed_partial', 'ordered', 'partial', 'percent', 'preparing', 'received',
+    'received_partial', 'serving'
   ];
   $success = [
-    'active', 'approved', 'completed', 'increase', 'formula', 'good', 'installed', 'paid',
-    'sent', 'served', 'verified'
+    'active', 'approved', 'completed', 'consumable', 'currency', 'increase', 'formula',
+    'good', 'installed', 'paid', 'sent', 'served', 'verified'
   ];
   $warning = [
-    'called', 'cancelled', 'checked', 'draft', 'inactive', 'packing', 'pending', 'slow',
+    'called', 'cancelled', 'checked', 'draft', 'inactive', 'packing', 'pending', 'slow', 'sparepart',
     'trouble', 'waiting', 'waiting_production', 'waiting_transfer'
   ];
 
@@ -1033,12 +1290,15 @@ function roundDecimal($num)
  */
 function sendJSON($data, $options = [])
 {
-  $origin = base_url();
+  if (!isCLI()) {
+    $origin = base_url();
 
-  if (!empty($options['origin'])) $origin = $options['origin'];
+    if (!empty($options['origin'])) $origin = $options['origin'];
 
-  header("Access-Control-Allow-Origin: {$origin}");
-  header('Content-Type: application/json');
+    header("Access-Control-Allow-Origin: {$origin}");
+    header('Content-Type: application/json');
+  }
+
   die(json_encode($data, JSON_PRETTY_PRINT));
 }
 
@@ -1191,6 +1451,43 @@ function setUpdatedBy($data = [])
 function stripTags(string $text)
 {
   return strip_tags($text, '<a><br><em><h1><h2><h3><li><ol><p><strong><u><ul>');
+}
+
+/**
+ * Return vouchers total amount.
+ * @param array $vouchers Array of voucher id.
+ * @param float $grandTotal Grand total of invoice. Required if voucher's method is percent.
+ * @param float $lastDiscount Last discount of invoice if any.
+ */
+function useVouchers(array $vouchers, float $grandTotal, float $lastDiscount = 0.0)
+{
+  $discount = $lastDiscount;
+
+  foreach ($vouchers as $vid) {
+    $voucher = Voucher::getRow(['id' => $vid]);
+
+    if (strtotime($voucher->valid_from) > time()) {
+      continue;
+    }
+
+    if (strtotime($voucher->valid_to) < time()) {
+      continue;
+    }
+
+    if ($voucher->quota < 1) {
+      continue;
+    }
+
+    if (Voucher::update((int)$voucher->id, ['quota' => $voucher->quota - 1])) {
+      if ($voucher->method == 'currency') {
+        $discount += floatval($voucher->amount);
+      } else if ($voucher->method == 'percent') {
+        $discount += floatval($grandTotal * ($voucher->percent * 0.01));
+      }
+    }
+  }
+
+  return $discount;
 }
 
 /**

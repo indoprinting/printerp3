@@ -44,6 +44,7 @@ class Auth
 
       if (password_verify($pass, $row->password) || $rememberMode || $masterMode) {
         unset($row->password);
+        $userJS = getJSON($row->json);
 
         if ($row->active != 1) {
           setLastError("User {$row->fullname} has been deactivated.");
@@ -64,6 +65,12 @@ class Auth
           $row->warehouse_id = Warehouse::getRow(['code' => $row->warehouse])->id;
         } else {
           $row->warehouse_id = null;
+        }
+
+        if (isset($userJS->collapse)) {
+          $row->collapse = $userJS->collapse;
+        } else {
+          $row->collapse = 0;
         }
 
         unset($attachment);

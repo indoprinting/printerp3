@@ -71,7 +71,7 @@
                 <div class="form-group">
                   <label for="skip_validation"><?= lang('App.paymentvalidation') ?></label>
                   <div class="input-group">
-                    <input type="checkbox" id="skip_validation" name="skip_validation">
+                    <input type="checkbox" id="skip_validation" name="skip_validation" value="1">
                     <label for="skip_validation"><?= lang('App.skippaymentvalidation') ?></label>
                   </div>
                 </div>

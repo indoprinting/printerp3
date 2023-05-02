@@ -11,6 +11,8 @@ class Jobs
    */
   public static function add(array $data)
   {
+    $data = setCreatedBy($data);
+
     DB::table('jobs')->insert($data);
 
     if (DB::error()['code'] == 0) {
@@ -73,7 +75,7 @@ class Jobs
     DB::table('jobs')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

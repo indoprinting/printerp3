@@ -21,11 +21,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="warehouse"><?= lang('App.warehouse') ?> *</label>
-                  <select id="warehouse" name="warehouse" class="select" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" placeholder="<?= lang('App.warehouse') ?>">
-                    <option value=""></option>
-                    <?php foreach (\App\Models\Warehouse::get(['active' => 1]) as $wh) : ?>
-                      <option value="<?= $wh->code ?>"><?= $wh->name ?></option>
-                    <?php endforeach; ?>
+                  <select id="warehouse" name="warehouse" class="select-warehouse" data-placeholder="<?= lang('App.warehouse') ?>" style="width:100%" >
                   </select>
                 </div>
               </div>
@@ -34,7 +30,7 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="mode"><?= lang('App.mode') ?> *</label>
-                  <select id="mode" name="mode" class="select" data-placeholder="<?= lang('App.mode') ?>" style="width:100%" placeholder="<?= lang('App.mode') ?>">
+                  <select id="mode" name="mode" class="select" data-placeholder="<?= lang('App.mode') ?>" style="width:100%">
                     <option value="overwrite"><?= lang('App.overwrite') ?></option>
                     <option value="formula"><?= lang('App.formula') ?></option>
                   </select>
@@ -110,8 +106,7 @@
   } from "<?= base_url('assets/app/js/ridintek.js?v=' . $resver); ?>";
 
   $(document).ready(function() {
-    erp.product = {};
-    erp.product.type = ['service', 'standard'];
+    erp.select2.product.type = ['service', 'standard'];
 
     let items = JSON.parse('<?= json_encode($items) ?>');
 
@@ -131,6 +126,8 @@
       $('[name="note"]').val(editor.root.innerHTML);
     });
 
+    preSelect2('warehouse', '#warehouse', '<?= $adjustment->warehouse_id ?>').catch(err => console.warn(err));
+
     $('#product').change(function() {
       if (!this.value) return false;
 
@@ -149,12 +146,13 @@
           code: this.value,
           warehouse: warehouse
         },
-        success: (data) => {
+        success: (response) => {
           sa.addItem({
-            code: data.data.code,
-            name: data.data.name,
-            quantity: data.data.quantity,
-            current_qty: data.data.quantity
+            code: response.data.id,
+            code: response.data.code,
+            name: response.data.name,
+            quantity: response.data.quantity,
+            current_qty: response.data.quantity
           });
 
           $(this).val('').trigger('change');
@@ -171,7 +169,7 @@
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/inventory/stockadjustment/add'
+      url: base_url + '/inventory/stockadjustment/edit/<?= $adjustment->id ?>'
     });
   });
 </script>

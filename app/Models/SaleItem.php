@@ -8,164 +8,209 @@ class SaleItem
 {
   /**
    * Add new SaleItem.
+   * @param int $saleId Sale ID.
+   * @param array $items Sale items collection to add.
+   * 
+   * [ *id, *quantity, completed_at, finished_qty, length,
+   * operator_id, price, spec, status, waiting_production_date, width ]
    */
-  public static function add(array $data)
+  public static function add(int $saleId, array $items)
   {
-    if (isset($data['sale'])) {
-      $sale = Sale::getRow(['reference' => $data['sale']]);
+    $sale = Sale::getRow(['id' => $saleId]);
 
-      if (!$sale) {
-        setLastError("Sale {$data['sale']} is not found.");
-        return false;
-      }
-
-      $data['sale_id'] = $sale->id;
-    } else {
-      setLastError("Sale is not set.");
+    if (!$sale) {
+      setLastError("Sale id {$saleId} is not found.");
       return false;
     }
 
-    if (isset($data['product'])) {
-      $product = Product::getRow(['code' => $data['product']]);
+    if (empty($items)) {
+      setLastError('Items are empty.');
+      return false;
+    }
+
+    $insertIds = [];
+
+    foreach ($items as $item) {
+      $product    = Product::getRow(['id' => $item['id']]);
+      $productJS  = getJSON($product->json);
 
       if (!$product) {
-        setLastError("Product {$data['product']} is not found.");
+        setLastError("Product id {$item['id']} is not found.");
         return false;
       }
 
-      $data['product_id']   = $product->id;
-      $data['product_code'] = $product->code;
-      $data['product_name'] = $product->name;
-      $data['product_type'] = $product->type;
-    } else {
-      setLastError("Product is not set.");
-      return false;
-    }
+      if (empty($item['quantity'])) {
+        setLastError('Item quantity is not set.');
+        return false;
+      }
 
-    DB::table('sale_items')->insert($data);
+      $completedAt  = ($item['completed_at'] ?? '');
+      $price        = floatval($item['price'] ?? $product->price);
+      $width        = floatval($item['width'] ?? 1);
+      $length       = floatval($item['length'] ?? 1);
+      $area         = ($width * $length);
+      $quantity     = ($area * floatval($item['quantity']));
+      $finishedQty  = floatval($item['finished_qty'] ?? 0);
+      $operatorId   = 0;
+      $status       = ($item['status'] ?? $sale->status); // Status sync by Sale::sync
+      $spec         = ($item['spec'] ?? '');
+      $subQty       = floatval($item['quantity']);
+      $subTotal     = ($price * $quantity);
 
-    if (DB::error()['code'] == 0) {
-      $insertId = DB::insertID();
+      if (!empty($item['operator_id'])) {
+        $operator = User::getRow(['id' => $item['operator_id']]);
 
-      $saleItem   = self::getRow(['id' => $insertId]);
-      $saleItemJS = getJSON($saleItem->json);
+        if (!$operator) {
+          setLastError("Operator id {$item['operator_id']} is not found.");
+          return false;
+        }
 
-      if (isCompleted($saleItemJS->status)) {
-        if ($product->type == 'combo') {
-          $comboItems = ComboItem::get(['product_id' => $product->id]);
+        $operatorId = $operator->id;
+      }
 
-          foreach ($comboItems as $comboItem) {
-            $rawItem = Product::getRow(['code' => $comboItem->item_code]);
+      $dataJS = json_encode([
+        'area'          => $area,
+        'completed_at'  => $completedAt,
+        'l'             => $length,
+        'operator_id'   => $operatorId,
+        'spec'          => $spec,
+        'sqty'          => $subQty,
+        'status'        => $status, // Backward PrintERP 2 compatibility.
+        'w'             => $width,
+        'complete'      => ($item['complete'] ?? []), // [{"created_at": "", "created_by":"", "quantity":""}]
+      ]);
 
-            if ($rawItem->type == 'standard') {
-              $res = Stock::decrease([
-                'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-                'sale'        => $sale->reference,
-                'saleitem_id' => $saleItem->id,
-                'product'     => $rawItem->code,
-                'quantity'    => ($saleItem->finished_qty * $comboItem->quantity),
-                'warehouse'   => $sale->warehouse,
-                'created_by'  => $saleItemJS->operator_id
-              ]);
+      $data = [
+        'date'          => $sale->date,
+        'sale'          => $sale->reference,
+        'sale_id'       => $sale->id,
+        'product'       => $product->code,
+        'product_id'    => $product->id,
+        'product_code'  => $product->code,
+        'product_name'  => $product->name,
+        'product_type'  => $product->type,
+        'price'         => $price,
+        'quantity'      => $quantity,
+        'finished_qty'  => $finishedQty,
+        'status'        => $status, // New PrintERP 3. Replacement from $json->status
+        'subtotal'      => $subTotal,
+        'json'          => $dataJS,
+        'json_data'     => $dataJS
+      ];
 
-              if (!$res) {
-                return false;
-              }
-            } else if ($rawItem->type == 'service') {
-              $res = Stock::increase([
-                'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-                'sale'        => $sale->reference,
-                'saleitem_id' => $saleItem->id,
-                'product'     => $rawItem->code,
-                'quantity'    => ($saleItem->finished_qty * $comboItem->quantity),
-                'warehouse'   => $sale->warehouse,
-                'created_by'  => $saleItemJS->operator_id
+      DB::table('sale_items')->insert($data);
+
+      if (DB::error()['code'] == 0) {
+        $insertId = DB::insertID();
+
+        $insertIds[] = $insertId;
+        $saleItem = self::getRow(['id' => $insertId]);
+        $isAutoComplete = (isset($productJS->autocomplete) && $productJS->autocomplete == 1);
+
+
+        if (isCompleted($saleItem->status) || $isAutoComplete) {
+          $sysUser = User::getRow(['username' => 'system']);
+
+          if (!$sysUser) {
+            setLastError('Username system is not found. Autocomplete aborted.');
+            return false;
+          }
+
+          if (isset($productJS->autocomplete) && $productJS->autocomplete == 1) {
+            $spec = 'Completed by system.';
+          } else {
+            $saleItemJS = getJSON($saleItem->json);
+            $spec = $saleItemJS->spec;
+          }
+
+          if (!empty($saleItemJS->complete) && is_array($saleItemJS->complete)) {
+            foreach ($saleItemJS->complete as $complete) {
+              $res = self::complete((int)$saleItem->id, [
+                'completed_at'  => $complete->completed_at,
+                'completed_by'  => ($isAutoComplete ? $sysUser->id : $complete->completed_by),
+                'quantity'      => $complete->quantity,
+                'spec'          => $spec,
               ]);
 
               if (!$res) {
                 return false;
               }
             }
-          }
-        } else if ($product->type == 'service') {
-          $res = Stock::increase([
-            'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-            'sale'        => $sale->reference,
-            'saleitem_id' => $saleItem->id,
-            'product'     => $product->code,
-            'quantity'    => $saleItem->finished_qty,
-            'warehouse'   => $sale->warehouse,
-            'created_by'  => $saleItemJS->operator_id
-          ]);
+          } else if (isCompleted($saleItem->status) && !empty($saleItemJS->completed_at)) {
+            $res = self::complete((int)$saleItem->id, [
+              'completed_at'  => $saleItemJS->completed_at,
+              'completed_by'  => ($isAutoComplete ? $sysUser->id : $saleItemJS->operator_id),
+              'quantity'      => $saleItem->finished_qty,
+              'spec'          => $spec,
+            ]);
 
-          if (!$res) {
-            return false;
-          }
-        } else if ($product->type == 'standard') {
-          $res = Stock::decrease([
-            'date'        => $saleItemJS->completed_at ?? date('Y-m-d H:i:s'),
-            'sale'        => $sale->reference,
-            'saleitem_id' => $saleItem->id,
-            'product'     => $product->code,
-            'quantity'    => $saleItem->finished_qty,
-            'warehouse'   => $sale->warehouse,
-            'created_by'  => $saleItemJS->operator_id
-          ]);
-
-          if (!$res) {
-            return false;
+            if (!$res) {
+              return false;
+            }
           }
         }
+      } else {
+        setLastError(DB::error()['message']);
+        return false;
       }
+    } // foreach
 
-      return $insertId;
-    }
-
-    setLastError(DB::error()['message']);
-
-    return false;
+    return $insertIds;
   }
-
 
   /**
    * Complete sale item.
    * @param int $id Sale item ID.
-   * @param array $data [ *quantity, spec, created_at, created_by ]
+   * @param array $data [ *quantity, spec, completed_at, completed_by ]
    */
   public static function complete(int $id, array $data)
   {
-    $data = setCreatedBy($data);
+    $data     = setCreatedBy($data);
     $saleItem = self::getRow(['id' => $id]);
 
     if ($saleItem) {
-      $completedQty = $data['quantity']; // Quantity to complete.
+      $completedQty = floatval($data['quantity']); // Quantity to complete.
       $sale         = Sale::getRow(['id' => $saleItem->sale_id]);
-      $saleItemJS   = getJSON($saleItem->json_data);
-      $status       = ($saleItemJS ? $saleItemJS->status : 'waiting_production'); // Default status.
+      $saleItemJS   = getJSON($saleItem->json);
 
       if (empty($data['quantity'])) {
-        setLastError("SaleItem::complete(): Quantity is missing?");
+        setLastError("Quantity is missing?");
         return false;
       }
 
       // Get operator data.
-      $operator = User::getRow(['id' => $data['created_by']]);
+      $operator = User::getRow(['id' => $data['completed_by']]);
 
-      if (($completedQty + $saleItem->finished_qty) < $saleItem->quantity) { // If completed partial.
-        $status = 'completed_partial';
-      } else if (($completedQty + $saleItem->finished_qty) == $saleItem->quantity) { // If fully completed.
-        $status = 'completed';
-      } else {
-        setLastError("SaleItem::complete(): Complete is more than requested. Complete: {$completedQty}, " .
-          "Finished: {$saleItem->finished_qty}, Quantity: {$saleItem->quantity}");
+      if (!$operator) {
+        setLastError("Operator is not found.");
         return false;
       }
 
+      // Get completed date. Default current date.
+      $completedDate = new \DateTime($data['completed_at'] ?? date('Y-m-d H:i:s'));
+
       // Set Completed date and Operator who completed it.
 
-      $saleItemJS->completed_at = ($data['created_at'] ?? date('Y-m-d H:i:s')); // Completed date.
-      $saleItemJS->operator_id  = $operator->id; // Change PIC who completed it.
-      $saleItemJS->status       = $status; // Restore status as completed or completed_partial.
+      // Reset if full.
+      if ($saleItem->finished_qty == $saleItem->quantity) {
+        $saleItem->finished_qty = 0;
+        $saleItemJS->complete = [];
+      }
+
+      if (isset($saleItemJS->complete) && is_array($saleItemJS->complete)) {
+        $saleItemJS->complete[] = [
+          'completed_at'  => $completedDate->format('Y-m-d H:i:s'), // Completed date.
+          'completed_by'  => intval($operator->id),
+          'quantity'      => $completedQty
+        ];
+      } else {
+        $saleItemJS->complete = [];
+        $saleItemJS->complete[] = [
+          'completed_at'  => $completedDate->format('Y-m-d H:i:s'), // Completed date.
+          'completed_by'  => intval($operator->id),
+          'quantity'      => $completedQty
+        ];
+      }
 
       if (isset($data['spec'])) {
         $saleItemJS->spec = $data['spec'];
@@ -181,8 +226,7 @@ class SaleItem
         'json'          => $saleItemJSON,
         'json_data'     => $saleItemJSON
       ];
-      print_r($saleItemData);
-      die;
+
       if (self::update((int)$saleItem->id, $saleItemData)) {
         // Increase and Decrease item.
 
@@ -194,7 +238,7 @@ class SaleItem
               $rawItem  = Product::getRow(['code' => $comboItem->item_code]);
 
               if (!$rawItem) {
-                setLastError("SaleItem::complete(): RAW item is not found.");
+                setLastError("RAW item is not found.");
                 return false;
               }
 
@@ -206,16 +250,20 @@ class SaleItem
                   return false;
                 }
 
-                Stock::decrease([
-                  'sale'        => $sale->reference,
-                  'saleitem_id' => $saleItem->id,
-                  'product'     => $rawItem->code,
-                  'price'       => $saleItem->price,
-                  'quantity'    => $finalCompletedQty,
-                  'warehouse'   => $sale->warehouse,
-                  'created_at'  => $data['created_at'],
-                  'created_by'  => $operator->id
+                $res = Stock::decrease([
+                  'date'          => $completedDate->format('Y-m-d H:i:s'),
+                  'sale_id'       => $sale->id,
+                  'saleitem_id'   => $saleItem->id,
+                  'product_id'    => $rawItem->id,
+                  'price'         => $saleItem->price,
+                  'quantity'      => $finalCompletedQty,
+                  'warehouse_id'  => $sale->warehouse_id,
+                  'created_by'    => $operator->id
                 ]);
+
+                if (!$res) {
+                  return false;
+                }
               } else if ($rawItem->type == 'service') { // COMBOITEM. Increment. KLIKPOD
                 // Since no decimal point for KLIKPOD/KLIKPODBW, we must round it up without precision.
                 switch ($rawItem->code) {
@@ -225,16 +273,20 @@ class SaleItem
                     break;
                 }
 
-                Stock::increase([
-                  'sale'        => $sale->reference,
-                  'saleitem_id' => $saleItem->id,
-                  'product'     => $rawItem->code,
-                  'price'       => $saleItem->price,
-                  'quantity'    => $finalCompletedQty,
-                  'warehouse'   => $sale->warehouse,
-                  'created_at'  => $data['created_at'],
-                  'created_by'  => $operator->id
+                $res = Stock::increase([
+                  'date'          => $completedDate->format('Y-m-d H:i:s'),
+                  'sale_id'       => $sale->id,
+                  'saleitem_id'   => $saleItem->id,
+                  'product_id'    => $rawItem->id,
+                  'price'         => $saleItem->price,
+                  'quantity'      => $finalCompletedQty,
+                  'warehouse_id'  => $sale->warehouse_id,
+                  'created_by'    => $operator->id
                 ]);
+
+                if (!$res) {
+                  return false;
+                }
               }
             }
           }
@@ -247,36 +299,44 @@ class SaleItem
               break;
           }
 
-          Stock::increase([
-            'sale'          => $sale->reference,
+          $res = Stock::increase([
+            'date'          => $completedDate->format('Y-m-d H:i:s'),
+            'sale_id'       => $sale->id,
             'saleitem_id'   => $saleItem->id,
-            'product'       => $saleItem->product,
+            'product_id'    => $saleItem->product_id,
             'price'         => $saleItem->price,
             'quantity'      => $completedQty,
-            'warehouse'     => $sale->warehouse,
-            'created_at'    => $data['created_at'],
+            'warehouse_id'  => $sale->warehouse_id,
             'created_by'    => $operator->id
           ]);
+
+          if (!$res) {
+            return false;
+          }
         } else if ($saleItem->product_type == 'standard') { // SALEITEM. Decrement. FFC280, POCT15
           if ($saleItem->product_code == 'KLIKPOD') {
             setLastError('CRITICAL: KLIKPOD KNOWN AS STANDARD TYPE MUST NOT BE DECREASED!');
             return false;
           }
 
-          Stock::decrease([
+          $res = Stock::decrease([
+            'date'          => $completedDate->format('Y-m-d H:i:s'),
             'sale_id'       => $sale->id,
             'saleitem_id'   => $saleItem->id,
-            'product'       => $saleItem->product,
+            'product_id'    => $saleItem->product_id,
             'price'         => $saleItem->price,
             'quantity'      => $completedQty,
-            'warehouse'     => $sale->warehouse,
-            'created_at'    => $data['created_at'],
+            'warehouse_id'  => $sale->warehouse_id,
             'created_by'    => $operator->id
           ]);
+
+          if (!$res) {
+            return false;
+          }
         }
 
-        // Sync sale after operator complete the item.
-        Sale::sync(['sale_id' => $sale->id]);
+        // Sync sale after complete operation.
+        Sale::sync(['id' => $sale->id]);
 
         return true;
       }
@@ -329,14 +389,14 @@ class SaleItem
   }
 
   /**
-   * Update SaleItem.
+   * Update SaleItem. Better not used. (Rarely used)
    */
   public static function update(int $id, array $data)
   {
     DB::table('sale_items')->update($data, ['id' => $id]);
 
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

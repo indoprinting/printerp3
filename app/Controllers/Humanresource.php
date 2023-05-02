@@ -202,8 +202,8 @@ class Humanresource extends BaseController
     $dt
       ->select("users.id AS id, avatar, fullname, username, users.phone, gender, users.groups,
         billers.name AS biller_name, warehouses.name AS warehouse_name, users.active AS active")
-      ->join('billers', 'billers.code = users.biller', 'left')
-      ->join('warehouses', 'warehouses.code = users.warehouse', 'left')
+      ->join('billers', 'billers.id = users.biller_id', 'left')
+      ->join('warehouses', 'warehouses.id = users.warehouse_id', 'left')
       ->editColumn('id', function ($data) {
         return '
           <div class="btn-group btn-action">
@@ -312,7 +312,7 @@ class Humanresource extends BaseController
       $customerData = [
         'customer_group_id' => getPost('group'),
         'price_group_id'    => getPost('pricegroup'),
-        'name'              => $name,
+        'name'              => trim($name),
         'company'           => getPost('company'),
         'email'             => getPost('email'),
         'phone'             => $phone,
@@ -379,13 +379,24 @@ class Humanresource extends BaseController
     }
 
     if (requestMethod() == 'POST') {
+      $name   = getPost('name');
+      $phone  = filterNumber(getPost('phone'));
+
+      if (empty($name)) {
+        $this->response(400, ['message' => 'Name is required.']);
+      }
+
+      if (empty($phone)) {
+        $this->response(400, ['message' => 'Phone number is required.']);
+      }
+
       $customerData = [
         'customer_group_id' => getPost('group'),
         'price_group_id'    => getPost('pricegroup'),
-        'name'              => getPost('name'),
+        'name'              => trim($name),
         'company'           => getPost('company'),
         'email'             => getPost('email'),
-        'phone'             => getPost('phone'),
+        'phone'             => trim($phone),
         'address'           => getPost('address'),
         'city'              => getPost('city'),
         'json'              => json_encode([])
@@ -596,10 +607,10 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(201, ['message' => 'User group has been added.']);
+        $this->response(201, ['message' => 'Usergroup has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addusergroup');
@@ -626,7 +637,7 @@ class Humanresource extends BaseController
         $this->response(200, ['message' => 'User group has been deleted.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to delete user group.']);
@@ -645,10 +656,10 @@ class Humanresource extends BaseController
       ];
 
       if (UserGroup::update((int)$userGroup->id, $userGroupData)) {
-        $this->response(200, ['message' => sprintf(lang('Msg.userGroupEditOK'), $userGroup->name)]);
+        $this->response(200, ['message' => 'Usergroup has been updated.']);
       }
 
-      $this->response(400, ['message' => sprintf(lang('Msg.userGroupEditNO'), $userGroup->name)]);
+      $this->response(400, ['message' => 'Failed to update Usergroup.']);
     }
 
     $this->data['title'] = lang('App.editusergroup');
@@ -695,21 +706,19 @@ class Humanresource extends BaseController
       ]);
 
       $data = [
-        'active'    => getPost('active'),
-        'biller'    => getPost('biller'),
-        'company'   => getPost('division'),
-        'fullname'  => getPost('fullname'),
-        'gender'    => getPost('gender'),
-        'groups'    => getPost('groups'),
-        'password'  => getPost('password'),
-        'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
-        'username'  => getPost('username'),
-        'warehouse' => getPost('warehouse'),
-        'json'      => $json,
-        'json_data' => $json
+        'active'        => getPost('active'),
+        'biller_id'     => getPost('biller'),
+        'company'       => getPost('division'),
+        'fullname'      => getPost('fullname'),
+        'gender'        => getPost('gender'),
+        'groups'        => getPost('groups'),
+        'password'      => getPost('password'),
+        'phone'         => preg_replace('/([^0-9])/', '', getPost('phone')),
+        'username'      => getPost('username'),
+        'warehouse_id'  => getPost('warehouse'),
+        'json'          => $json,
+        'json_data'     => $json
       ];
-
-      // $this->response(400, ['message' => is_array($data['groups'])]);
 
       $upload = new FileUpload();
 
@@ -734,7 +743,7 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(201, ['message' => sprintf(lang('Msg.userAddOK'), $data['username'])]);
+        $this->response(201, ['message' => 'User has been added.']);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -754,7 +763,7 @@ class Humanresource extends BaseController
     }
 
     if (User::delete(['id' => $userId])) {
-      $this->response(200, ['message' => lang('Msg.userDeleteOK')]);
+      $this->response(200, ['message' => 'User has been deleted.']);
     }
 
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -779,22 +788,24 @@ class Humanresource extends BaseController
       ]);
 
       $data = [
-        'active'    => getPost('active'),
-        'biller'    => getPost('biller'),
-        'company'   => getPost('division'),
-        'fullname'  => getPost('fullname'),
-        'gender'    => getPost('gender'),
-        'groups'    => getPost('groups'),
-        'phone'     => preg_replace('/([^0-9])/', '', getPost('phone')),
-        'username'  => getPost('username'),
-        'warehouse' => getPost('warehouse'),
-        'json'      => $json,
-        'json_data' => $json
+        'active'        => getPost('active'),
+        'biller_id'     => getPost('biller'),
+        'company'       => getPost('division'),
+        'fullname'      => getPost('fullname'),
+        'gender'        => getPost('gender'),
+        'groups'        => getPost('groups'),
+        'phone'         => preg_replace('/([^0-9])/', '', getPost('phone')),
+        'username'      => getPost('username'),
+        'warehouse_id'  => getPost('warehouse'),
+        'json'          => $json,
+        'json_data'     => $json
       ];
 
       if ($pass = getPost('password')) {
         $data['password'] = $pass;
       }
+
+      DB::transStart();
 
       $upload = new FileUpload();
 
@@ -816,8 +827,6 @@ class Humanresource extends BaseController
         $data['avatar'] = ($data['gender'] == 'male' ? 'avatarmale' : 'avatarfemale');
       }
 
-      DB::transStart();
-
       $res = User::update((int)$userId, $data);
 
       if (!$res) {
@@ -827,7 +836,7 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(200, ['message' => sprintf(lang('Msg.userEditOK'), $user->fullname)]);
+        $this->response(200, ['message' => 'User has been updated.']);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -927,7 +936,7 @@ class Humanresource extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $this->response(201, ['message' => sprintf(lang('Msg.supplierAddOK'), $supplierData['name'])]);
+        $this->response(201, ['message' => 'Supplier has been added.']);
       }
 
       $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
@@ -957,7 +966,7 @@ class Humanresource extends BaseController
     DB::transComplete();
 
     if (Supplier::delete(['id' => $supplierId])) {
-      $this->response(200, ['message' => lang('Msg.supplierDeleteOK')]);
+      $this->response(200, ['message' => 'Supplier has been deleted.']);
     }
 
     $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);

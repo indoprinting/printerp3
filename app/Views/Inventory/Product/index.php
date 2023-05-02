@@ -7,6 +7,9 @@
             <a class="btn btn-tool bg-gradient-success" href="<?= base_url('inventory/product/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
               <i class="fad fa-plus-circle"></i>
             </a>
+            <a class="btn btn-tool bg-gradient-indigo" href="<?= base_url('inventory/product/sync') ?>" data-action="confirm" data-widget="tooltip" data-title="Sync Product">
+              <i class="fad fa-sync"></i>
+            </a>
           </div>
         </div>
         <div class="card-body">
@@ -14,6 +17,7 @@
             <thead>
               <tr>
                 <th></th>
+                <th><input class="checkbox-parent" type="checkbox"></th>
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
                 <th><?= lang('App.type'); ?></th>
@@ -26,6 +30,7 @@
             <tfoot>
               <tr>
                 <th></th>
+                <th><input class="checkbox-parent" type="checkbox"></th>
                 <th><?= lang('App.code'); ?></th>
                 <th><?= lang('App.name'); ?></th>
                 <th><?= lang('App.type'); ?></th>
@@ -54,7 +59,7 @@
         url: base_url + '/inventory/getProducts'
       },
       columnDefs: [{
-        targets: [0],
+        targets: [0, 1],
         orderable: false
       }],
       fixedHeader: false,
@@ -63,7 +68,7 @@
         [10, 25, 50, 100, lang.App.all]
       ],
       order: [
-        [1, 'asc']
+        [2, 'asc']
       ],
       processing: true,
       responsive: true,

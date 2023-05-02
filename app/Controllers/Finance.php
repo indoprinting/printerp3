@@ -277,6 +277,52 @@ class Finance extends BaseController
     $dt->generate();
   }
 
+  public function getPayments()
+  {
+    checkPermission('Payment.View');
+
+    $dt = new DataTables('payments');
+    $dt
+      ->select("payment_validations.id AS id, payment_validations.date,
+      payment_validations.reference, creator.fullname, biller.name AS biller_name,
+        IF(
+          LENGTH(customers.company),
+          CONCAT(customers.name, ' (', customers.company, ')'),
+          customers.name
+        ) AS customer_name, banks.name AS bank_name, banks.number AS bank_number,
+        payment_validations.amount,
+        (payment_validations.amount + payment_validations.unique_code) AS total,
+        payment_validations.expired_at, payment_validations.transaction_at,
+        payment_validations.verified_at, payment_validations.unique,
+        payment_validations.note, payment_validations.status,
+        payment_validations.created_at,
+        payment_validations.attachment")
+      ->join('banks', 'banks.id = payment_validations.bank_id', 'left')
+      ->join('biller', 'biller.id = payment_validations.biller_id', 'left')
+      ->join('sales', 'sales.id = payment_validations.sale_id', 'left')
+      ->join('customers', 'customers.id = sales.customer_id', 'left')
+      ->join('bank_mutations', 'bank_mutations.id = payment_validations.mutation_id', 'left')
+      ->join('users creator', 'creator.id = payment_validations.created_by', 'left')
+      ->editColumn('amount', function ($data) {
+        return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
+      })
+      ->editColumn('total', function ($data) {
+        return '<div class="float-right">' . formatNumber($data['total']) . '</div>';
+      })
+      ->editColumn('status', function ($data) {
+        return renderStatus($data['status']);
+      })
+      ->editColumn('attachment', function ($data) {
+        return renderAttachment($data['attachment']);
+      });
+
+    if ($biller = session('login')->biller) {
+      $dt->where('payment_validations.biller', $biller);
+    }
+
+    $dt->generate();
+  }
+
   public function getPaymentValidations()
   {
     checkPermission('PaymentValidation.View');
@@ -303,6 +349,20 @@ class Finance extends BaseController
       ->join('customers', 'customers.id = sales.customer_id', 'left')
       ->join('bank_mutations', 'bank_mutations.id = payment_validations.mutation_id', 'left')
       ->join('users creator', 'creator.id = payment_validations.created_by', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-gear"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('finance/validation/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
       ->editColumn('amount', function ($data) {
         return '<div class="float-right">' . formatNumber($data['amount']) . '</div>';
       })
@@ -601,7 +661,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST' && isAJAX()) {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -751,7 +811,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -869,7 +929,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -988,7 +1048,7 @@ class Finance extends BaseController
       $attachment = Attachment::getRow(['hashname' => $income->attachment]);
 
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'bank_id'     => getPost('bank'),
         'biller_id'   => getPost('biller'),
         'category_id' => getPost('category'),
@@ -1099,7 +1159,7 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'amount'      => filterDecimal(getPost('amount')),
         'biller_id'   => getPost('biller'),
         'bankfrom_id' => getPost('bankfrom'),
@@ -1160,9 +1220,9 @@ class Finance extends BaseController
           ]);
 
           $paymentInID = Payment::add([
-            'mutation_id'    => $mutation->id,
-            'bank_id'        => $data['bankto_id'],
-            'biller_id'      => $data['biller_id'],
+            'mutation_id' => $mutation->id,
+            'bank_id'     => $data['bankto_id'],
+            'biller_id'   => $data['biller_id'],
             'amount'      => $data['amount'],
             'type'        => 'received',
             'attachment'  => ($data['attachment'] ?? null)
@@ -1237,11 +1297,11 @@ class Finance extends BaseController
 
     if (requestMethod() == 'POST') {
       $data = [
-        'date'        => dateTimeJS(getPost('date')),
+        'date'        => dateTimePHP(getPost('date')),
         'amount'      => filterDecimal(getPost('amount')),
-        'biller_id'   => getPost('biller_id'),
-        'bankfrom_id' => getPost('bankfrom_id'),
-        'bankto_id'   => getPost('bankto_id'),
+        'biller_id'   => getPost('biller'),
+        'bankfrom_id' => getPost('bankfrom'),
+        'bankto_id'   => getPost('bankto'),
         'note'        => stripTags(getPost('note'))
       ];
 
@@ -1290,11 +1350,37 @@ class Finance extends BaseController
 
       if ($payments && $skipPV) {
         foreach ($payments as $payment) {
-          Payment::update((int)$payment->id, [
+          $res = Payment::update((int)$payment->id, [
             'amount'      => $data['amount'],
             'biller_id'   => $data['biller_id'],
             'attachment'  => $mutation->attachment
           ]);
+
+          if (!$res) {
+            $this->response(400, ['message' => getLastError()]);
+          }
+        }
+      } else if (!$payments && $mutation->status == 'paid') {
+        $paymentOutID = Payment::add([
+          'mutation_id' => $mutation->id,
+          'bank_id'     => $data['bankfrom_id'],
+          'biller_id'   => $data['biller_id'],
+          'amount'      => $data['amount'],
+          'type'        => 'sent',
+          'attachment'  => ($data['attachment'] ?? $mutation->attachment)
+        ]);
+
+        $paymentInID = Payment::add([
+          'mutation_id' => $mutation->id,
+          'bank_id'     => $data['bankto_id'],
+          'biller_id'   => $data['biller_id'],
+          'amount'      => $data['amount'],
+          'type'        => 'received',
+          'attachment'  => ($data['attachment'] ?? $mutation->attachment)
+        ]);
+
+        if (!$paymentOutID || !$paymentInID) {
+          $this->response(400, ['message' => getLastError()]);
         }
       }
 
@@ -1317,6 +1403,31 @@ class Finance extends BaseController
     $this->data['title'] = lang('App.editbankmutation');
 
     $this->response(200, ['content' => view('Finance/Mutation/edit', $this->data)]);
+  }
+
+  public function payment()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    checkPermission('Payment.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.finance'), 'slug' => 'finance', 'url' => '#'],
+        ['name' => lang('App.payment'), 'slug' => 'payment', 'url' => '#']
+      ],
+      'content' => 'Finance/Payment/index',
+      'title' => lang('App.payment')
+    ];
+
+    return $this->buildPage($this->data);
   }
 
   public function reconciliation()
@@ -1352,18 +1463,7 @@ class Finance extends BaseController
       $this->response(400, ['message' => 'Sync Bank amount failed.']);
     }
 
-    $recon = BankReconciliation::get();
-
     if (BankReconciliation::sync()) {
-      $newRecon = BankReconciliation::get();
-
-      addActivity('Sync bank reconciliation.', [
-        'data' => [
-          'after'   => $newRecon,
-          'before'  => $recon
-        ]
-      ]);
-
       $this->response(200, ['message' => 'Bank Reconciliation has been synced successfully.']);
     }
 
@@ -1395,27 +1495,66 @@ class Finance extends BaseController
     return $this->buildPage($this->data);
   }
 
+  protected function validation_delete($id = null)
+  {
+    checkPermission('PaymentValidation.Delete');
+
+    $pv = PaymentValidation::getRow(['id' => $id]);
+
+    if (!$pv) {
+      $this->response(404, ['message' => 'Payment Validation is not found.']);
+    }
+
+    DB::transStart();
+
+    $res = PaymentValidation::delete(['id' => $id]);
+
+    if (!$res) {
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    DB::transComplete();
+
+    if (DB::transStatus()) {
+      $this->response(200, ['message' => 'Payment Validation has been deleted.']);
+    }
+
+    $this->response(200, ['message' => 'Failed to delete Payment Validation.']);
+  }
+
   protected function validation_manual(string $mode = null, $id = null)
   {
     checkPermission('PaymentValidation.Manual');
 
     $pv = null;
 
-    if (!$mode || ($mode != 'sale' && $mode != 'mutation')) {
-      $this->response(400, ['message' => 'Manual validation mode must be SALE or MUTATION.']);
+    if (!inStatus($mode, ['mutation', 'sale'])) {
+      $this->response(400, ['message' => 'Manual validation mode must be Sale or Mutation.']);
     }
 
     if ($mode == 'sale') {
       $pv = PaymentValidation::select('*')->where('sale_id', $id)->orderBy('id', 'DESC')->getRow();
-      $sale = Sale::getRow(['id' => $id]);
-      $this->data['sale']       = $sale;
-      $this->data['reference']  = $sale->reference;
+      $inv = Sale::getRow(['id' => $id]);
+
+      if (!$inv) {
+        $this->response(404, ['message' => 'Sale is not found.']);
+      }
+
+      $this->data['sale'] = $inv;
     } else if ($mode == 'expense') {
       $pv = PaymentValidation::select('*')->where('expense_id', $id)->orderBy('id', 'DESC')->getRow();
-      $mutation = BankMutation::getRow(['id' => $id]);
-      $this->data['mutation']   = $mutation;
-      $this->data['reference']  = $mutation->reference;
+      $inv = BankMutation::getRow(['id' => $id]);
+
+      if (!$inv) {
+        $this->response(404, ['message' => 'Bank mutation is not found.']);
+      }
+
+      $this->data['mutation'] = $inv;
+    } else {
+      $this->response(400, ['message' => 'Mode is neither sale nor bank mutation.']);
     }
+
+    $this->data['reference']  = $inv->reference;
 
     if (!$pv) {
       $this->response(404, ['message' => 'Payment Validation is not found.']);
@@ -1426,15 +1565,15 @@ class Finance extends BaseController
     }
 
     if (requestMethod() == 'POST' && isAJAX()) {
-      $date   = dateTimeJS(getPost('date'));
+      $date   = dateTimePHP(getPost('date'));
       $amount = filterDecimal(getPost('amount'));
-      $bankId = getPost('bank');
+      $bank   = getPost('bank');
 
       if (empty($amount)) {
         $this->response(400, ['message' => 'Amount is empty.']);
       }
 
-      if (empty($bankId)) {
+      if (empty($bank)) {
         $this->response(400, ['message' => 'Bank is empty.']);
       }
 
@@ -1442,9 +1581,9 @@ class Finance extends BaseController
         'date'        => $date,
         'mutation_id' => $pv->mutation_id,
         'sale_id'     => $pv->sale_id,
-        'bank_id'     => $bankId,
+        'bank_id'     => $bank,
         'biller_id'   => $pv->biller_id,
-        'amount'      => $amount,
+        'amount'      => $amount, // For validation only.
         'note'        => stripTags(getPost('note')),
         'manual'      => true // Required.
       ];

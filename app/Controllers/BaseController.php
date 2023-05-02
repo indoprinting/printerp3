@@ -135,10 +135,15 @@ class BaseController extends Controller
 			$data['page']['content'] = view($data['page']['content'], $data);
 			$data['page']['url'] = $currentUrl;
 
+			if (isLoggedIn()) {
+				$user = User::getRow(['id' => session('login')->user_id]);
+				log_message('notice', "Page: {$user->fullname}({$user->id}) => {$data['page']['url']}.");
+			}
+
 			$this->response(200, $data['page']);
 		} else if (requestMethod() == 'GET') {
 			if (isLoggedIn()) {
-				echo view('content', $data);
+				return view('content', $data);
 			}
 		}
 	}
@@ -148,12 +153,16 @@ class BaseController extends Controller
 	 * @param int $code Code to response.
 	 * @param array $data Respons data.
 	 */
-	protected function response(int $code, $data = [])
+	protected static function response(int $code, $data = [])
 	{
 		if (!is_array($data)) throw new \Exception('Response 2nd parameter is not an array.');
 
 		$data = array_merge(['code' => intval($code)], $data);
-		http_response_code($code);
+
+		if (!isCLI()) {
+			http_response_code($code);
+		}
+
 		sendJSON($data);
 	}
 

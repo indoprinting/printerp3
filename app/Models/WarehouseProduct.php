@@ -7,14 +7,14 @@ namespace App\Models;
 class WarehouseProduct
 {
   /**
-   * Add new warehouses_products.
+   * Add new WarehouseProduct.
    * @param array $data [ *product_id, *product_code, *warehouse_id, *quantity, rack, safety_stock,
    * user_id, so_cycle ]
    */
   public static function add(array $data)
   {
     DB::table('warehouses_products')->insert($data);
-    
+
     if (DB::error()['code'] == 0) {
       return DB::insertID();
     }
@@ -31,13 +31,13 @@ class WarehouseProduct
   }
 
   /**
-   * Delete warehouses_products.
+   * Delete WarehouseProduct.
    * @param array $clause [ id, name, code ]
    */
   public static function delete(array $clause)
   {
     DB::table('warehouses_products')->delete($clause);
-    
+
     if (DB::error()['code'] == 0) {
       return DB::affectedRows();
     }
@@ -48,7 +48,7 @@ class WarehouseProduct
   }
 
   /**
-   * Get warehouses_products collections.
+   * Get WarehouseProduct collections.
    * @param array $clause [ id, name, code ]
    */
   public static function get($clause = [])
@@ -57,7 +57,7 @@ class WarehouseProduct
   }
 
   /**
-   * Get warehouses_products row.
+   * Get WarehouseProduct row.
    * @param array $clause [ id, name, code ]
    */
   public static function getRow($clause = [])
@@ -75,17 +75,25 @@ class WarehouseProduct
   }
 
   /**
-   * Update warehouses_products.
-   * @param int $id warehouses_products ID.
+   * Select WarehouseProduct.
+   */
+  public static function select(string $columns, $escape = TRUE)
+  {
+    return DB::table('warehouses_products')->select($columns, $escape);
+  }
+
+  /**
+   * Update WarehouseProduct.
+   * @param int $id WarehouseProduct ID.
    * @param array $data [ product_id, product_code, warehouse_id, quantity, rack, safety_stock,
    * user_id, so_cycle ]
    */
   public static function update(int $id, array $data)
   {
     DB::table('warehouses_products')->update($data, ['id' => $id]);
-    
+
     if (DB::error()['code'] == 0) {
-      return DB::affectedRows();
+      return true;
     }
 
     setLastError(DB::error()['message']);

@@ -4,11 +4,11 @@
       <div class="card shadow">
         <div class="card-header bg-gradient-dark">
           <div class="card-tools">
-            <a class="btn btn-tool bg-gradient-warning" href="#" data-widget="control-sidebar" data-toggle="tooltip" title="Filter" data-slide="true">
-              <i class="fad fa-filter"></i>
-            </a>
-            <a class="btn btn-tool bg-gradient-success" href="<?= base_url('sale/add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <a class="btn btn-tool bg-gradient-success use-tooltip" href="<?= base_url('sale/add') ?>" title="<?= lang('App.add') ?>" data-toggle="modal" data-target="#ModalStatic" data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
               <i class="fad fa-plus-circle"></i>
+            </a>
+            <a class="btn btn-tool bg-gradient-warning use-tooltip" href="#" data-widget="control-sidebar" title="<?= lang('App.filter') ?>" data-slide="true">
+              <i class="fad fa-filter"></i>
             </a>
           </div>
         </div>
@@ -267,6 +267,20 @@
         orderable: false
       }],
       fixedHeader: false,
+      footerCallback: function(row, data, start, end, display) {
+        let api = this.api();
+        let columns = api.columns([10, 11]).data();
+        let grandTotal = 0,
+          paymentTotal = 0;
+
+        for (let a = 0; a < columns[0].length; a++) {
+          grandTotal += filterNumber(columns[0][a]);
+          paymentTotal += filterNumber(columns[1][a]);
+        }
+
+        $(api.column(10).footer()).html(`<span class="float-right">${formatNumber(grandTotal)}</span>`);
+        $(api.column(11).footer()).html(`<span class="float-right">${formatNumber(paymentTotal)}</span>`);
+      },
       lengthMenu: [
         [10, 25, 50, 100, -1],
         [10, 25, 50, 100, lang.App.all]

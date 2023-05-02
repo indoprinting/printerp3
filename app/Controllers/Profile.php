@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Libraries\DataTables;
-use App\Models\{Auth, DB, User, UserGroup};
+use App\Models\{Auth, DB, Notification, User, UserGroup};
 
 class Profile extends BaseController
 {
@@ -16,7 +16,12 @@ class Profile extends BaseController
     $dt = new DataTables('notification');
     $dt
       ->select("type, created_at, title, note")
-      ->where('status', 'active');
+      ->where('status', 'active')
+      ->rowCallback(function ($row) {
+        $scope = getJSON($row['scopes']);
+
+        return (hasNotificationAccess($scope) ? $row : false);
+      });
 
     $dt->generate();
   }
@@ -75,6 +80,8 @@ class Profile extends BaseController
   public function notification()
   {
     $this->data['title'] = lang('App.notification');
+
+    $this->data['notifications'] = Notification::get(['status' => 'active']);
 
     $this->response(200, ['content' => view('Profile/notification', $this->data)]);
   }
