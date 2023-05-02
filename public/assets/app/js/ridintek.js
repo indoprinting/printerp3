@@ -822,7 +822,7 @@ export class StockAdjustment {
     this.tbody = $(table).find('tbody');
 
     if (!this.tbody.length) {
-      console.log('Sale::table() Cannot find tbody.');
+      console.log('StockAdjustment::table() Cannot find tbody.');
     }
 
     return this;
@@ -847,12 +847,71 @@ export class StockAdjustment {
     this.tbody.prepend(`
       <tr>
         <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
+        <input type="hidden" name="item[code][]" value="${item.code}">
         <td>(${item.code}) ${item.name}</td>
         <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
         <td>${formatNumber(item.current_qty)}</td>
         <td><a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a></td>
       </tr>
     `);
+  }
+}
+
+export class StockOpname {
+  static tbody = null;
+
+  static table(table) {
+    this.tbody = $(table).find('tbody');
+
+    if (!this.tbody.length) {
+      console.log('StockOpname::table() Cannot find tbody.');
+    }
+
+    return this;
+  }
+
+  static addItem(item, allowDuplicate = false) {
+    if (!this.tbody.length) {
+      return false;
+    }
+
+    if (!allowDuplicate) {
+      let items = this.tbody.find('.item-id');
+
+      for (let i of items) {
+        if (item.code == i.value) {
+          toastr.error('Item has been added before.');
+          return false;
+        }
+      }
+    }
+
+    let delRow = (hasAccess('StockOpname.Edit')
+      ? '<a href="#" class="table-row-delete"><i class="fad fa-fw fa-times"></i></a>'
+      : '');
+
+    this.tbody.prepend(`
+      <tr>
+        <input type="hidden" name="item[id][]" class="item-id" value="${item.id}">
+        <td>(${item.code}) ${item.name}</td>
+        <td>${item.unit}</td>
+        <td><input type="number" name="item[quantity][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.quantity)}"></td>
+        <td><input type="number" name="item[reject][]" class="form-control form-control-border form-control-sm" min="0" value="${filterDecimal(item.reject)}"></td>
+        <td>${delRow}</td>
+      </tr>
+    `);
+  }
+
+  static addRow(row) {
+    this.tbody.prepend(`<tr>${row}</tr>`);
+
+    return this;
+  }
+
+  static clear() {
+    this.tbody.empty();
+
+    return this;
   }
 }
 

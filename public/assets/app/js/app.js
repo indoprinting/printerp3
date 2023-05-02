@@ -222,11 +222,11 @@ $(document).ready(function () {
   $(document).on('click', '[data-action="confirm"]', function (e) {
     e.preventDefault();
 
-    let text            = this.dataset.text;
-    let title           = this.dataset.title;
-    let url             = this.href;
-    let fa              = $(this).find('i')[0];
-    let faClass         = fa.className;
+    let text = this.dataset.text;
+    let title = this.dataset.title;
+    let url = this.href;
+    let fa = $(this).find('i')[0];
+    let faClass = fa.className;
     let faClassProgress = 'fad fa-spinner-third fa-spin';
 
     if (this.dataset.progress == 'true') {
@@ -323,6 +323,7 @@ $(document).ready(function () {
     let fa = $(this).find('i')[0];
     let faClass = fa.className;
     let faClassProgress = 'fad fa-spinner-third fa-spin';
+    let data = erp.http.get;
 
     if (this.dataset.progress == 'true') {
       return false;
@@ -333,6 +334,7 @@ $(document).ready(function () {
     $(fa).removeClass(faClass).addClass(faClassProgress);
 
     $.ajax({
+      data: data,
       error: (xhr) => {
         Swal.fire({
           icon: 'error',
@@ -344,10 +346,14 @@ $(document).ready(function () {
         delete this.dataset.progress;
       },
       method: 'GET',
-      success: (data) => {
+      success: (response) => {
+        if (typeof erp.http.callback == 'function') {
+          erp.http.callback(response);
+        };
+
         Swal.fire({
           icon: 'success',
-          text: data.message,
+          text: response.message,
           title: lang.App.success
         });
 
@@ -367,6 +373,7 @@ $(document).ready(function () {
     let fa = $(this).find('i')[0];
     let faClass = fa.className;
     let faClassProgress = 'fad fa-spinner-third fa-spin';
+    let data = erp.http.post;
 
     if (this.dataset.progress == 'true') {
       return false;
@@ -376,10 +383,10 @@ $(document).ready(function () {
 
     $(fa).removeClass(faClass).addClass(faClassProgress);
 
+    data.__ = __;
+
     $.ajax({
-      data: {
-        __: __
-      },
+      data: data,
       error: (xhr) => {
         Swal.fire({
           icon: 'error',
@@ -391,10 +398,14 @@ $(document).ready(function () {
         delete this.dataset.progress;
       },
       method: 'POST',
-      success: (data) => {
+      success: (response) => {
+        if (typeof erp.http.callback == 'function') {
+          erp.http.callback(response);
+        };
+
         Swal.fire({
           icon: 'success',
-          text: data.message,
+          text: response.message,
           title: lang.App.success
         });
 

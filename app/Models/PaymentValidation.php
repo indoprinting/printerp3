@@ -232,7 +232,7 @@ class PaymentValidation
   public static function validate($option = [])
   {
     $createdAt = ($option['date'] ?? date('Y-m-d H:i:s'));
-    $startDate = date('Y-m-d H:i:s', strtotime('-7 day')); // We retrieve data from 7 days ago.
+    $startDate = date('Y-m-d H:i:s', strtotime('-1 day')); // We retrieve data from 7 days ago.
     $useManual = false;
 
     // Manual Validation.
@@ -338,6 +338,14 @@ class PaymentValidation
 
     $status = ['pending'];
 
+    if (!$useManual) {
+      // Delete old MutasiBank data.
+      DB::table('mutasibank')
+        ->whereIn('status', $status)
+        ->where("created_at < '{$startDate} 00:00:00'")
+        ->delete();
+    }
+
     $mutasiBanks = DB::table('mutasibank')
       ->whereIn('status', $status)
       ->where("created_at >= '{$startDate} 00:00:00'")
@@ -394,6 +402,46 @@ class PaymentValidation
             continue;
           }
 
+          // Problem double payment. See if there is a double validate.
+          $log = [
+            'account' => $mb->account,
+            'module'  => $dm->bank_module,
+            'bank'    => [
+              'id'      => $bank->id,
+              'name'    => $bank->name,
+              'number'  => $bank->number
+            ],
+            'dm'  => [
+              'id'          => $dm->id,
+              'amount'      => $dm->amount,
+              'bank_module' => $dm->bank_module,
+              'created'     => $dm->created,
+              'description' => $dm->description,
+              'type'        => $dm->type,
+            ],
+            'pv'  => [
+              'id'          => $pv->id,
+              'date'        => $pv->date,
+              'biller'      => $pv->biller,
+              'biller_id'   => $pv->biller_id,
+              'mutation'    => $pv->mutation,
+              'mutation_id' => $pv->mutation_id,
+              'sale'        => $pv->sale,
+              'sale_id'     => $pv->sale_id,
+              'reference'   => $pv->reference,
+              'amount'      => $pv->amount,
+              'unique'      => $pv->unique,
+              'status'      => $pv->status,
+              'created_at'  => $pv->created_at,
+              'created_by'  => $pv->created_by
+            ],
+            'pvData'      => $pvData,
+            'created_at'  => $createdAt,
+            'created_by'  => $pv->created_by
+          ];
+
+          log_message('notice', json_encode($log, JSON_PRETTY_PRINT));
+
           if ($pv->sale_id) {
             $sale = Sale::getRow(['id' => $pv->sale_id]);
 
@@ -422,9 +470,6 @@ class PaymentValidation
             if (!Sale::addPayment((int)$sale->id, $payment)) { // Add real payment and sync sales.
               continue;
             }
-
-            // Problem double payment. See if there is a double validate.
-            log_message('notice', "PaymentValidation::validate(): Sale [{$sale->id}] {$sale->reference}: {$pv->amount}");
 
             $validated = true;
             $validateTotal++;

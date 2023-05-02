@@ -332,7 +332,7 @@ class Sale
         }
 
         SaleItem::update((int)$saleItem->id, [
-          'status' => $saleItemStatus
+          'status'  => $saleItemStatus
         ]);
       }
 
@@ -425,8 +425,11 @@ class Sale
         }
       }
 
-      if ($saleStatus == 'waiting_production' && empty($saleJS->waiting_production_date)) {
+      if ($sale->status != 'waiting_production' && $saleStatus == 'waiting_production') {
         $saleJS->waiting_production_date = date('Y-m-d H:i:s');
+
+        // Set sale due date.
+        $saleData['due_date'] = date('Y-m-d', strtotime('+7 day'));
       }
 
       if ($sale->status != 'draft') {
@@ -438,10 +441,12 @@ class Sale
         $saleData['status'] = 'inactive';
       }
 
+      $json = json_encode($saleJS);
+
       $saleData['paid']       = $totalPaid;
       $saleData['balance']    = $balance;
-      $saleData['json']       = json_encode($saleJS);
-      $saleData['json_data']  = json_encode($saleJS);
+      $saleData['json']       = $json;
+      $saleData['json_data']  = $json;
 
       if (self::update((int)$sale->id, $saleData)) {
         $updateCounter++;
@@ -474,8 +479,6 @@ class Sale
 
     if (isset($data['approved'])) {
       $saleJS->approved = $data['approved'];
-
-      unset($data['approved']);
     }
 
     if (isset($data['customer_id'])) {
@@ -494,37 +497,40 @@ class Sale
       if ($cashier) {
         $saleJS->cashier_by = $cashier->id;
       }
-
-      unset($data['cashier_id']);
     }
 
     if (isset($data['est_complete_date'])) {
       $saleJS->est_complete_date = $data['est_complete_date'];
-      unset($data['est_complete_date']);
     }
 
     if (isset($data['payment_due_date'])) {
       $saleJS->payment_due_date = $data['payment_due_date'];
-      unset($data['payment_due_date']);
     }
 
     if (isset($data['source'])) {
       $saleJS->source = $data['source'];
-      unset($data['source']);
     }
 
     if (isset($data['vouchers'])) {
       $saleJS->vouchers = $data['vouchers'];
-      unset($data['vouchers']);
     }
 
     if (isset($data['waiting_production_date'])) {
       $saleJS->waiting_production_date = $data['waiting_production_date'];
-      unset($data['waiting_production_date']);
     }
 
     $data['json']       = json_encode($saleJS);
     $data['json_data']  = json_encode($saleJS);
+
+    unset(
+      $data['approved'],
+      $data['cashier_id'],
+      $data['est_complete_date'],
+      $data['payment_due_date'],
+      $data['source'],
+      $data['vouchers'],
+      $data['waiting_production_date']
+    );
 
     DB::table('sales')->update($data, ['id' => $id]);
 

@@ -609,6 +609,7 @@ class Home extends BaseController
 
   protected function select2_customer()
   {
+    $id     = getGet('id');
     $limit  = getGet('limit');
     $term   = getGet('term');
 
@@ -634,6 +635,10 @@ class Home extends BaseController
         ->orWhereIn('company', $term)
         ->orWhereIn('phone', $term)
         ->groupEnd();
+    }
+
+    if ($id) {
+      $q->whereIn('id', $id);
     }
 
     return $q->get();
@@ -673,6 +678,7 @@ class Home extends BaseController
 
   protected function select2_product($submode = null)
   {
+    $id         = getGet('id');
     $limit      = getGet('limit');
     $term       = getGet('term');
     $types      = getGet('type');
@@ -727,6 +733,10 @@ class Home extends BaseController
         ->groupEnd();
     }
 
+    if ($id) {
+      $q->whereIn('id', $id);
+    }
+
     if ($iuseTypes) {
       $q->whereIn('iuse_type', $iuseTypes);
     }
@@ -740,6 +750,7 @@ class Home extends BaseController
 
   protected function select2_supplier()
   {
+    $id     = getGet('id');
     $limit  = getGet('limit');
     $term   = getGet('term');
 
@@ -763,6 +774,10 @@ class Home extends BaseController
         ->orWhereIn('name', $term)
         ->orWhereIn('company', $term)
         ->groupEnd();
+    }
+
+    if ($id) {
+      $q->whereIn('id', $id);
     }
 
     return $q->get();
@@ -802,11 +817,15 @@ class Home extends BaseController
     }
 
     if ($billers) {
-      $q->whereIn('biller_id', $billers);
+      if (!in_array(null, $billers)) {
+        $q->whereIn('biller_id', $billers);
+      }
     }
 
     if ($warehouses) {
-      $q->whereIn('warehouse_id', $warehouses);
+      if (!in_array(null, $warehouses)) {
+        $q->whereIn('warehouse_id', $warehouses);
+      }
     }
 
     return $q->get();
@@ -814,6 +833,7 @@ class Home extends BaseController
 
   protected function select2_user()
   {
+    $id         = getGet('id');
     $billers    = getGet('biller');
     $limit      = getGet('limit');
     $term       = getGet('term');
@@ -833,7 +853,7 @@ class Home extends BaseController
         ->where('id', $term)
         ->orWhere('phone', $term)
         ->orLike('fullname', $term, 'both')
-        ->orLike('username', $term, 'both')
+        ->orLike('username', $term, 'none')
         ->groupEnd();
     } else if ($term && is_array($term)) {
       $q->groupStart()
@@ -844,8 +864,14 @@ class Home extends BaseController
         ->groupEnd();
     }
 
+    if ($id) {
+      $q->whereIn('id', $id);
+    }
+
     if ($billers) {
-      $q->whereIn('biller_id', $billers);
+      if (in_array(null, $billers)) {
+        $q->whereIn('biller_id', $billers);
+      }
     }
 
     if ($warehouses) {
@@ -922,6 +948,7 @@ class Home extends BaseController
   {
     $limit  = getGet('limit');
     $term   = getGet('term');
+    $id     = getGet('id');
 
     $q = Warehouse::select("id, name text ")
       ->where('active', 1);
@@ -944,6 +971,10 @@ class Home extends BaseController
         ->orWhereIn('code', $term)
         ->orWhereIn('name', $term)
         ->groupEnd();
+    }
+
+    if ($id) {
+      $q->whereIn('id', $id);
     }
 
     return $q->get();

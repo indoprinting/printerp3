@@ -501,6 +501,10 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
+          if (erp?.select2?.product?.id) {
+            params.id = erp.select2.product.id;
+          }
+
           if (erp?.select2?.product?.type) {
             params.type = erp.select2.product.type;
           }
@@ -582,6 +586,10 @@ function initControls() {
       allowClear: true,
       ajax: {
         data: (params) => {
+          if (erp?.select2?.user?.id) {
+            params.id = erp.select2.user.id;
+          }
+
           if (erp?.select2?.user?.biller) {
             params.biller = erp.select2.user.biller;
           }
@@ -617,6 +625,8 @@ function initControls() {
           if (erp?.select2?.warehouse?.id) {
             params.id = erp.select2.warehouse.id;
           }
+
+          return params;
         },
         delay: 1000,
         url: base_url + '/select2/warehouse'

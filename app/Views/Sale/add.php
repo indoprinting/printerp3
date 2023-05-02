@@ -32,16 +32,15 @@
                   </select>
                 </div>
               </div>
-            </div>
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="cashier"><?= lang('App.cashier') ?></label>
-                  <select id="cashier" name="cashier" class="select-user" data-placeholder="<?= lang('App.cashier') ?>" style="width:100%" placeholder="<?= lang('App.cashier') ?>">
-                    <option value=""></option>
-                  </select>
+              <?php if (hasAccess('Sale.Edit')) : ?>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="created_by"><?= lang('App.createdby') ?></label>
+                    <select id="created_by" name="created_by" class="select-user" data-placeholder="<?= lang('App.createdby') ?>" style="width:100%" placeholder="<?= lang('App.createdby') ?>">
+                    </select>
+                  </div>
                 </div>
-              </div>
+              <?php endif; ?>
               <div class="col-md-4">
                 <div class="form-group">
                   <label for="customer"><?= lang('App.customer') ?> *</label>
@@ -52,19 +51,18 @@
                       </div>
                     <?php endif; ?>
                     <select id="customer" name="customer" class="select-customer" data-placeholder="<?= lang('App.customer') ?>" style="width:100%" placeholder="<?= lang('App.customer') ?>">
-                      <option value=""></option>
                     </select>
                   </div>
                 </div>
               </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="duedate"><?= lang('App.duedate') ?></label>
-                  <input type="datetime-local" id="duedate" name="duedate" class="form-control form-control-border form-control-sm">
+              <?php if (hasAccess('Sale.Edit')) : ?>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label for="duedate"><?= lang('App.duedate') ?></label>
+                    <input type="datetime-local" id="duedate" name="duedate" class="form-control form-control-border form-control-sm">
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div class="row">
+              <?php endif; ?>
               <div class="col-md-4">
                 <?php if (hasAccess('Sale.Discount')) : ?>
                   <div class="form-group">
@@ -101,15 +99,21 @@
                   </div>
                 <?php endif; ?>
               </div>
-            </div>
-            <?php if (hasAccess('Sale.Voucher')) : ?>
-              <div class="row">
-                <div class="col-md-4">
-                  <label for="voucher"><?= lang('App.voucher') ?></label>
-                  <select id="voucher" name="voucher[]" class="select-voucher" data-placeholder="<?= lang('App.voucher') ?>" style="width:100%" multiple></select>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="cashier"><?= lang('App.cashier') ?></label>
+                  <select id="cashier" name="cashier" class="select-user" data-placeholder="<?= lang('App.cashier') ?>" style="width:100%" placeholder="<?= lang('App.cashier') ?>">
+                  </select>
                 </div>
               </div>
-            <?php endif; ?>
+              <?php if (hasAccess('Sale.Voucher')) : ?>
+                <div class="col-md-4">
+                  <label for="voucher"><?= lang('App.voucher') ?></label>
+                  <select id="voucher" name="voucher[]" class="select-voucher" data-placeholder="<?= lang('App.voucher') ?>" style="width:100%" multiple>
+                  </select>
+                </div>
+              <?php endif; ?>
+            </div>
           </div>
         </div>
       </div>
@@ -217,8 +221,10 @@
     erp.select2.warehouse = {};
 
     erp.select2.product.type = ['combo', 'service'];
-    erp.select2.user.biller = ['<?= session('login')->biller ?>'];
-    erp.select2.operator.warehouse = ['<?= session('login')->warehouse ?>'];
+
+    if (erp.biller.id) {
+      erp.select2.biller.id = [erp.biller.id];
+    }
 
     let customer = <?= getGet('customer') ?? 0 ?>;
 
@@ -326,8 +332,6 @@
         url: base_url + '/api/v1/product'
       });
     });
-
-    $('#duedate').val('<?= dateTimeJS(date('Y-m-d H:i', strtotime('+7 day'))) ?>');
 
     if (erp?.biller?.id) {
       preSelect2('biller', '#biller', erp.biller.id).catch(err => console.warn(err));

@@ -276,13 +276,14 @@ class Sale extends BaseController
       $cashier    = getPost('cashier');
       $customer   = getPost('customer');
       $discount   = filterDecimal(getPost('discount') ?? 0);
-      $dueDate    = dateTimePHP(getPost('duedate'));
+      $dueDate    = dateTimePHP(getPost('duedate'), false);
       $note       = getPost('note');
       $approved   = (getPost('approved') == 1 ? 1 : 0);
       $transfer   = (getPost('transfer') == 1);
       $draft      = (getPost('draft') == 1);
       $rawItems   = getPost('item');
       $vouchers   = getPost('voucher');
+      $createdBy  = getPost('created_by');
 
       if (empty($biller)) {
         $this->response(400, ['message' => 'Biller is required.']);
@@ -327,7 +328,6 @@ class Sale extends BaseController
         'warehouse_id'  => $warehouse,
         'cashier_id'    => $cashier,
         'customer_id'   => $customer,
-        'due_date'      => $dueDate,
         'note'          => $note,
         'source'        => 'PrintERP3',
         'approved'      => $approved,
@@ -340,6 +340,14 @@ class Sale extends BaseController
 
       if ($draft) {
         $data['status'] = 'draft';
+      }
+
+      if ($dueDate) {
+        $data['due_date'] = $dueDate;
+      }
+
+      if ($createdBy) {
+        $data['created_by'] = $createdBy;
       }
 
       DB::transStart();
@@ -459,6 +467,7 @@ class Sale extends BaseController
       $draft      = (getPost('draft') == 1);
       $rawItems   = getPost('item');
       $vouchers   = getPost('voucher');
+      $createdBy  = getPost('created_by');
 
       if (empty($biller)) {
         $this->response(400, ['message' => 'Biller is required.']);
@@ -510,7 +519,8 @@ class Sale extends BaseController
         'due_date'      => $dueDate,
         'note'          => $note,
         'source'        => 'PrintERP3',
-        'approved'      => $approved
+        'approved'      => $approved,
+        'created_by'    => $createdBy
       ];
 
       if ($discount) {

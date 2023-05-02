@@ -23,7 +23,7 @@
           </tr>
           <tr>
             <td><?= lang('App.warehouse') ?></td>
-            <td><?= \App\Models\Warehouse::getRow(['code' => $adjustment->warehouse])->name ?></td>
+            <td><?= \App\Models\Warehouse::getRow(['id' => $adjustment->warehouse_id])->name ?></td>
           </tr>
           <tr>
             <td><?= lang('App.mode') ?></td>

@@ -146,13 +146,12 @@
           code: this.value,
           warehouse: warehouse
         },
-        success: (response) => {
+        success: (data) => {
           sa.addItem({
-            code: response.data.id,
-            code: response.data.code,
-            name: response.data.name,
-            quantity: response.data.quantity,
-            current_qty: response.data.quantity
+            code: data.data.code,
+            name: data.data.name,
+            quantity: data.data.quantity,
+            current_qty: data.data.quantity
           });
 
           $(this).val('').trigger('change');
@@ -169,7 +168,7 @@
     initModalForm({
       form: '#form',
       submit: '#submit',
-      url: base_url + '/inventory/stockadjustment/edit/<?= $adjustment->id ?>'
+      url: base_url + '/inventory/stockadjustment/add'
     });
   });
 </script>

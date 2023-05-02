@@ -15,6 +15,9 @@ use App\Models\{
   ProductMutationItem,
   Stock,
   StockAdjustment,
+  StockOpname,
+  StockOpnameItem,
+  User,
   Warehouse,
   WarehouseProduct
 };
@@ -257,6 +260,56 @@ class Inventory extends BaseController
       ->generate();
   }
 
+  public function getStockOpnames()
+  {
+    checkPermission('StockOpname.View');
+
+    $dt = new DataTables('stock_opnames');
+    $dt
+      ->select("stock_opnames.id AS id, stock_opnames.date, stock_opnames.reference,
+        adjustment_plus.reference AS plus_ref, adjustment_min.reference AS min_ref,
+        creator.fullname, warehouse.name AS warehouse_name,
+        stock_opnames.total_lost, stock_opnames.total_plus, stock_opnames.total_edited,
+        stock_opnames.status, stock_opnames.note,
+        stock_opnames.created_at, stock_opnames.attachment")
+      ->join('adjustments adjustment_plus', 'adjustment_plus.id = stock_opnames.adjustment_plus_id', 'left')
+      ->join('adjustments adjustment_min', 'adjustment_min.id = stock_opnames.adjustment_min_id', 'left')
+      ->join('warehouse', 'warehouse.id = stock_opnames.warehouse_id', 'left')
+      ->join('users creator', 'creator.id = stock_opnames.created_by', 'left')
+      ->editColumn('id', function ($data) {
+        return '
+          <div class="btn-group btn-action">
+            <a class="btn bg-gradient-primary btn-sm dropdown-toggle" href="#" data-toggle="dropdown">
+              <i class="fad fa-gear"></i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="' . base_url('inventory/stockopname/edit/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-edit"></i> ' . lang('App.edit') . '
+              </a>
+              <a class="dropdown-item" href="' . base_url('inventory/stockopname/view/' . $data['id']) . '"
+                data-toggle="modal" data-target="#ModalStatic"
+                data-modal-class="modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <i class="fad fa-fw fa-magnifying-glass"></i> ' . lang('App.view') . '
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="' . base_url('inventory/stockopname/delete/' . $data['id']) . '"
+                data-action="confirm">
+                <i class="fad fa-fw fa-trash"></i> ' . lang('App.delete') . '
+              </a>
+            </div>
+          </div>';
+      })
+      ->editColumn('status', function ($data) {
+        return renderStatus($data['status']);
+      })
+      ->editColumn('attachment', function ($data) {
+        return renderAttachment($data['attachment']);
+      })
+      ->generate();
+  }
+
   public function category()
   {
     if ($args = func_get_args()) {
@@ -333,6 +386,35 @@ class Inventory extends BaseController
     $this->data['title'] = lang('App.addproductcategory');
 
     $this->response(200, ['content' => view('Inventory/Category/add', $this->data)]);
+  }
+
+  protected function category_delete($id = null)
+  {
+    $category = ProductCategory::getRow(['id' => $id]);
+
+    if (!$category) {
+      $this->response(404, ['message' => 'Product category is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      DB::transStart();
+
+      $res = ProductCategory::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Product category has been deleted.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    $this->response(400, ['message' => 'Bad request.']);
   }
 
   protected function category_edit($id = null)
@@ -526,7 +608,7 @@ class Inventory extends BaseController
         $this->response(201, ['message' => 'Internal Use has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addinternaluse');
@@ -543,28 +625,33 @@ class Inventory extends BaseController
       $this->response(404, ['message' => 'Internal Use is not found.']);
     }
 
-    DB::transStart();
+    if (requestMethod() == 'POST' && isAJAX()) {
 
-    Attachment::delete(['hashname' => $iUse->attachment]);
-    Stock::delete(['internal_use_id' => $id]);
+      DB::transStart();
 
-    foreach ($iUseItems as $iUseItem) {
-      Product::sync((int)$iUseItem->product_id);
-    }
+      Attachment::delete(['hashname' => $iUse->attachment]);
+      Stock::delete(['internal_use_id' => $id]);
 
-    $res = InternalUse::delete(['id' => $id]);
+      foreach ($iUseItems as $iUseItem) {
+        Product::sync((int)$iUseItem->product_id);
+      }
 
-    if (!$res) {
+      $res = InternalUse::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Internal Use has been deleted.']);
+      }
+
       $this->response(400, ['message' => getLastError()]);
     }
 
-    DB::transComplete();
-
-    if (DB::transStatus()) {
-      $this->response(200, ['message' => 'Internal Use has been deleted.']);
-    }
-
-    $this->response(400, ['message' => getLastError()]);
+    $this->response(400, ['message' => 'Bad Request.']);
   }
 
   protected function internaluse_edit($id = null)
@@ -636,7 +723,7 @@ class Inventory extends BaseController
         $this->response(201, ['message' => 'Internal Use has been updated.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $items = [];
@@ -825,7 +912,7 @@ class Inventory extends BaseController
         $this->response(201, ['message' => 'Product Mutation has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addproductmutation');
@@ -842,28 +929,33 @@ class Inventory extends BaseController
       $this->response(404, ['message' => 'Product Mutation is not found.']);
     }
 
-    DB::transStart();
+    if (requestMethod() == 'POST' && isAJAX()) {
 
-    Attachment::delete(['hashname' => $mutation->attachment]);
-    Stock::delete(['pm_id' => $id]);
+      DB::transStart();
 
-    foreach ($mutationItems as $mutationItem) {
-      Product::sync((int)$mutationItem->product_id);
-    }
+      Attachment::delete(['hashname' => $mutation->attachment]);
+      Stock::delete(['pm_id' => $id]);
 
-    $res = ProductMutation::delete(['id' => $id]);
+      foreach ($mutationItems as $mutationItem) {
+        Product::sync((int)$mutationItem->product_id);
+      }
 
-    if (!$res) {
+      $res = ProductMutation::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Product Mutation has been deleted.']);
+      }
+
       $this->response(400, ['message' => getLastError()]);
     }
 
-    DB::transComplete();
-
-    if (DB::transStatus()) {
-      $this->response(200, ['message' => 'Product Mutation has been deleted.']);
-    }
-
-    $this->response(400, ['message' => getLastError()]);
+    $this->response(400, ['message' => 'Bad request.']);
   }
 
   protected function mutation_status($id = null)
@@ -956,21 +1048,26 @@ class Inventory extends BaseController
       $this->response(404, ['message' => 'Product is not found.']);
     }
 
-    DB::transStart();
+    if (requestMethod() == 'POST' && isAJAX()) {
 
-    $res = Product::delete(['id' => $id]);
+      DB::transStart();
 
-    if (!$res) {
+      $res = Product::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Product has been deleted.']);
+      }
+
       $this->response(400, ['message' => getLastError()]);
     }
 
-    DB::transComplete();
-
-    if (DB::transStatus()) {
-      $this->response(200, ['message' => 'Product has been deleted.']);
-    }
-
-    $this->response(400, ['message' => getLastError()]);
+    $this->response(400, ['message' => 'Bad request.']);
   }
 
   protected function product_sync()
@@ -1037,20 +1134,21 @@ class Inventory extends BaseController
         'note'          => stripTags(getPost('note'))
       ];
 
+      $itemIds    = getPost('item[id]');
       $itemCodes  = getPost('item[code]');
       $itemQty    = getPost('item[quantity]');
 
-      if (!is_array($itemCodes) && !is_array($itemQty)) {
+      if (!is_array($itemIds) && !is_array($itemQty)) {
         $this->response(400, ['message' => 'Item tidak ada atau tidak valid.']);
       }
 
-      for ($a = 0; $a < count($itemCodes); $a++) {
+      for ($a = 0; $a < count($itemIds); $a++) {
         if (empty($itemQty[$a])) {
           $this->response(400, ['message' => "Item {$itemCodes[$a]} has invalid quantity."]);
         }
 
         $items[] = [
-          'code'      => $itemCodes[$a],
+          'id'        => $itemIds[$a],
           'quantity'  => $itemQty[$a]
         ];
       }
@@ -1068,18 +1166,10 @@ class Inventory extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $adjustment = StockAdjustment::getRow(['id' => $insertID]);
-        $attachment = Attachment::getRow(['hashname' => ($data['attachment'] ?? null)]);
-
-        addActivity("Stock Adjustment {$adjustment->reference} has been added.", [
-          'add'         => $adjustment,
-          'attachment'  => $attachment
-        ]);
-
         $this->response(201, ['message' => 'Stock Adjustment has been added.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->data['title'] = lang('App.addstockadjustment');
@@ -1094,7 +1184,6 @@ class Inventory extends BaseController
     if (requestMethod() == 'POST' && isAJAX()) {
       $adjustment = StockAdjustment::getRow(['id' => $id]);
       $stocks     = Stock::get(['adjustment_id' => $id]);
-      $attachment = Attachment::getRow(['hashname' => $adjustment->attachment]);
 
       if (!$adjustment) {
         $this->response(404, ['message' => 'Stock Adjustment is not found.']);
@@ -1112,26 +1201,16 @@ class Inventory extends BaseController
       Attachment::delete(['hashname' => $adjustment->attachment]);
 
       foreach ($stocks as $stock) {
-        Stock::sync((int)$stock->product_id, (int)$stock->warehouse_id);
+        Product::sync((int)$stock->product_id);
       }
 
       DB::transComplete();
 
       if (DB::transStatus()) {
-        if ($attachment) {
-          $attachment->data = base64_encode($attachment->data);
-        }
-
-        addActivity("Stock Adjustment {$adjustment->reference} has been deleted.", [
-          'delete'      => $adjustment,
-          'attachment'  => $attachment,
-          'stocks'      => $stocks
-        ]);
-
         $this->response(200, ['message' => 'Stock Adjustment has been deleted.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $this->response(400, ['message' => 'Failed to delete Stock Adjustment.']);
@@ -1161,16 +1240,17 @@ class Inventory extends BaseController
         'note'          => stripTags(getPost('note'))
       ];
 
+      $itemIds    = getPost('item[id]');
       $itemCodes  = getPost('item[code]');
       $itemQty    = getPost('item[quantity]');
 
-      for ($a = 0; $a < count($itemCodes); $a++) {
-        if (empty($itemQty[$a])) {
+      for ($a = 0; $a < count($itemIds); $a++) {
+        if (empty($itemQty[$a]) && $itemQty[$a] != 0) {
           $this->response(400, ['message' => "Item {$itemCodes[$a]} has invalid quantity."]);
         }
 
         $items[] = [
-          'code'      => $itemCodes[$a],
+          'id'        => $itemIds[$a],
           'quantity'  => $itemQty[$a]
         ];
       }
@@ -1179,7 +1259,7 @@ class Inventory extends BaseController
 
       $data = $this->useAttachment($data);
 
-      $insertID = StockAdjustment::add($data, $items);
+      $insertID = StockAdjustment::update((int)$id, $data, $items);
 
       if (!$insertID) {
         $this->response(400, ['message' => getLastError()]);
@@ -1188,18 +1268,10 @@ class Inventory extends BaseController
       DB::transComplete();
 
       if (DB::transStatus()) {
-        $adjustment = StockAdjustment::getRow(['id' => $insertID]);
-        $attachment = Attachment::getRow(['hashname' => ($data['attachment'] ?? null)]);
-
-        addActivity("Stock Adjustment {$adjustment->reference} has been added.", [
-          'add'         => $adjustment,
-          'attachment'  => $attachment
-        ]);
-
-        $this->response(201, ['message' => 'Stock Adjustment has been added.']);
+        $this->response(201, ['message' => 'Stock Adjustment has been updated.']);
       }
 
-      $this->response(400, ['message' => (isEnv('development') ? getLastError() : 'Failed')]);
+      $this->response(400, ['message' => getLastError()]);
     }
 
     $items = [];
@@ -1208,6 +1280,7 @@ class Inventory extends BaseController
       $whProduct = WarehouseProduct::getRow(['product_id' => $stock->product_id, 'warehouse_id' => $stock->warehouse_id]);
 
       $items[] = [
+        'id'          => $stock->product_id,
         'code'        => $stock->product_code,
         'name'        => $stock->product_name,
         'quantity'    => $stock->adjustment_qty,
@@ -1236,5 +1309,229 @@ class Inventory extends BaseController
     $this->data['title']      = lang('App.viewstockadjustment');
 
     $this->response(200, ['content' => view('Inventory/StockAdjustment/view', $this->data)]);
+  }
+
+  /**
+   * Stock Opname.
+   * Stock Qty == Input Qty => 'Excellent'.
+   * Stock Qty < Input Qty  => 'Good' + Adjustment Plus.
+   * Stock Qty > Input Qty  => 'Need Confirm' (Checked).
+   * 'Need Confirm' => First SO Qty == Update SO Qty.
+   */
+  public function stockopname()
+  {
+    if ($args = func_get_args()) {
+      $method = __FUNCTION__ . '_' . $args[0];
+
+      if (method_exists($this, $method)) {
+        array_shift($args);
+        return call_user_func_array([$this, $method], $args);
+      }
+    }
+
+    checkPermission('StockOpname.View');
+
+    $this->data['page'] = [
+      'bc' => [
+        ['name' => lang('App.inventory'), 'slug' => 'inventory', 'url' => '#'],
+        ['name' => lang('App.stockopname'), 'slug' => 'stockopname', 'url' => '#']
+      ],
+      'content' => 'Inventory/StockOpname/index',
+      'title' => lang('App.stockopname')
+    ];
+
+    return $this->buildPage($this->data);
+  }
+
+  protected function stockopname_add()
+  {
+    checkPermission('StockOpname.Add');
+
+    if (requestMethod() == 'POST') {
+      $itemIds    = getPost('item[id]');
+      $itemQty    = getPost('item[quantity]');
+      $itemReject = getPost('item[reject]');
+
+      $data = [
+        'date'          => dateTimePHP(getPost('date')),
+        'warehouse_id'  => getPost('warehouse'),
+        'cycle'         => (getPost('cycle') ?? 1),
+        'note'          => stripTags(getPost('note')),
+        'created_by'    => getPost('pic')
+      ];
+
+      if (!is_array($itemIds) && !is_array($itemQty)) {
+        $this->response(400, ['message' => 'Item tidak ada atau tidak valid.']);
+      }
+
+      for ($a = 0; $a < count($itemIds); $a++) {
+        if (empty($itemQty[$a]) && $itemQty[$a] != 0) {
+          $this->response(400, ['message' => "Item {$itemIds[$a]} has invalid quantity."]);
+        }
+
+        $items[] = [
+          'id'        => $itemIds[$a],
+          'quantity'  => $itemQty[$a],
+          'reject'    => $itemReject[$a]
+        ];
+      }
+
+      DB::transStart();
+
+      $data = $this->useAttachment($data);
+
+      $insertID = StockOpname::add($data, $items);
+
+      if (!$insertID) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(201, ['message' => 'Stock Opname has been added.']);
+      }
+
+      $this->response(400, ['message' => getLastError()]);
+    }
+
+    $this->data['title'] = lang('App.addstockopname');
+
+    $this->response(200, ['content' => view('Inventory/StockOpname/add', $this->data)]);
+  }
+
+  protected function stockopname_delete($id = null)
+  {
+    $opname = StockOpname::getRow(['id' => $id]);
+    $soItems = StockOpnameItem::get(['opname_id' => $id]);
+
+    if (!$opname) {
+      $this->response(404, ['message' => 'Stock Opname is not found.']);
+    }
+
+    if (requestMethod() == 'POST' && isAJAX()) {
+      DB::transStart();
+
+      Attachment::delete(['hashname' => $opname->attachment]);
+
+      if ($opname->adjustment_plus_id) {
+        StockAdjustment::delete(['id' => $opname->adjustment_plus_id]);
+        Stock::delete(['adjustment_id' => $opname->adjustment_plus_id]);
+      }
+
+      if ($opname->adjustment_min_id) {
+        StockAdjustment::delete(['id' => $opname->adjustment_min_id]);
+        Stock::delete(['adjustment_id' => $opname->adjustment_min_id]);
+      }
+
+      foreach ($soItems as $soItem) {
+        Product::sync((int)$soItem->product_id);
+      }
+
+      $res = StockOpname::delete(['id' => $id]);
+
+      if (!$res) {
+        $this->response(400, ['message' => getLastError()]);
+      }
+
+      DB::transComplete();
+
+      if (DB::transStatus()) {
+        $this->response(200, ['message' => 'Stock Opname has been deleted.']);
+      }
+    }
+
+    $this->response(400, ['message' => getLastError()]);
+  }
+
+  protected function stockopname_edit($id = null)
+  {
+  }
+
+  protected function stockopname_status($id = null)
+  {
+    $opname = StockOpname::getRow(['id' => $id]);
+
+    if (!$opname) {
+      $this->response(404, ['message' => 'Stock opname is not found.']);
+    }
+
+    
+  }
+
+  protected function stockopname_suggestion()
+  {
+    $userId = getGet('pic');
+    $warehouseId = getGet('warehouse');
+    $items = [];
+
+    $user = User::getRow(['id' => $userId]);
+
+    if (!$user) {
+      $this->response(404, ['message' => 'User is not found.']);
+    }
+
+    $userJS = getJSON($user->json);
+    $soCycle = intval($userJS->so_cycle ?? 1);
+
+    $warehouse = Warehouse::getRow(['id' => $warehouseId]);
+
+    if (!$warehouse) {
+      $this->response(404, ['message' => 'Warehouse is not found.']);
+    }
+
+    if (empty($userJS->so_cycle)) {
+      $userJS->so_cycle = $soCycle;
+
+      $data = [
+        'json'      => json_encode($userJS),
+        'json_data' => json_encode($userJS),
+      ];
+
+      if (!User::update((int)$user->id, $data)) {
+        $this->response(400, ['message' => 'Failed to update user data.']);
+      }
+    }
+
+    $items = getStockOpnameSuggestion((int)$user->id, (int)$warehouse->id, $soCycle);
+
+    if (!$items) {
+      $soCycle = 1;
+      $userJS->so_cycle = $soCycle;
+
+      $items = getStockOpnameSuggestion((int)$user->id, (int)$warehouse->id, $soCycle);
+    }
+
+    if (!$items) {
+      $this->response(400, ['message' => 'No items to be check.']);
+    }
+
+    foreach ($items as $item) {
+      Product::sync((int)$item->id);
+    }
+
+    // Updated items quantity.
+    $items = getStockOpnameSuggestion((int)$user->id, (int)$warehouse->id, $soCycle);
+
+    $this->response(200, ['data' => [
+      'cycle' => $soCycle,
+      'items' => $items,
+    ]]);
+  }
+
+  protected function stockopname_view($id = null)
+  {
+    checkPermission('StockOpname.View');
+
+    $opname = StockOpname::getRow(['id' => $id]);
+
+    if (!$opname) {
+      $this->response(404, ['message' => 'Stock Opname is not found.']);
+    }
+
+    $this->data['opname'] = $opname;
+    $this->data['title']  = lang('App.viewstockopname');
+
+    $this->response(200, ['content' => view('Inventory/StockOpname/view', $this->data)]);
   }
 }

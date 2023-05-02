@@ -15,7 +15,8 @@ use App\Models\{
   SaleItem,
   User,
   Voucher,
-  Warehouse
+  Warehouse,
+  WarehouseProduct
 };
 use Config\Services;
 
@@ -767,6 +768,25 @@ function getLastError(string $defaultMsg = null)
 function getMarkonPrice($cost, $markon)
 {
   return round(filterDecimal($cost) / (1 - (filterDecimal($markon) / 100)));
+}
+
+/**
+ * Get StockOpname items suggestion.
+ */
+function getStockOpnameSuggestion(int $userId, int $warehouseId, int $cycle)
+{
+  return WarehouseProduct::select('products.id AS id, products.code AS code, products.name AS name,
+    units.code AS unit, warehouses_products.quantity AS quantity')
+    ->join('products', 'products.id = warehouses_products.product_id', 'left')
+    ->join('units', 'units.id = products.unit', 'left')
+    ->where('products.active', 1)
+    ->where('warehouses_products.user_id', $userId)
+    ->where('warehouses_products.warehouse_id', $warehouseId)
+    ->where('warehouses_products.so_cycle', $cycle)
+    ->like('products.type', 'standard')
+    ->groupBy('products.id')
+    ->orderBy('name', 'ASC')
+    ->get();
 }
 
 /**

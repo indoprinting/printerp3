@@ -41,16 +41,19 @@
       chart: {},
       debug: false,
       echart: {},
-      modal: [], // Stackable modal.
-      sale: {
-        customer: null
+      http: {
+        callback: null,
+        get: {},
+        post: {}
       },
-      table: null,
-      tableModal: null,
+      modal: [], // Stackable modal.
       qms: {
         counter: {
           showTimer: true
         }
+      },
+      sale: {
+        customer: null
       },
       select2: {
         bank: {},
@@ -64,6 +67,8 @@
         warehouse: {}
       },
       table: null,
+      table: null,
+      tableModal: null,
       user: {
         id: <?= session('login')->user_id ?>
       },
@@ -435,8 +440,8 @@
                   <?php endif; ?>
                   <?php if (hasAccess('StockOpname.View')) : ?>
                     <li class="nav-item">
-                      <a href="#" class="nav-link">
-                        <i class="nav-icon fad fa-box-check"></i>
+                      <a href="<?= base_url('inventory/stockopname') ?>" class="nav-link" data-action="link" data-slug="stockopname">
+                        <i class="nav-icon fad fa-box-check" style="color:#ff4080"></i>
                         <p><?= lang('App.stockopname') ?></p>
                       </a>
                     </li>

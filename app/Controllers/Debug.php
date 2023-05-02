@@ -4,10 +4,37 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\{DB, SaleItem, Stock, Test1, Test2};
+use App\Models\{Bank, DB, PaymentValidation, SaleItem, Stock, Test1, Test2};
 
 class Debug extends BaseController
 {
+  public function paymentvalidation()
+  {
+    $createdAt = ($option['date'] ?? date('Y-m-d H:i:s'));
+    $startDate = date('Y-m-d H:i:s', strtotime('-1 day')); // We retrieve data from 7 days ago.
+    $status = ['pending'];
+
+    // Delete old MutasiBank data.
+    DB::table('mutasibank')
+      ->whereIn('status', $status)
+      ->where("created_at < '{$startDate} 00:00:00'")
+      ->delete();
+
+    $mutasiBanks = DB::table('mutasibank')
+      ->whereIn('status', $status)
+      ->where("created_at >= '{$startDate} 00:00:00'")
+      ->get();
+
+    dbgprint($mutasiBanks); die;
+
+    $paymentValidations = PaymentValidation::select('*')
+      ->whereIn('status', $status)
+      ->where("date >= '{$startDate} 00:00:00'")
+      ->get();
+
+    dbgprint($paymentValidations);
+  }
+
   public function emoji()
   {
     $items = SaleItem::get(['sale_id' => 48064]);
